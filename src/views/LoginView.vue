@@ -20,28 +20,30 @@ async function login() {
     return
   }
 
-  router.push('/admin')
+  router.push('/management')
 }
 </script>
 
 <template>
-  <section class="hero">
-    <h1>Admin login</h1>
-    <p>Log in to add or manage events.</p>
-  </section>
+  <div class="management-page">
+    <section class="hero">
+      <h1>Login</h1>
+      <p>Log in to manage events.</p>
+    </section>
 
-  <form class="card form" @submit.prevent="login">
-    <div class="field">
-      <label>Email</label>
-      <input v-model="email" type="email" required />
-    </div>
+    <form class="card form" @submit.prevent="login">
+      <div class="field">
+        <label>Email</label>
+        <input v-model="email" type="email" required />
+      </div>
 
-    <div class="field">
-      <label>Password</label>
-      <input v-model="password" type="password" required />
-    </div>
+      <div class="field">
+        <label>Password</label>
+        <input v-model="password" type="password" required />
+      </div>
 
-    <button class="button" type="submit">Log in</button>
-    <p v-if="status" class="status">{{ status }}</p>
-  </form>
+      <button class="button" type="submit">Log in</button>
+      <p v-if="status" class="status">{{ status }}</p>
+    </form>
+  </div>
 </template>

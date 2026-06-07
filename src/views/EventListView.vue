@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import EventCard from '../components/EventCard.vue'
+import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
 
 const filter = ref('upcoming')
 const category = ref('all')
+const searchQuery = ref('')
 const events = ref([])
 const loading = ref(true)
 const error = ref('')
@@ -44,7 +46,7 @@ async function loadEvents() {
     return
   }
 
-  events.value = data || []
+  events.value = (data || []).map(normalizeEvent)
   loading.value = false
 }
 
@@ -63,6 +65,24 @@ function isFree(event) {
   return (event.price_text || '').toLowerCase().includes('free')
 }
 
+function matchesSearch(event) {
+  if (!searchQuery.value) return true
+  const query = searchQuery.value.toLowerCase()
+  return (
+    (event.title || '').toLowerCase().includes(query) ||
+    (event.organizer || '').toLowerCase().includes(query) ||
+    (event.location || '').toLowerCase().includes(query)
+  )
+}
+
+function formatDateGroup(date) {
+  return new Intl.DateTimeFormat('en-DK', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long'
+  }).format(date)
+}
+
 const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
@@ -74,42 +94,78 @@ const visibleEvents = computed(() => {
     .filter(event => filter.value !== 'weekend' || isThisWeekend(event))
     .filter(event => filter.value !== 'free' || isFree(event))
     .filter(event => category.value === 'all' || event.category === category.value)
+    .filter(matchesSearch)
     .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
 })
+
+const groupedEvents = computed(() => {
+  const groups = {}
+
+  visibleEvents.value.forEach(event => {
+    const dateKey = new Date(event.start_time).toDateString()
+    if (!groups[dateKey]) {
+      groups[dateKey] = []
+    }
+    groups[dateKey].push(event)
+  })
+
+  return Object.entries(groups).map(([dateStr, eventsInGroup]) => ({
+    date: new Date(dateStr),
+    dateLabel: formatDateGroup(new Date(dateStr)),
+    events: eventsInGroup
+  }))
+})
+
 </script>
 
 <template>
-  <section class="hero app-hero">
-    <p class="eyebrow">Copenhagen bachata calendar</p>
-    <h1>Find your next dance night.</h1>
-    <p>Socials, classes, workshops and parties from local organizers in one simple list.</p>
-  </section>
+  <div class="public-page">
+    <section class="hero app-hero">
+      <p class="eyebrow">Copenhagen bachata calendar</p>
+      <h1>Find your next dance night.</h1>
+      <p>Socials, classes, workshops and parties from local organizers in one simple list.</p>
+    </section>
 
-  <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
+    <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
 
-  <section class="filters" aria-label="Event filters">
-    <button class="filter-button" :class="{ active: filter === 'upcoming' }" @click="filter = 'upcoming'">Upcoming</button>
-    <button class="filter-button" :class="{ active: filter === 'today' }" @click="filter = 'today'">Today</button>
-    <button class="filter-button" :class="{ active: filter === 'weekend' }" @click="filter = 'weekend'">Weekend</button>
-    <button class="filter-button" :class="{ active: filter === 'free' }" @click="filter = 'free'">Free</button>
-  </section>
+    <div class="search-section">
+      <input
+        v-model="searchQuery"
+        type="text"
+        class="search-input"
+        placeholder="Search by title, organizer, or location..."
+      />
+    </div>
 
-  <label class="category-filter">
-    <span>Category</span>
-    <select v-model="category">
-      <option v-for="item in categories" :key="item" :value="item">
-        {{ item === 'all' ? 'All categories' : item }}
-      </option>
-    </select>
-  </label>
+    <section class="filters" aria-label="Event filters">
+      <button class="filter-button" :class="{ active: filter === 'upcoming' }" @click="filter = 'upcoming'">Upcoming</button>
+      <button class="filter-button" :class="{ active: filter === 'today' }" @click="filter = 'today'">Today</button>
+      <button class="filter-button" :class="{ active: filter === 'weekend' }" @click="filter = 'weekend'">Weekend</button>
+      <button class="filter-button" :class="{ active: filter === 'free' }" @click="filter = 'free'">Free</button>
+    </section>
 
-  <p v-if="loading" class="empty-state">Loading events...</p>
+    <label class="category-filter">
+      <span>Category</span>
+      <select v-model="category">
+        <option v-for="item in categories" :key="item" :value="item">
+          {{ item === 'all' ? 'All categories' : item }}
+        </option>
+      </select>
+    </label>
 
-  <p v-else-if="error" class="empty-state">Could not load events: {{ error }}</p>
+    <p v-if="loading" class="empty-state">Loading events...</p>
 
-  <p v-else-if="visibleEvents.length === 0" class="empty-state">No events match these filters yet.</p>
+    <p v-else-if="error" class="empty-state">Could not load events: {{ error }}</p>
 
-  <section v-else class="event-list" aria-label="Upcoming bachata events">
-    <EventCard v-for="event in visibleEvents" :key="event.id" :event="event" />
-  </section>
+    <p v-else-if="groupedEvents.length === 0" class="empty-state">No events match these filters yet.</p>
+
+    <section v-else aria-label="Upcoming bachata events">
+      <div v-for="group in groupedEvents" :key="group.date.toISOString()" class="event-date-group">
+        <h2 class="event-date-header">{{ group.dateLabel }}</h2>
+        <div class="event-list">
+          <EventCard v-for="event in group.events" :key="event.id" :event="event" />
+        </div>
+      </div>
+    </section>
+  </div>
 </template>

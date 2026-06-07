@@ -1,172 +1,221 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
 
 const router = useRouter()
+const route = useRoute()
 const status = ref('')
-const user = ref(null)
+const isEditing = ref(false)
+const eventId = ref(null)
 
 const form = ref({
   title: '',
   organizer: '',
-  facebook_url: '',
+  category: 'social',
   location: '',
+  description: '',
+  price_text: 'Free',
+  event_link: '',
   date: '',
   start_time: '18:30',
-  end_time: '21:30',
-  category: 'social',
-  price_text: 'Free',
-  description: '',
-  recurrence: 'single',
-  repeat_until: ''
+  end_time: '21:30'
 })
 
 onMounted(async () => {
-  const { data } = await supabase.auth.getUser()
-  user.value = data.user
-  if (!user.value) router.push('/login')
+  if (route.params.id) {
+    await loadEvent(route.params.id)
+    return
+  }
+
+  if (route.query.duplicateId) {
+    await loadEvent(route.query.duplicateId, { duplicate: true })
+  }
 })
+
+function applyEventToForm(data) {
+  const event = normalizeEvent(data)
+  const startDate = new Date(event.start_time)
+
+  form.value = {
+    title: event.title || '',
+    organizer: event.organizer || '',
+    category: event.category || 'social',
+    location: event.location || '',
+    description: event.description || '',
+    price_text: event.price_text || 'Free',
+    event_link: event.event_link || '',
+    date: startDate.toISOString().slice(0, 10),
+    start_time: startDate.toTimeString().slice(0, 5),
+    end_time: event.end_time ? new Date(event.end_time).toTimeString().slice(0, 5) : ''
+  }
+}
+
+async function loadEvent(id, options = {}) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error || !data) {
+    status.value = 'Could not load event.'
+    return
+  }
+
+  applyEventToForm(data)
+
+  if (options.duplicate) {
+    isEditing.value = false
+    eventId.value = null
+    status.value = 'Duplicating event. Update the date or details before saving.'
+    return
+  }
+
+  eventId.value = data.id
+  isEditing.value = true
+}
 
 function toDateTime(date, time) {
   return new Date(`${date}T${time}:00`).toISOString()
 }
 
-function generateDates() {
-  const dates = []
-  const start = new Date(`${form.value.date}T00:00:00`)
-  const end = form.value.repeat_until
-    ? new Date(`${form.value.repeat_until}T00:00:00`)
-    : start
-
-  const cursor = new Date(start)
-  while (cursor <= end) {
-    dates.push(cursor.toISOString().slice(0, 10))
-    cursor.setDate(cursor.getDate() + 7)
+function buildPayload() {
+  return {
+    title: form.value.title,
+    organizer: form.value.organizer || null,
+    category: form.value.category,
+    location: form.value.location || null,
+    description: form.value.description || null,
+    price_text: form.value.price_text || null,
+    event_link: form.value.event_link || null,
+    start_time: toDateTime(form.value.date, form.value.start_time),
+    end_time: form.value.end_time ? toDateTime(form.value.date, form.value.end_time) : null,
+    approved: true
   }
-  return dates
 }
 
 async function saveEvent() {
   status.value = 'Saving...'
 
-  const dates = form.value.recurrence === 'weekly' ? generateDates() : [form.value.date]
-  const rows = dates.map(date => ({
-    title: form.value.title,
-    organizer: form.value.organizer,
-    facebook_url: form.value.facebook_url,
-    location: form.value.location,
-    start_time: toDateTime(date, form.value.start_time),
-    end_time: toDateTime(date, form.value.end_time),
-    category: form.value.category,
-    price_text: form.value.price_text,
-    description: form.value.description,
-    approved: true
-  }))
+  const payload = buildPayload()
+  const query = isEditing.value
+    ? supabase.from('events').update(payload).eq('id', eventId.value)
+    : supabase.from('events').insert(payload)
 
-  const { error } = await supabase.from('events').insert(rows)
+  const { error } = await query
 
   if (error) {
     status.value = error.message
     return
   }
 
-  sessionStorage.setItem('flash_message', `Saved ${rows.length} event(s).`)
-  router.push('/')
+  sessionStorage.setItem('flash_message', isEditing.value ? 'Event updated successfully.' : 'Event created successfully.')
+  router.push('/management')
 }
 
-async function logout() {
-  await supabase.auth.signOut()
-  router.push('/')
+async function deleteEvent() {
+  if (!confirm('Delete this event? This cannot be undone.')) return
+
+  status.value = 'Deleting...'
+
+  const { error } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', eventId.value)
+
+  if (error) {
+    status.value = error.message
+    return
+  }
+
+  sessionStorage.setItem('flash_message', 'Event deleted.')
+  router.push('/management')
 }
 </script>
 
 <template>
-  <section class="hero">
-    <h1>Add event</h1>
-    <p>Paste Facebook link, add date details, publish it to the public list.</p>
-  </section>
+  <div class="management-page">
+    <section class="hero">
+      <h1>{{ isEditing ? 'Edit event' : 'Add event' }}</h1>
+      <p>{{ isEditing ? 'Update the event details and save changes.' : 'Add one event occurrence to the public calendar.' }}</p>
+    </section>
 
-  <form class="card form" @submit.prevent="saveEvent">
-    <div class="grid-two">
-      <div class="field">
-        <label>Event title</label>
-        <input v-model="form.title" required placeholder="Bachata Friday at BLOX" />
+    <form class="card form" @submit.prevent="saveEvent">
+      <p class="required-note">Fields marked with * are required.</p>
+
+      <div class="grid-two">
+        <div class="field">
+          <label for="event-title">Title *</label>
+          <input id="event-title" v-model="form.title" required placeholder="Bachata Friday at BLOX" />
+        </div>
+
+        <div class="field">
+          <label for="event-organizer">Organizer</label>
+          <input id="event-organizer" v-model="form.organizer" placeholder="DanceManiacs" />
+        </div>
+      </div>
+
+      <div class="grid-two">
+        <div class="field">
+          <label for="event-category">Category</label>
+          <select id="event-category" v-model="form.category">
+            <option value="social">Social</option>
+            <option value="class">Class</option>
+            <option value="party">Party</option>
+            <option value="festival">Festival</option>
+            <option value="workshop">Workshop</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="event-location">Location</label>
+          <input id="event-location" v-model="form.location" placeholder="BLOX, Copenhagen" />
+        </div>
       </div>
 
       <div class="field">
-        <label>Organizer / school</label>
-        <input v-model="form.organizer" placeholder="Dancemaniacs" />
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Facebook event link</label>
-      <input v-model="form.facebook_url" type="url" required placeholder="https://facebook.com/events/..." />
-    </div>
-
-    <div class="grid-two">
-      <div class="field">
-        <label>Location</label>
-        <input v-model="form.location" placeholder="BLOX, Copenhagen" />
+        <label for="event-description">Description</label>
+        <textarea id="event-description" v-model="form.description" placeholder="Short note visible on the public page" />
       </div>
 
-      <div class="field">
-        <label>Category</label>
-        <select v-model="form.category">
-          <option value="social">Social</option>
-          <option value="class">Class</option>
-          <option value="party">Party</option>
-          <option value="festival">Festival</option>
-          <option value="workshop">Workshop</option>
-        </select>
-      </div>
-    </div>
+      <div class="grid-two">
+        <div class="field">
+          <label for="event-price">Price</label>
+          <input id="event-price" v-model="form.price_text" placeholder="Free / 80 DKK / donation based" />
+        </div>
 
-    <div class="grid-two">
-      <div class="field">
-        <label>Date</label>
-        <input v-model="form.date" type="date" required />
+        <div class="field">
+          <label for="event-link">Event Link</label>
+          <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
+        </div>
+      </div>
+
+      <div class="grid-two">
+        <div class="field">
+          <label for="event-date">Date *</label>
+          <input id="event-date" v-model="form.date" type="date" required />
+        </div>
+
+        <div class="field">
+          <label for="event-start">Start Time *</label>
+          <input id="event-start" v-model="form.start_time" type="time" required />
+        </div>
       </div>
 
       <div class="field">
-        <label>Recurrence</label>
-        <select v-model="form.recurrence">
-          <option value="single">Single event</option>
-          <option value="weekly">Repeat weekly</option>
-        </select>
-      </div>
-    </div>
-
-    <div v-if="form.recurrence === 'weekly'" class="field">
-      <label>Repeat until</label>
-      <input v-model="form.repeat_until" type="date" required />
-    </div>
-
-    <div class="grid-two">
-      <div class="field">
-        <label>Start time</label>
-        <input v-model="form.start_time" type="time" required />
+        <label for="event-end">End Time</label>
+        <input id="event-end" v-model="form.end_time" type="time" />
       </div>
 
-      <div class="field">
-        <label>End time</label>
-        <input v-model="form.end_time" type="time" />
+      <div class="form-actions">
+        <button class="button" type="submit">{{ isEditing ? 'Save changes' : 'Create event' }}</button>
+        <RouterLink to="/management" class="button secondary">Cancel</RouterLink>
+        <button v-if="isEditing" class="button danger" type="button" @click="deleteEvent">Delete event</button>
       </div>
-    </div>
 
-    <div class="field">
-      <label>Price</label>
-      <input v-model="form.price_text" placeholder="Free / 80 DKK / donation based" />
-    </div>
-
-    <div class="field">
-      <label>Description</label>
-      <textarea v-model="form.description" placeholder="Short note visible on the public page"></textarea>
-    </div>
-
-    <button class="button" type="submit">Save event</button>
-    <button class="button secondary" type="button" @click="logout">Log out</button>
-    <p v-if="status" class="status">{{ status }}</p>
-  </form>
+      <p v-if="status" class="status">{{ status }}</p>
+    </form>
+  </div>
 </template>

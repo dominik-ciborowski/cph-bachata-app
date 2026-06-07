@@ -37,7 +37,7 @@ function formatTimeRange(startValue, endValue) {
     <div class="event-card__body">
       <div class="event-card__topline">
         <span class="pill">{{ event.category }}</span>
-        <span class="price">{{ event.price_text }}</span>
+        <span class="price-badge" :class="{ free: (event.price_text || '').toLowerCase().includes('free') || (event.price_text||'').trim()==='0' }">{{ (event.price_text || 'FREE').toUpperCase() }}</span>
       </div>
 
       <h2>{{ event.title }}</h2>
