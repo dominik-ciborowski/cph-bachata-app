@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { CalendarPlus } from 'lucide-vue-next'
 import { supabase } from '../lib/supabase'
 
 const router = useRouter()
@@ -14,7 +15,7 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: 'Free',
+  price_text: '',
   event_link: '',
   start_time: '18:30',
   end_time: '21:30'
@@ -111,7 +112,6 @@ async function saveBulk() {
           <select id="bulk-category" v-model="form.category">
             <option value="social">Social</option>
             <option value="class">Class</option>
-            <option value="party">Party</option>
             <option value="festival">Festival</option>
             <option value="workshop">Workshop</option>
           </select>
@@ -130,8 +130,9 @@ async function saveBulk() {
 
       <div class="grid-two">
         <div class="field">
-          <label for="bulk-price">Price</label>
-          <input id="bulk-price" v-model="form.price_text" placeholder="Free / 80 DKK / donation based" />
+          <label for="bulk-price">Price (DKK)</label>
+          <input id="bulk-price" v-model="form.price_text" placeholder="0, 80, 120" />
+          <p class="field-help">If the event is free, enter 0.</p>
         </div>
 
         <div class="field">
@@ -175,7 +176,7 @@ async function saveBulk() {
       </div>
 
       <div class="form-actions">
-        <button class="button" type="submit">Create events</button>
+        <button class="button icon-text" type="submit"><CalendarPlus class="icon icon--sm" />Create events</button>
         <RouterLink to="/management" class="button secondary">Cancel</RouterLink>
       </div>
 

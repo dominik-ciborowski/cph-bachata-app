@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { CalendarPlus, Plus } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
 
@@ -97,8 +98,8 @@ function gotoBulkAdd() {
       </div>
 
       <div class="management-toolbar__actions">
-        <button class="button button--compact" type="button" @click="gotoAddEvent">+ Add Event</button>
-        <button class="button secondary button--compact" type="button" @click="gotoBulkAdd">+ Bulk Add Events</button>
+        <button class="button button--compact icon-text" type="button" @click="gotoAddEvent"><Plus class="icon icon--sm" />Add Event</button>
+        <button class="button secondary button--compact icon-text" type="button" @click="gotoBulkAdd"><CalendarPlus class="icon icon--sm" />Bulk Add Events</button>
       </div>
     </section>
 
@@ -109,14 +110,14 @@ function gotoBulkAdd() {
 
     <section v-else class="management-list">
       <div v-for="event in upcomingEvents" :key="event.id" class="card management-card">
-        <div class="management-card__content">
+        <RouterLink :to="{ path: `/events/${event.id}`, query: { from: 'management' } }" class="management-card__content management-card__link">
           <h2 class="management-card__title">{{ event.title }}</h2>
           <p class="management-card__meta">
             {{ formatStart(event.start_time) }}
             <span v-if="event.location">• {{ event.location }}</span>
             <span v-if="event.organizer">• {{ event.organizer }}</span>
           </p>
-        </div>
+        </RouterLink>
 
         <div class="management-card__actions">
           <button class="button button--compact" type="button" @click="editEvent(event.id)">Edit</button>

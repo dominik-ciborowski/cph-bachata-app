@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import EventCard from '../components/EventCard.vue'
 import { normalizeEvent } from '../lib/events'
+import { getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
 const filter = ref('upcoming')
@@ -51,9 +52,34 @@ async function loadEvents() {
 }
 
 function isThisWeekend(event) {
-  const date = new Date(event.start_time)
-  const day = date.getDay()
-  return day === 5 || day === 6 || day === 0
+  const eventDate = new Date(event.start_time)
+  const weekendRange = getWeekendRange()
+  return eventDate >= weekendRange.start && eventDate < weekendRange.end
+}
+
+function getWeekendRange() {
+  const day = today.getDay()
+  const start = new Date(today)
+
+  if (day >= 1 && day <= 4) {
+    start.setDate(today.getDate() + (5 - day))
+  }
+
+  if (day === 0) {
+    start.setDate(today.getDate())
+  }
+
+  const end = new Date(start)
+
+  if (day === 0) {
+    end.setDate(start.getDate() + 1)
+  } else if (day === 6) {
+    end.setDate(start.getDate() + 2)
+  } else {
+    end.setDate(start.getDate() + 3)
+  }
+
+  return { start, end }
 }
 
 function isToday(event) {
@@ -62,7 +88,7 @@ function isToday(event) {
 }
 
 function isFree(event) {
-  return (event.price_text || '').toLowerCase().includes('free')
+  return isFreePrice(event.price_text)
 }
 
 function matchesSearch(event) {
@@ -140,18 +166,18 @@ const groupedEvents = computed(() => {
     <section class="filters" aria-label="Event filters">
       <button class="filter-button" :class="{ active: filter === 'upcoming' }" @click="filter = 'upcoming'">Upcoming</button>
       <button class="filter-button" :class="{ active: filter === 'today' }" @click="filter = 'today'">Today</button>
-      <button class="filter-button" :class="{ active: filter === 'weekend' }" @click="filter = 'weekend'">Weekend</button>
+      <button class="filter-button" :class="{ active: filter === 'weekend' }" @click="filter = 'weekend'">This Weekend</button>
       <button class="filter-button" :class="{ active: filter === 'free' }" @click="filter = 'free'">Free</button>
     </section>
 
     <label class="category-filter">
       <span>Category</span>
       <select v-model="category">
-        <option v-for="item in categories" :key="item" :value="item">
-          {{ item === 'all' ? 'All categories' : item }}
-        </option>
-      </select>
-    </label>
+      <option v-for="item in categories" :key="item" :value="item">
+        {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+      </option>
+    </select>
+  </label>
 
     <p v-if="loading" class="empty-state">Loading events...</p>
 

@@ -1,8 +1,10 @@
 <script setup>
 import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { CalendarDays, MapPin, Pencil, Trash2 } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
+import { EventLinkIcon, formatPriceDisplay, getCategoryMeta } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
@@ -11,6 +13,14 @@ const { isAuthenticated } = useAuth()
 const event = ref(null)
 const loading = ref(true)
 const error = ref('')
+
+function getBackTarget() {
+  return route.query.from === 'management' ? '/management' : '/'
+}
+
+function getBackLabel() {
+  return route.query.from === 'management' ? 'Back to management' : 'Back to events'
+}
 
 onMounted(async () => {
   await loadEvent()
@@ -60,6 +70,11 @@ function formatTime(value) {
   }).format(new Date(value))
 }
 
+function getMapsUrl(location) {
+  if (!location) return ''
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+}
+
 async function deleteEvent() {
   if (!confirm('Are you sure you want to delete this event?')) {
     return
@@ -91,28 +106,43 @@ async function deleteEvent() {
     <p class="eyebrow">Event</p>
     <h1>Could not load event</h1>
     <p>{{ error }}</p>
-    <RouterLink to="/" class="button">Back to events</RouterLink>
+    <RouterLink :to="getBackTarget()" class="button">{{ getBackLabel() }}</RouterLink>
   </section>
 
   <section v-else-if="event" class="detail">
-    <RouterLink to="/" class="detail-back">← Back to events</RouterLink>
+    <RouterLink :to="getBackTarget()" class="detail-back">← {{ getBackLabel() }}</RouterLink>
 
     <section class="hero detail-hero">
-      <p class="eyebrow">{{ event.category }}</p>
+      <p class="eyebrow detail-category" :class="getCategoryMeta(event.category).className">
+        <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
+        {{ getCategoryMeta(event.category).label }}
+      </p>
       <h1>{{ event.title }}</h1>
-      <p v-if="event.organizer">Hosted by {{ event.organizer }}</p>
+      <p v-if="event.organizer" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer }}</span></p>
     </section>
 
     <section class="card detail-summary">
       <div class="detail-summary__place">
         <span>Where</span>
-        <strong>{{ event.location || 'Location not listed yet' }}</strong>
+        <strong v-if="event.location">
+          <a
+            class="detail-location-link icon-text"
+            :href="getMapsUrl(event.location)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <MapPin class="icon icon--sm" />
+            {{ event.location }}
+            <EventLinkIcon class="icon icon--sm" />
+          </a>
+        </strong>
+        <strong v-else>Location not listed yet</strong>
       </div>
 
       <div class="detail-summary__facts">
         <div class="detail-fact">
           <span>When</span>
-          <strong>{{ formatDate(event.start_time) }}</strong>
+          <strong class="icon-text"><CalendarDays class="icon icon--sm" />{{ formatDate(event.start_time) }}</strong>
           <p>
             {{ formatTime(event.start_time) }}
             <template v-if="event.end_time"> until {{ formatTime(event.end_time) }}</template>
@@ -120,13 +150,8 @@ async function deleteEvent() {
         </div>
 
         <div class="detail-fact">
-          <span>Organizer</span>
-          <strong>{{ event.organizer || 'Organizer not listed yet' }}</strong>
-        </div>
-
-        <div class="detail-fact">
           <span>Price</span>
-          <strong>{{ event.price_text || 'Check event details' }}</strong>
+          <strong>{{ formatPriceDisplay(event.price_text) }}</strong>
         </div>
       </div>
     </section>
@@ -141,12 +166,15 @@ async function deleteEvent() {
         <h2>More information</h2>
         <p>Open the event link for the latest updates, attendance info, and details.</p>
       </div>
-      <a class="button detail-cta__button" :href="event.event_link" target="_blank" rel="noreferrer">Open event link</a>
+      <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer">
+        <EventLinkIcon class="icon icon--sm" />
+        Open event link
+      </a>
     </section>
 
     <section v-if="isAuthenticated" class="card detail-actions">
-      <RouterLink :to="`/admin/${event.id}`" class="button">Edit event</RouterLink>
-      <button class="button danger" @click="deleteEvent">Delete event</button>
+      <RouterLink :to="`/admin/${event.id}`" class="button icon-text"><Pencil class="icon icon--sm" />Edit event</RouterLink>
+      <button class="button danger icon-text" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
     </section>
   </section>
 
@@ -154,6 +182,6 @@ async function deleteEvent() {
     <p class="eyebrow">Event</p>
     <h1>Event not found</h1>
     <p>This event is not available or is no longer approved.</p>
-    <RouterLink to="/" class="button">Back to events</RouterLink>
+    <RouterLink :to="getBackTarget()" class="button">{{ getBackLabel() }}</RouterLink>
   </section>
 </template>

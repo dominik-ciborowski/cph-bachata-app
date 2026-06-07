@@ -1,7 +1,9 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
+import { isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
 const router = useRouter()
@@ -16,7 +18,7 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: 'Free',
+  price_text: '',
   event_link: '',
   date: '',
   start_time: '18:30',
@@ -44,7 +46,7 @@ function applyEventToForm(data) {
     category: event.category || 'social',
     location: event.location || '',
     description: event.description || '',
-    price_text: event.price_text || 'Free',
+    price_text: isFreePrice(event.price_text) ? '0' : (event.price_text || ''),
     event_link: event.event_link || '',
     date: startDate.toISOString().slice(0, 10),
     start_time: startDate.toTimeString().slice(0, 5),
@@ -148,12 +150,12 @@ async function deleteEvent() {
       <div class="grid-two">
         <div class="field">
           <label for="event-title">Title *</label>
-          <input id="event-title" v-model="form.title" required placeholder="Bachata Friday at BLOX" />
+          <input id="event-title" v-model="form.title" required />
         </div>
 
         <div class="field">
           <label for="event-organizer">Organizer</label>
-          <input id="event-organizer" v-model="form.organizer" placeholder="DanceManiacs" />
+          <input id="event-organizer" v-model="form.organizer" />
         </div>
       </div>
 
@@ -163,7 +165,6 @@ async function deleteEvent() {
           <select id="event-category" v-model="form.category">
             <option value="social">Social</option>
             <option value="class">Class</option>
-            <option value="party">Party</option>
             <option value="festival">Festival</option>
             <option value="workshop">Workshop</option>
           </select>
@@ -171,7 +172,7 @@ async function deleteEvent() {
 
         <div class="field">
           <label for="event-location">Location</label>
-          <input id="event-location" v-model="form.location" placeholder="BLOX, Copenhagen" />
+          <input id="event-location" v-model="form.location" />
         </div>
       </div>
 
@@ -182,8 +183,9 @@ async function deleteEvent() {
 
       <div class="grid-two">
         <div class="field">
-          <label for="event-price">Price</label>
-          <input id="event-price" v-model="form.price_text" placeholder="Free / 80 DKK / donation based" />
+          <label for="event-price">Price (DKK)</label>
+          <input id="event-price" v-model="form.price_text" placeholder="0, 80, 120" />
+          <p class="field-help">If the event is free, enter 0.</p>
         </div>
 
         <div class="field">
@@ -192,27 +194,30 @@ async function deleteEvent() {
         </div>
       </div>
 
-      <div class="grid-two">
-        <div class="field">
-          <label for="event-date">Date *</label>
-          <input id="event-date" v-model="form.date" type="date" required />
-        </div>
+      <div class="field">
+        <label for="event-date">Date *</label>
+        <input id="event-date" v-model="form.date" type="date" required />
+      </div>
 
+      <div class="grid-two">
         <div class="field">
           <label for="event-start">Start Time *</label>
           <input id="event-start" v-model="form.start_time" type="time" required />
         </div>
-      </div>
 
-      <div class="field">
-        <label for="event-end">End Time</label>
-        <input id="event-end" v-model="form.end_time" type="time" />
+        <div class="field">
+          <label for="event-end">End Time</label>
+          <input id="event-end" v-model="form.end_time" type="time" />
+        </div>
       </div>
 
       <div class="form-actions">
-        <button class="button" type="submit">{{ isEditing ? 'Save changes' : 'Create event' }}</button>
+        <button class="button icon-text" type="submit">
+          <component :is="isEditing ? Pencil : Plus" class="icon icon--sm" />
+          {{ isEditing ? 'Save changes' : 'Create event' }}
+        </button>
         <RouterLink to="/management" class="button secondary">Cancel</RouterLink>
-        <button v-if="isEditing" class="button danger" type="button" @click="deleteEvent">Delete event</button>
+        <button v-if="isEditing" class="button danger icon-text" type="button" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
       </div>
 
       <p v-if="status" class="status">{{ status }}</p>
