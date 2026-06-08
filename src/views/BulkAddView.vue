@@ -3,8 +3,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CalendarPlus } from 'lucide-vue-next'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
+const { user } = useAuth()
 const status = ref('')
 const dateInput = ref('')
 const selectedDates = ref([])
@@ -57,6 +59,11 @@ async function saveBulk() {
     return
   }
 
+  if (!user.value) {
+    status.value = 'You must be logged in to save events.'
+    return
+  }
+
   status.value = 'Saving...'
 
   const rows = selectedDates.value.map((date) => ({
@@ -69,7 +76,8 @@ async function saveBulk() {
     event_link: form.value.event_link || null,
     start_time: toDateTime(date, form.value.start_time),
     end_time: form.value.end_time ? toDateTime(date, form.value.end_time) : null,
-    approved: true
+    approved: true,
+    created_by: user.value.id
   }))
 
   const { error } = await supabase.from('events').insert(rows)

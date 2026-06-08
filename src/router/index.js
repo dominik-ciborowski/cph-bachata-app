@@ -5,15 +5,15 @@ import AdminView from '../views/AdminView.vue'
 import LoginView from '../views/LoginView.vue'
 import ManagementView from '../views/ManagementView.vue'
 import BulkAddView from '../views/BulkAddView.vue'
-import { supabase } from '../lib/supabase'
+import { getAuthState } from '../composables/useAuth'
 
 const routes = [
   { path: '/', component: EventListView },
   { path: '/events/:id', component: EventDetailView },
-  { path: '/admin', component: AdminView, meta: { requiresAuth: true } },
-  { path: '/admin/:id', component: AdminView, meta: { requiresAuth: true } },
-  { path: '/management', component: ManagementView, meta: { requiresAuth: true } },
-  { path: '/management/bulk', component: BulkAddView, meta: { requiresAuth: true } },
+  { path: '/admin', component: AdminView, meta: { requiresManagement: true } },
+  { path: '/admin/:id', component: AdminView, meta: { requiresManagement: true } },
+  { path: '/management', component: ManagementView, meta: { requiresManagement: true } },
+  { path: '/management/bulk', component: BulkAddView, meta: { requiresManagement: true } },
   { path: '/login', component: LoginView }
 ]
 
@@ -22,25 +22,29 @@ const router = createRouter({
   routes
 })
 
-// Route guard for protected routes
+// Route guard for protected management routes
 router.beforeEach(async (to, from, next) => {
-  const { data } = await supabase.auth.getUser()
-  const currentUser = data.user
+  const { user, role } = await getAuthState()
+  const canManageEvents = role === 'organizer' || role === 'admin'
 
-  if (to.path === '/login' && currentUser) {
-    next('/management')
+  if (to.path === '/login' && user) {
+    next(canManageEvents ? '/management' : '/')
     return
   }
 
-  if (to.meta.requiresAuth) {
-    if (!currentUser) {
+  if (to.meta.requiresManagement) {
+    if (!user) {
       next('/login')
-    } else {
-      next()
+      return
     }
-  } else {
-    next()
+
+    if (!canManageEvents) {
+      next('/')
+      return
+    }
   }
+
+  next()
 })
 
 export default router
