@@ -96,12 +96,12 @@ function gotoBulkAdd() {
         <h1>Event Management</h1>
         <p>Upcoming Events ({{ upcomingEvents.length }})</p>
       </div>
-
-      <div class="management-toolbar__actions">
-        <button class="button button--compact icon-text" type="button" @click="gotoAddEvent"><Plus class="icon icon--sm" />Add Event</button>
-        <button class="button secondary button--compact icon-text" type="button" @click="gotoBulkAdd"><CalendarPlus class="icon icon--sm" />Bulk Add Events</button>
-      </div>
     </section>
+
+    <div class="management-toolbar__actions" aria-label="Management actions">
+      <button class="button button--compact icon-text" type="button" @click="gotoAddEvent"><Plus class="icon icon--sm" />Add Event</button>
+      <button class="button secondary button--compact icon-text" type="button" @click="gotoBulkAdd"><CalendarPlus class="icon icon--sm" />Bulk Add Events</button>
+    </div>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
     <p v-if="loading" class="empty-state">Loading events...</p>
