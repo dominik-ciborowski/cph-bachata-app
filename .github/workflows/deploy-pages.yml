@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to build and deploy to GitHub Pages
+        required: true
+        default: master
+        type: string
 
 permissions:
   contents: read
@@ -20,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
