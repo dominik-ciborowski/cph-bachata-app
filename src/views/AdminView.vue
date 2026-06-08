@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
+import { buildEventPayload, buildNewEventPayload } from '../lib/eventPayload'
 import { isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
@@ -81,25 +82,6 @@ async function loadEvent(id, options = {}) {
   isEditing.value = true
 }
 
-function toDateTime(date, time) {
-  return new Date(`${date}T${time}:00`).toISOString()
-}
-
-function buildPayload() {
-  return {
-    title: form.value.title,
-    organizer: form.value.organizer || null,
-    category: form.value.category,
-    location: form.value.location || null,
-    description: form.value.description || null,
-    price_text: form.value.price_text || null,
-    event_link: form.value.event_link || null,
-    start_time: toDateTime(form.value.date, form.value.start_time),
-    end_time: form.value.end_time ? toDateTime(form.value.date, form.value.end_time) : null,
-    approved: true
-  }
-}
-
 async function saveEvent() {
   status.value = 'Saving...'
 
@@ -108,10 +90,12 @@ async function saveEvent() {
     return
   }
 
-  const payload = buildPayload()
+  const payload = isEditing.value
+    ? buildEventPayload(form.value)
+    : buildNewEventPayload(form.value, user.value.id)
   const query = isEditing.value
     ? supabase.from('events').update(payload).eq('id', eventId.value)
-    : supabase.from('events').insert({ ...payload, created_by: user.value.id })
+    : supabase.from('events').insert(payload)
 
   const { error } = await query
 
