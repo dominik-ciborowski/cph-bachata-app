@@ -52,7 +52,7 @@ async function loadEvents() {
     .select('*')
 
   if (isOrganizer.value && !isAdmin.value) {
-    query = query.eq('ownerId', user.value.id)
+    query = query.eq('created_by', user.value.id)
   }
 
   const { data, error: queryError } = await query.order('start_time', { ascending: true })
@@ -112,7 +112,7 @@ function logUserProfile() {
   console.log('Management test user profile info', {
     user: user.value,
     profile: profile.value,
-    ownerId: user.value?.id || null
+    created_by: user.value?.id || null
   })
 }
 </script>

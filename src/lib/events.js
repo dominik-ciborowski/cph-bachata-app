@@ -2,7 +2,7 @@
  * @typedef {Object} Event
  * @property {string} id
  * @property {string} title
- * @property {string} ownerId Authenticated user id for the organizer who owns the event.
+ * @property {string} created_by Authenticated user id for the organizer who owns the event.
  * @property {string | null} organizer
  * @property {string | null} event_link
  * @property {string} start_time
@@ -19,7 +19,6 @@ export function normalizeEvent(row) {
 
   return {
     ...row,
-    ownerId: row.ownerId || row.owner_id || row.created_by || null,
     event_link: row.event_link || row.facebook_url || null
   }
 }

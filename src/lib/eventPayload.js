@@ -20,7 +20,7 @@ export function buildEventPayload(form) {
 export function buildNewEventPayload(form, userId) {
   return {
     ...buildEventPayload(form),
-    ownerId: userId
+    created_by: userId
   }
 }
 

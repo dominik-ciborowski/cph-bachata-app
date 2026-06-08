@@ -17,28 +17,26 @@ const form = {
 }
 
 describe('event payload ownership', () => {
-  it('omits ownerId from update payloads', () => {
-    assert.equal('ownerId' in buildEventPayload(form), false)
+  it('omits created_by from update payloads', () => {
+    assert.equal('created_by' in buildEventPayload(form), false)
   })
 
-  it('adds authenticated user id as ownerId for new single events', () => {
+  it('adds authenticated user id as created_by for new single events', () => {
     const payload = buildNewEventPayload(form, 'user-123')
 
-    assert.equal(payload.ownerId, 'user-123')
+    assert.equal(payload.created_by, 'user-123')
     assert.equal(payload.title, form.title)
     assert.equal(payload.event_link, form.event_link)
   })
 
-  it('adds ownerId to every bulk-created event payload', () => {
+  it('adds created_by to every bulk-created event payload', () => {
     const rows = buildBulkEventPayloads(form, ['2026-06-12', '2026-06-19'], 'user-456')
 
     assert.equal(rows.length, 2)
-    assert.deepEqual(rows.map((row) => row.ownerId), ['user-456', 'user-456'])
+    assert.deepEqual(rows.map((row) => row.created_by), ['user-456', 'user-456'])
   })
 
-  it('normalizes legacy ownership fields to ownerId', () => {
-    assert.equal(normalizeEvent({ created_by: 'legacy-user' }).ownerId, 'legacy-user')
-    assert.equal(normalizeEvent({ owner_id: 'snake-user' }).ownerId, 'snake-user')
-    assert.equal(normalizeEvent({ ownerId: 'camel-user' }).ownerId, 'camel-user')
+  it('preserves the existing created_by ownership field when normalizing events', () => {
+    assert.equal(normalizeEvent({ created_by: 'user-789' }).created_by, 'user-789')
   })
 })
