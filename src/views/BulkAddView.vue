@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CalendarPlus } from 'lucide-vue-next'
+import { buildBulkEventPayloads } from '../lib/eventPayload'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
@@ -44,10 +45,6 @@ function formatDateForChip(dateStr) {
   }).format(new Date(`${dateStr}T00:00:00`))
 }
 
-function toDateTime(date, time) {
-  return new Date(`${date}T${time}:00`).toISOString()
-}
-
 async function saveBulk() {
   if (!form.value.title) {
     status.value = 'Title is required.'
@@ -66,19 +63,7 @@ async function saveBulk() {
 
   status.value = 'Saving...'
 
-  const rows = selectedDates.value.map((date) => ({
-    title: form.value.title,
-    organizer: form.value.organizer || null,
-    category: form.value.category,
-    location: form.value.location || null,
-    description: form.value.description || null,
-    price_text: form.value.price_text || null,
-    event_link: form.value.event_link || null,
-    start_time: toDateTime(date, form.value.start_time),
-    end_time: form.value.end_time ? toDateTime(date, form.value.end_time) : null,
-    approved: true,
-    created_by: user.value.id
-  }))
+  const rows = buildBulkEventPayloads(form.value, selectedDates.value, user.value.id)
 
   const { error } = await supabase.from('events').insert(rows)
 

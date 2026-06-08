@@ -712,6 +712,22 @@ textarea {
   font-weight: 600;
 }
 
+.status--success {
+  color: #2F7D4A;
+}
+
+.auth-switch {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.auth-switch a {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
 .search-section {
   margin-bottom: 16px;
 }

@@ -42,7 +42,10 @@ onBeforeUnmount(() => {
     <RouterLink to="/" class="brand" @click="closeMenu">Bachata CPH</RouterLink>
 
     <nav class="topnav" aria-label="Main navigation">
-      <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
+      <template v-if="!isAuthenticated">
+        <RouterLink to="/login" class="button-link button-link--nav">Login</RouterLink>
+        <RouterLink to="/register" class="button-link button-link--nav">Register</RouterLink>
+      </template>
       <button v-else-if="!canManageEvents" class="button-link button-link--nav" type="button" @click="handleLogout">Logout</button>
 
       <div v-else ref="menuRef" class="management-menu-wrapper">
