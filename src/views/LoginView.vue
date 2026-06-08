@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 
 const router = useRouter()
@@ -44,6 +44,7 @@ async function login() {
 
       <button class="button" type="submit">Log in</button>
       <p v-if="status" class="status">{{ status }}</p>
+      <p class="auth-switch">Don't have an account? <RouterLink to="/register">Register</RouterLink></p>
     </form>
   </div>
 </template>
