@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
-const { user, isAdmin, isOrganizer, canManageEvents } = useAuth()
+const { user, profile, isAdmin, isOrganizer, canManageEvents } = useAuth()
 const events = ref([])
 const loading = ref(true)
 const error = ref('')
@@ -52,7 +52,7 @@ async function loadEvents() {
     .select('*')
 
   if (isOrganizer.value && !isAdmin.value) {
-    query = query.eq('created_by', user.value.id)
+    query = query.eq('ownerId', user.value.id)
   }
 
   const { data, error: queryError } = await query.order('start_time', { ascending: true })
@@ -107,6 +107,14 @@ function gotoAddEvent() {
 function gotoBulkAdd() {
   router.push('/management/bulk')
 }
+
+function logUserProfile() {
+  console.log('Management test user profile info', {
+    user: user.value,
+    profile: profile.value,
+    ownerId: user.value?.id || null
+  })
+}
 </script>
 
 <template>
@@ -121,6 +129,7 @@ function gotoBulkAdd() {
     <div class="management-toolbar__actions" aria-label="Management actions">
       <button class="button button--compact icon-text" type="button" @click="gotoAddEvent"><Plus class="icon icon--sm" />Add Event</button>
       <button class="button secondary button--compact icon-text" type="button" @click="gotoBulkAdd"><CalendarPlus class="icon icon--sm" />Bulk Add Events</button>
+      <button class="button secondary button--compact" type="button" @click="logUserProfile">Log profile test</button>
     </div>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>

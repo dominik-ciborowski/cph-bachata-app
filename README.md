@@ -29,6 +29,7 @@ create table public.events (
   price_text text,
   description text,
   approved boolean default true,
+  "ownerId" uuid not null references auth.users(id),
   created_at timestamptz default now()
 );
 
