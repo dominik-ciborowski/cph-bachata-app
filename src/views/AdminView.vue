@@ -5,9 +5,11 @@ import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
+const { user } = useAuth()
 const status = ref('')
 const isEditing = ref(false)
 const eventId = ref(null)
@@ -101,10 +103,15 @@ function buildPayload() {
 async function saveEvent() {
   status.value = 'Saving...'
 
+  if (!user.value) {
+    status.value = 'You must be logged in to save events.'
+    return
+  }
+
   const payload = buildPayload()
   const query = isEditing.value
     ? supabase.from('events').update(payload).eq('id', eventId.value)
-    : supabase.from('events').insert(payload)
+    : supabase.from('events').insert({ ...payload, created_by: user.value.id })
 
   const { error } = await query
 

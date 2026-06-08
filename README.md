@@ -55,7 +55,19 @@ To release production, manually run the `Promote master to release` GitHub Actio
 
 ### Dev/Staging: GitHub Pages
 
-GitHub Pages deploys from the `master` branch via the `.github/workflows/deploy-pages.yml` workflow. The GitHub Pages URL format is:
+GitHub Pages deploys automatically from the `master` branch via the `.github/workflows/deploy-pages.yml` workflow. The same workflow can also be run manually to deploy any selected branch for temporary preview testing before merging to `master`.
+
+To preview a feature branch on GitHub Pages:
+
+1. Go to the repository's **Actions** tab.
+2. Select the **Deploy GitHub Pages** workflow.
+3. Click **Run workflow**.
+4. Enter the branch name to deploy. The input defaults to `master`.
+5. Open the GitHub Pages URL after the deployment completes.
+
+Important: GitHub Pages has only one active deployment per repository, so manually deploying a feature branch temporarily replaces the current Pages preview until `master` is deployed again.
+
+The GitHub Pages URL format is:
 
 ```text
 https://OWNER.github.io/cph-bachata-app/

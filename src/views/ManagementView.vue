@@ -4,8 +4,10 @@ import { RouterLink, useRouter } from 'vue-router'
 import { CalendarPlus, Plus } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
+const { user, isAdmin, isOrganizer, canManageEvents } = useAuth()
 const events = ref([])
 const loading = ref(true)
 const error = ref('')
@@ -21,6 +23,12 @@ onMounted(async () => {
     sessionStorage.removeItem('flash_message')
   }
 
+  if (!canManageEvents.value) {
+    loading.value = false
+    error.value = 'You do not have access to event management.'
+    return
+  }
+
   await loadEvents()
 })
 
@@ -32,10 +40,22 @@ async function loadEvents() {
   loading.value = true
   error.value = ''
 
-  const { data, error: queryError } = await supabase
+  if (!canManageEvents.value || !user.value) {
+    error.value = 'You do not have access to event management.'
+    events.value = []
+    loading.value = false
+    return
+  }
+
+  let query = supabase
     .from('events')
     .select('*')
-    .order('start_time', { ascending: true })
+
+  if (isOrganizer.value && !isAdmin.value) {
+    query = query.eq('created_by', user.value.id)
+  }
+
+  const { data, error: queryError } = await query.order('start_time', { ascending: true })
 
   if (queryError) {
     error.value = queryError.message
@@ -94,7 +114,7 @@ function gotoBulkAdd() {
     <section class="management-toolbar">
       <div class="management-toolbar__heading">
         <h1>Event Management</h1>
-        <p>Upcoming Events ({{ upcomingEvents.length }})</p>
+        <p>{{ isAdmin ? 'All upcoming events' : 'Your upcoming events' }} ({{ upcomingEvents.length }})</p>
       </div>
     </section>
 

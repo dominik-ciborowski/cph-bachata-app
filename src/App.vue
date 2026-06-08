@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 
 const router = useRouter()
-const { isAuthenticated, logout } = useAuth()
+const { isAuthenticated, canManageEvents, logout } = useAuth()
 const showMenu = ref(false)
 const menuRef = ref(null)
 
@@ -43,6 +43,7 @@ onBeforeUnmount(() => {
 
     <nav class="topnav" aria-label="Main navigation">
       <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
+      <button v-else-if="!canManageEvents" class="button-link button-link--nav" type="button" @click="handleLogout">Logout</button>
 
       <div v-else ref="menuRef" class="management-menu-wrapper">
         <button
