@@ -47,4 +47,20 @@ with check (true);
 
 ## Hosting
 
-Recommended: Netlify. Build command: `npm run build`. Publish directory: `dist`.
+### Production: Netlify
+
+Netlify deploys production from the `release` branch. Build command: `npm run build`. Publish directory: `dist`.
+
+To release production, manually run the `Promote master to release` GitHub Actions workflow. It force-updates `release` to match `master`, and Netlify then deploys production from `release`.
+
+### Dev/Staging: GitHub Pages
+
+GitHub Pages deploys from the `master` branch via the `.github/workflows/deploy-pages.yml` workflow. The GitHub Pages URL format is:
+
+```text
+https://OWNER.github.io/cph-bachata-app/
+```
+
+The workflow builds with `VITE_BASE_PATH=/cph-bachata-app/` so Vite assets resolve under the repository path. Netlify keeps the default `/` base path.
+
+Known limitation: Vue Router was not changed for this setup, so direct refreshes on nested GitHub Pages routes such as `/management` may not work.
