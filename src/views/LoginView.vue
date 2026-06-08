@@ -42,7 +42,10 @@ async function login() {
         <input v-model="password" type="password" required />
       </div>
 
-      <button class="button" type="submit">Log in</button>
+      <div class="form-actions">
+        <button class="button" type="submit">Log in</button>
+        <RouterLink to="/register" class="button secondary">Register</RouterLink>
+      </div>
       <p v-if="status" class="status">{{ status }}</p>
       <p class="auth-switch">Don't have an account? <RouterLink to="/register">Register</RouterLink></p>
     </form>
