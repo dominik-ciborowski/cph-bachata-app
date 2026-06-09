@@ -72,11 +72,41 @@ button, input, textarea, select { font: inherit; }
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
   text-decoration: none;
-  font-weight: 800;
-  font-size: 19px;
-  letter-spacing: 0;
   color: var(--color-text);
+}
+
+.brand__logo {
+  flex: 0 0 auto;
+  width: clamp(42px, 8vw, 56px);
+  height: clamp(42px, 8vw, 56px);
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.brand__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.brand__name {
+  font-weight: 800;
+  font-size: clamp(16px, 2.6vw, 19px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.brand__attribution {
+  color: var(--color-text-muted);
+  font-size: clamp(11px, 2vw, 12px);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .topnav {
@@ -880,8 +910,13 @@ textarea {
     flex-wrap: wrap;
   }
 
+  .brand {
+    flex: 1 1 calc(100% - 120px);
+  }
+
   .topnav {
-    width: 100%;
+    flex: 1 1 auto;
+    width: auto;
   }
 
   .management-menu {
@@ -944,6 +979,15 @@ textarea {
 @media (max-width: 520px) {
   .grid-two {
     grid-template-columns: 1fr;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .brand__logo {
+    width: 40px;
+    height: 40px;
   }
 
   .button-link--nav,

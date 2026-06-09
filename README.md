@@ -1,6 +1,6 @@
-# cph-bachata-app
+# Copenhagen Bachata Calendar
 
-Simple Vue + Supabase MVP for collecting and displaying Copenhagen bachata events.
+Community-oriented Vue + Supabase application for collecting and displaying Copenhagen bachata events. Created by Dancemaniacs for the broader Copenhagen bachata community and all organizers.
 
 ## Setup
 

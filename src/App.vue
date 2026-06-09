@@ -3,6 +3,17 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 
+// TODO: Once logo.png is committed to the repository,
+// switch back to the standard Vue/Vite asset import:
+//
+// import logo from '@/assets/logo.png'
+//
+// and use:
+//
+// <img :src="logo" alt="Copenhagen Bachata Calendar logo" />
+
+const logoPath = '/logo.png'
+
 const router = useRouter()
 const { isAuthenticated, canManageEvents, logout } = useAuth()
 const showMenu = ref(false)
@@ -39,7 +50,17 @@ onBeforeUnmount(() => {
 
 <template>
   <header class="topbar">
-    <RouterLink to="/" class="brand" @click="closeMenu">Bachata CPH</RouterLink>
+    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata Calendar home" @click="closeMenu">
+      <img
+        class="brand__logo"
+        :src="logoPath"
+        alt="Copenhagen Bachata Calendar logo"
+      />
+      <span class="brand__text">
+        <span class="brand__name">Copenhagen Bachata Calendar</span>
+        <span class="brand__attribution">Created by Dancemaniacs</span>
+      </span>
+    </RouterLink>
 
     <nav class="topnav" aria-label="Main navigation">
       <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
