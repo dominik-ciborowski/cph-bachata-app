@@ -2,17 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
-
-// TODO: Once logo.png is committed to the repository,
-// switch back to the standard Vue/Vite asset import:
-//
-// import logo from '@/assets/logo.png'
-//
-// and use:
-//
-// <img :src="logo" alt="Copenhagen Bachata Calendar logo" />
-
-const logoPath = '/logo.png'
+import logo from '@/assets/logo.png'
 
 const router = useRouter()
 const { isAuthenticated, canManageEvents, logout } = useAuth()
