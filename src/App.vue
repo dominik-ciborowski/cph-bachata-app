@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import logo from '@/assets/logo.png'
 
 const router = useRouter()
 const { isAuthenticated, canManageEvents, logout } = useAuth()
@@ -39,7 +40,17 @@ onBeforeUnmount(() => {
 
 <template>
   <header class="topbar">
-    <RouterLink to="/" class="brand" @click="closeMenu">Bachata CPH</RouterLink>
+    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata Calendar home" @click="closeMenu">
+      <img
+        class="brand__logo"
+        :src="logo"
+        alt="Copenhagen Bachata Calendar logo"
+      />
+      <span class="brand__text">
+        <span class="brand__name">Copenhagen Bachata Calendar</span>
+        <span class="brand__attribution">by Dancemaniacs</span>
+      </span>
+    </RouterLink>
 
     <nav class="topnav" aria-label="Main navigation">
       <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>

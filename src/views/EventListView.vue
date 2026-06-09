@@ -5,7 +5,7 @@ import { normalizeEvent } from '../lib/events'
 import { getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
-const filter = ref('upcoming')
+const filter = ref('all')
 const category = ref('all')
 const searchQuery = ref('')
 const events = ref([])
@@ -109,6 +109,10 @@ function formatDateGroup(date) {
   }).format(date)
 }
 
+function setQuickFilter(nextFilter) {
+  filter.value = filter.value === nextFilter && nextFilter !== 'all' ? 'all' : nextFilter
+}
+
 const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
@@ -147,9 +151,12 @@ const groupedEvents = computed(() => {
 <template>
   <div class="public-page">
     <section class="hero app-hero">
-      <p class="eyebrow">Copenhagen bachata calendar</p>
+      <p class="eyebrow">Copenhagen Bachata Calendar</p>
       <h1>Find your next dance night.</h1>
-      <p>Socials, classes, workshops and parties from local organizers in one simple list.</p>
+      <p>
+        Created by Dancemaniacs for the Copenhagen bachata community — a shared calendar for socials,
+        classes, workshops and parties from all local organizers.
+      </p>
     </section>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
@@ -164,10 +171,10 @@ const groupedEvents = computed(() => {
     </div>
 
     <section class="filters" aria-label="Event filters">
-      <button class="filter-button" :class="{ active: filter === 'upcoming' }" @click="filter = 'upcoming'">Upcoming</button>
-      <button class="filter-button" :class="{ active: filter === 'today' }" @click="filter = 'today'">Today</button>
-      <button class="filter-button" :class="{ active: filter === 'weekend' }" @click="filter = 'weekend'">This Weekend</button>
-      <button class="filter-button" :class="{ active: filter === 'free' }" @click="filter = 'free'">Free</button>
+      <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
+      <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
+      <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
+      <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
     </section>
 
     <label class="category-filter">
@@ -185,7 +192,7 @@ const groupedEvents = computed(() => {
 
     <p v-else-if="groupedEvents.length === 0" class="empty-state">No events match these filters yet.</p>
 
-    <section v-else aria-label="Upcoming bachata events">
+    <section v-else aria-label="Bachata event results">
       <div v-for="group in groupedEvents" :key="group.date.toISOString()" class="event-date-group">
         <h2 class="event-date-header">{{ group.dateLabel }}</h2>
         <div class="event-list">
