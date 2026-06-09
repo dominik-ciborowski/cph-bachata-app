@@ -1,7 +1,19 @@
-name: Promote master to release
+name: Promote and Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag, e.g. v0.2.0"
+        required: true
+      title:
+        description: "Release title"
+        required: true
+        default: "Release"
+      notes:
+        description: "Release notes"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -10,18 +22,36 @@ jobs:
   promote:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Configure git
-        run: |
+      - run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Promote master to release
-        run: |
           git fetch origin master
           git checkout -B release origin/master
           git push origin release --force
+
+  release:
+    needs: promote
+    runs-on: ubuntu-latest
+    environment: production-release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release
+          fetch-depth: 0
+
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ inputs.version }}" -m "${{ inputs.title }}"
+          git push origin "${{ inputs.version }}"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.title }}
+          body: ${{ inputs.notes }}
+          target_commitish: release
