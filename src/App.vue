@@ -43,12 +43,12 @@ onBeforeUnmount(() => {
     <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata Calendar home" @click="closeMenu">
       <img
         class="brand__logo"
-        :src="logoPath"
+        :src="logo"
         alt="Copenhagen Bachata Calendar logo"
       />
       <span class="brand__text">
         <span class="brand__name">Copenhagen Bachata Calendar</span>
-        <span class="brand__attribution">Created by Dancemaniacs</span>
+        <span class="brand__attribution">by Dancemaniacs</span>
       </span>
     </RouterLink>
 
