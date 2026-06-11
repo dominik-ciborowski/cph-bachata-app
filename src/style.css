@@ -1001,3 +1001,61 @@ textarea {
     max-width: calc(100vw - 32px);
   }
 }
+
+.organizer-selector {
+  align-content: start;
+}
+
+.organizer-admin-section {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.organizer-admin-section h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.organizer-admin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.organizer-admin-row:last-child {
+  border-bottom: 0;
+}
+
+.organizer-admin-row__select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.organizer-admin-row__select input {
+  width: auto;
+}
+
+.organizer-admin-row__name {
+  overflow-wrap: anywhere;
+}
+
+.organizer-admin-row__meta {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .organizer-admin-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

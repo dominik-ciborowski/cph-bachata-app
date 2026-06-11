@@ -5,7 +5,7 @@ import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
 
 const router = useRouter()
-const { isAuthenticated, canManageEvents, logout } = useAuth()
+const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
 const showMenu = ref(false)
 const menuRef = ref(null)
 
@@ -71,6 +71,7 @@ onBeforeUnmount(() => {
           <RouterLink to="/management" class="menu-item" role="menuitem" @click="closeMenu">Dashboard</RouterLink>
           <RouterLink to="/admin" class="menu-item" role="menuitem" @click="closeMenu">Add Event</RouterLink>
           <RouterLink to="/management/bulk" class="menu-item" role="menuitem" @click="closeMenu">Bulk Add Event</RouterLink>
+          <RouterLink v-if="isAdmin" to="/management/organizers" class="menu-item" role="menuitem" @click="closeMenu">Organizer Management</RouterLink>
           <button class="menu-item logout-item" type="button" role="menuitem" @click="handleLogout">Logout</button>
         </div>
       </div>

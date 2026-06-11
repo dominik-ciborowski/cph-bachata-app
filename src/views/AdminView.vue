@@ -2,8 +2,10 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import OrganizerSelector from '../components/OrganizerSelector.vue'
 import { normalizeEvent } from '../lib/events'
 import { buildEventPayload, buildNewEventPayload } from '../lib/eventPayload'
+import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
 import { isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
@@ -12,12 +14,15 @@ const router = useRouter()
 const route = useRoute()
 const { user } = useAuth()
 const status = ref('')
+const organizers = ref([])
 const isEditing = ref(false)
 const eventId = ref(null)
 
 const form = ref({
   title: '',
   organizer: '',
+  organizer_id: '',
+  newOrganizerName: '',
   category: 'social',
   location: '',
   description: '',
@@ -29,6 +34,8 @@ const form = ref({
 })
 
 onMounted(async () => {
+  await loadOrganizers()
+
   if (route.params.id) {
     await loadEvent(route.params.id)
     return
@@ -45,7 +52,9 @@ function applyEventToForm(data) {
 
   form.value = {
     title: event.title || '',
-    organizer: event.organizer || '',
+    organizer: event.organizer_name || event.organizer || '',
+    organizer_id: event.organizer_id || '',
+    newOrganizerName: '',
     category: event.category || 'social',
     location: event.location || '',
     description: event.description || '',
@@ -60,7 +69,7 @@ function applyEventToForm(data) {
 async function loadEvent(id, options = {}) {
   const { data, error } = await supabase
     .from('events')
-    .select('*')
+    .select('*, organizer_record:organizers(id,name,verified)')
     .eq('id', id)
     .maybeSingle()
 
@@ -82,6 +91,15 @@ async function loadEvent(id, options = {}) {
   isEditing.value = true
 }
 
+async function loadOrganizers() {
+  try {
+    organizers.value = await fetchOrganizers()
+  } catch (organizerError) {
+    status.value = organizerError.message
+    organizers.value = []
+  }
+}
+
 async function saveEvent() {
   status.value = 'Saving...'
 
@@ -90,9 +108,23 @@ async function saveEvent() {
     return
   }
 
+  let organizer
+
+  try {
+    organizer = await resolveOrganizerForEvent(form.value, user.value.id, organizers.value)
+  } catch (organizerError) {
+    status.value = organizerError.message
+    return
+  }
+
+  const eventForm = {
+    ...form.value,
+    organizer_id: organizer?.id || null,
+    organizer: organizer?.name || form.value.organizer || null
+  }
   const payload = isEditing.value
-    ? buildEventPayload(form.value)
-    : buildNewEventPayload(form.value, user.value.id)
+    ? buildEventPayload(eventForm)
+    : buildNewEventPayload(eventForm, user.value.id)
   const query = isEditing.value
     ? supabase.from('events').update(payload).eq('id', eventId.value)
     : supabase.from('events').insert(payload)
@@ -144,10 +176,14 @@ async function deleteEvent() {
           <input id="event-title" v-model="form.title" required />
         </div>
 
-        <div class="field">
-          <label for="event-organizer">Organizer</label>
-          <input id="event-organizer" v-model="form.organizer" />
-        </div>
+        <OrganizerSelector
+          v-model:organizer-id="form.organizer_id"
+          v-model:organizer-name="form.organizer"
+          v-model:new-organizer-name="form.newOrganizerName"
+          :organizers="organizers"
+          select-id="event-organizer"
+          new-input-id="event-new-organizer"
+        />
       </div>
 
       <div class="grid-two">
