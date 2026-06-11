@@ -59,3 +59,14 @@ describe('event payload ownership', () => {
     assert.equal(event.organizer_display, 'Fallback Organizer')
   })
 })
+
+it('matches admin and organizer ownership rules for event management permissions', async () => {
+  const { canManageEvent } = await import('../src/lib/permissions.js')
+  const event = { created_by: 'organizer-1' }
+
+  assert.equal(canManageEvent(event, { id: 'admin-1' }, 'admin'), true)
+  assert.equal(canManageEvent(event, { id: 'organizer-1' }, 'organizer'), true)
+  assert.equal(canManageEvent(event, { id: 'organizer-2' }, 'organizer'), false)
+  assert.equal(canManageEvent(event, { id: 'user-1' }, 'user'), false)
+  assert.equal(canManageEvent(event, null, 'admin'), false)
+})

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { CalendarDays, MapPin, Pencil, Trash2 } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
@@ -9,10 +9,11 @@ import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
-const { isAuthenticated } = useAuth()
+const { canManageEventRecord } = useAuth()
 const event = ref(null)
 const loading = ref(true)
 const error = ref('')
+const canManageCurrentEvent = computed(() => canManageEventRecord(event.value))
 
 function getBackTarget() {
   return route.query.from === 'management' ? '/management' : '/'
@@ -172,7 +173,7 @@ async function deleteEvent() {
       </a>
     </section>
 
-    <section v-if="isAuthenticated" class="card detail-actions">
+    <section v-if="canManageCurrentEvent" class="card detail-actions">
       <RouterLink :to="`/admin/${event.id}`" class="button icon-text"><Pencil class="icon icon--sm" />Edit event</RouterLink>
       <button class="button danger icon-text" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
     </section>
