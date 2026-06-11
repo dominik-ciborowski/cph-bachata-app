@@ -21,7 +21,7 @@ export async function fetchOrganizers() {
   return sortOrganizersByName(data || [])
 }
 
-async function findOrganizerByNameInDatabase(name) {
+export async function findOrganizerByNameInDatabase(name) {
   const normalizedName = normalizeOrganizerName(name)
   if (!normalizedName) return null
 
@@ -65,7 +65,7 @@ export async function resolveOrganizerForEvent(form, userId, organizers = []) {
   }
 
   if (form.organizer_id) {
-    return (organizers || []).find((organizer) => organizer.id === form.organizer_id) || {
+    return (organizers || []).find((organizer) => String(organizer.id) === String(form.organizer_id)) || {
       id: form.organizer_id,
       name: form.organizer || ''
     }

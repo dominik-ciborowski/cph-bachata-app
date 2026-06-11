@@ -1059,3 +1059,12 @@ textarea {
     flex-direction: column;
   }
 }
+
+.organizer-admin-form {
+  display: grid;
+  gap: 12px;
+}
+
+.organizer-admin-form .button {
+  width: fit-content;
+}

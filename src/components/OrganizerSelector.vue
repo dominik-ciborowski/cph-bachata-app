@@ -1,10 +1,10 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ADD_NEW_ORGANIZER_VALUE, normalizeOrganizerName, sortOrganizersByName } from '../lib/organizerDisplay'
 
 const props = defineProps({
   organizerId: {
-    type: String,
+    type: [String, Number],
     default: ''
   },
   organizerName: {
@@ -35,26 +35,38 @@ const emit = defineEmits([
   'update:newOrganizerName'
 ])
 
+const isAddingNewOrganizer = ref(false)
+
 const sortedOrganizers = computed(() => sortOrganizersByName(props.organizers))
 
 const selectValue = computed({
   get() {
-    return props.newOrganizerName ? ADD_NEW_ORGANIZER_VALUE : (props.organizerId || '')
+    return isAddingNewOrganizer.value ? ADD_NEW_ORGANIZER_VALUE : String(props.organizerId || '')
   },
   set(value) {
     if (value === ADD_NEW_ORGANIZER_VALUE) {
+      isAddingNewOrganizer.value = true
       emit('update:organizerId', '')
-      emit('update:organizerName', '')
-      emit('update:newOrganizerName', props.newOrganizerName || '')
+      emit('update:organizerName', normalizeOrganizerName(props.newOrganizerName))
       return
     }
 
-    const organizer = sortedOrganizers.value.find((item) => item.id === value)
-    emit('update:organizerId', value)
+    isAddingNewOrganizer.value = false
+    const organizer = sortedOrganizers.value.find((item) => String(item.id) === String(value))
+    emit('update:organizerId', organizer?.id || '')
     emit('update:organizerName', organizer?.name || '')
     emit('update:newOrganizerName', '')
   }
 })
+
+watch(
+  () => props.organizerId,
+  (organizerId) => {
+    if (organizerId) {
+      isAddingNewOrganizer.value = false
+    }
+  }
+)
 
 function updateNewOrganizerName(value) {
   emit('update:newOrganizerName', value)
@@ -67,20 +79,20 @@ function updateNewOrganizerName(value) {
     <label :for="selectId">Organizer</label>
     <select :id="selectId" v-model="selectValue">
       <option value="">No organizer selected</option>
-      <option v-for="organizer in sortedOrganizers" :key="organizer.id" :value="organizer.id">
+      <option v-for="organizer in sortedOrganizers" :key="organizer.id" :value="String(organizer.id)">
         {{ organizer.name }}
       </option>
       <option :value="ADD_NEW_ORGANIZER_VALUE">Add new organizer...</option>
     </select>
 
     <input
-      v-if="selectValue === ADD_NEW_ORGANIZER_VALUE"
+      v-if="isAddingNewOrganizer"
       :id="newInputId"
       :value="newOrganizerName"
       placeholder="New organizer name"
       @input="updateNewOrganizerName($event.target.value)"
     />
-    <p v-if="!organizerId && organizerName && !newOrganizerName" class="field-help">Current fallback organizer: {{ organizerName }}</p>
+    <p v-if="!isAddingNewOrganizer && !organizerId && organizerName" class="field-help">Current fallback organizer: {{ organizerName }}</p>
     <p class="field-help">Choose an existing organizer or add a new one for review.</p>
   </div>
 </template>

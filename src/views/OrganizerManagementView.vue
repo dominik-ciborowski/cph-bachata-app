@@ -1,11 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { fetchOrganizers } from '../lib/organizers'
-import { sortOrganizersByName } from '../lib/organizerDisplay'
+import { fetchOrganizers, findOrganizerByNameInDatabase } from '../lib/organizers'
+import { findOrganizerByName, normalizeOrganizerName, sortOrganizersByName } from '../lib/organizerDisplay'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
-const { isAdmin } = useAuth()
+const { user, isAdmin } = useAuth()
 const organizers = ref([])
 const loading = ref(true)
 const error = ref('')
@@ -13,6 +13,7 @@ const status = ref('')
 const filter = ref('all')
 const selectedSourceIds = ref([])
 const targetOrganizerId = ref('')
+const adminOrganizerName = ref('')
 
 onMounted(async () => {
   if (!isAdmin.value) {
@@ -49,6 +50,58 @@ async function loadOrganizers() {
   }
 
   loading.value = false
+}
+
+async function addOrganizer() {
+  const name = normalizeOrganizerName(adminOrganizerName.value)
+
+  if (!name) {
+    status.value = 'Organizer name is required.'
+    return
+  }
+
+  if (!user.value) {
+    status.value = 'You must be logged in to add organizers.'
+    return
+  }
+
+  if (findOrganizerByName(organizers.value, name)) {
+    status.value = 'An organizer with this name already exists.'
+    return
+  }
+
+  let existingOrganizer
+
+  try {
+    existingOrganizer = await findOrganizerByNameInDatabase(name)
+  } catch (queryError) {
+    status.value = queryError.message
+    return
+  }
+
+  if (existingOrganizer) {
+    status.value = 'An organizer with this name already exists.'
+    return
+  }
+
+  status.value = 'Adding organizer...'
+
+  const { error: insertError } = await supabase
+    .from('organizers')
+    .insert({
+      name,
+      verified: true,
+      created_by: user.value.id
+    })
+
+  if (insertError) {
+    status.value = insertError.message
+    return
+  }
+
+  adminOrganizerName.value = ''
+  status.value = 'Organizer added.'
+  await loadOrganizers()
 }
 
 async function approveOrganizer(organizer) {
@@ -198,6 +251,17 @@ async function mergeOrganizers() {
     <p v-else-if="error" class="empty-state">Could not load organizers: {{ error }}</p>
 
     <template v-else>
+      <section class="card organizer-admin-section">
+        <h2>Add Organizer</h2>
+        <form class="organizer-admin-form" @submit.prevent="addOrganizer">
+          <div class="field">
+            <label for="admin-organizer-name">Organizer name</label>
+            <input id="admin-organizer-name" v-model="adminOrganizerName" placeholder="Organizer name" />
+          </div>
+          <button class="button" type="submit">Add Organizer</button>
+        </form>
+      </section>
+
       <section class="card organizer-admin-section">
         <div class="filters" aria-label="Organizer filters">
           <button type="button" class="filter-button" :class="{ active: filter === 'all' }" @click="filter = 'all'">All</button>
