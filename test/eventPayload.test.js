@@ -2,6 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { buildBulkEventPayloads, buildEventPayload, buildNewEventPayload } from '../src/lib/eventPayload.js'
 import { normalizeEvent } from '../src/lib/events.js'
+import { isFreePrice } from '../src/lib/eventPresentation.js'
 
 const form = {
   title: 'Friday Social',
@@ -69,4 +70,19 @@ it('matches admin and organizer ownership rules for event management permissions
   assert.equal(canManageEvent(event, { id: 'organizer-2' }, 'organizer'), false)
   assert.equal(canManageEvent(event, { id: 'user-1' }, 'user'), false)
   assert.equal(canManageEvent(event, null, 'admin'), false)
+})
+
+
+describe('free price detection', () => {
+  it('matches prices displayed as free by the current price formatter', () => {
+    for (const priceText of [null, '', ' ', '0', '0.0', '0,0', '0 DKK', '0 kr', 'free', 'gratis']) {
+      assert.equal(isFreePrice(priceText), true)
+    }
+  })
+
+  it('does not include paid prices in the free filter', () => {
+    for (const priceText of ['50', '50 DKK', '100 kr', '0-50 DKK', 'donation']) {
+      assert.equal(isFreePrice(priceText), false)
+    }
+  })
 })

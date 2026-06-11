@@ -1,19 +1,31 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
 const editableRoles = ['user', 'organizer']
 const { user } = useAuth()
 const profiles = ref([])
+const roleDrafts = ref({})
 const loading = ref(true)
+const saving = ref(false)
 const error = ref('')
 const status = ref('')
-const updatingProfileId = ref('')
 
 onMounted(async () => {
   await loadProfiles()
 })
+
+const pendingChanges = computed(() =>
+  profiles.value
+    .filter((profile) => isEditableProfile(profile))
+    .map((profile) => ({
+      profile,
+      fromRole: profile.role || 'user',
+      toRole: roleDrafts.value[profile.id] || profile.role || 'user'
+    }))
+    .filter((change) => change.fromRole !== change.toRole)
+)
 
 async function loadProfiles() {
   loading.value = true
@@ -32,6 +44,7 @@ async function loadProfiles() {
   }
 
   profiles.value = data || []
+  resetRoleDrafts()
   loading.value = false
 }
 
@@ -41,40 +54,96 @@ function isEditableProfile(profile) {
   return editableRoles.includes(profile.role)
 }
 
-async function changeRole(profile, nextRole) {
+function resetRoleDrafts() {
+  roleDrafts.value = Object.fromEntries(
+    profiles.value.map((profile) => [profile.id, profile.role || 'user'])
+  )
+}
+
+function setDraftRole(profile, nextRole) {
   status.value = ''
   error.value = ''
 
   if (!editableRoles.includes(nextRole)) {
-    error.value = 'Only user and organizer roles can be assigned from this page.'
-    await loadProfiles()
+    error.value = 'Only user and organizer roles can be selected from this page.'
+    roleDrafts.value[profile.id] = profile.role || 'user'
     return
   }
 
   if (!isEditableProfile(profile)) {
     error.value = 'This profile cannot be edited from User Management.'
-    await loadProfiles()
+    roleDrafts.value[profile.id] = profile.role || 'user'
     return
   }
 
-  if (profile.role === nextRole) return
+  roleDrafts.value[profile.id] = nextRole
+}
 
-  updatingProfileId.value = profile.id
+function discardChanges() {
+  status.value = ''
+  error.value = ''
+  resetRoleDrafts()
+}
 
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ role: nextRole })
-    .eq('id', profile.id)
+function getChangeSummary(change) {
+  return `${change.profile.email || 'Profile'}: ${change.fromRole} → ${change.toRole}`
+}
 
-  updatingProfileId.value = ''
+function validatePendingChanges() {
+  const invalidChange = pendingChanges.value.find((change) => (
+    !editableRoles.includes(change.toRole) || !isEditableProfile(change.profile)
+  ))
 
-  if (updateError) {
-    error.value = updateError.message
-    await loadProfiles()
+  if (invalidChange) {
+    return 'One or more selected role changes are not allowed. Discard changes and try again.'
+  }
+
+  return ''
+}
+
+async function saveChanges() {
+  status.value = ''
+  error.value = ''
+
+  if (pendingChanges.value.length === 0) return
+
+  const validationError = validatePendingChanges()
+  if (validationError) {
+    error.value = validationError
     return
   }
 
-  status.value = `${profile.email || 'Profile'} role updated to ${nextRole}.`
+  const summary = pendingChanges.value.map(getChangeSummary).join('\n')
+  if (!confirm(`Save these role changes?
+
+${summary}`)) return
+
+  saving.value = true
+
+  let results
+
+  try {
+    results = await Promise.all(
+      pendingChanges.value.map((change) => supabase
+        .from('profiles')
+        .update({ role: change.toRole })
+        .eq('id', change.profile.id))
+    )
+  } catch {
+    saving.value = false
+    error.value = 'Could not save role changes right now. No local changes were discarded, so you can review and try again.'
+    return
+  }
+
+  saving.value = false
+
+  const failedResult = results.find((result) => result.error)
+  if (failedResult) {
+    error.value = 'Could not save all role changes. No local changes were discarded, so you can review and try again.'
+    return
+  }
+
+  status.value = `Saved ${pendingChanges.value.length} role change${pendingChanges.value.length === 1 ? '' : 's'}.`
   await loadProfiles()
 }
 </script>
@@ -90,9 +159,9 @@ async function changeRole(profile, nextRole) {
 
     <p v-if="status" class="flash-message">{{ status }}</p>
     <p v-if="loading" class="empty-state">Loading users...</p>
-    <p v-else-if="error" class="empty-state">Could not update users: {{ error }}</p>
+    <p v-if="error" class="empty-state">Could not update users: {{ error }}</p>
 
-    <section v-else class="card user-management-section">
+    <section v-if="!loading" class="card user-management-section">
       <p class="field-help">Admin roles are manually managed in Supabase. This page cannot assign admin or edit admin profiles.</p>
 
       <div v-if="profiles.length === 0" class="empty-state">No users found.</div>
@@ -113,9 +182,9 @@ async function changeRole(profile, nextRole) {
             <select
               v-if="isEditableProfile(profile)"
               :id="`profile-role-${profile.id}`"
-              :value="profile.role"
-              :disabled="updatingProfileId === profile.id"
-              @change="changeRole(profile, $event.target.value)"
+              :value="roleDrafts[profile.id] || profile.role || 'user'"
+              :disabled="saving"
+              @change="setDraftRole(profile, $event.target.value)"
             >
               <option value="user">user</option>
               <option value="organizer">organizer</option>
@@ -123,6 +192,24 @@ async function changeRole(profile, nextRole) {
             <span v-else class="role-readonly">{{ profile.role || 'user' }}</span>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section v-if="pendingChanges.length > 0" class="card unsaved-changes-section">
+      <div>
+        <h2>Unsaved changes</h2>
+        <p class="field-help">Review staged role changes before saving them to Supabase.</p>
+      </div>
+
+      <ul class="pending-change-list">
+        <li v-for="change in pendingChanges" :key="change.profile.id">
+          {{ getChangeSummary(change) }}
+        </li>
+      </ul>
+
+      <div class="form-actions">
+        <button class="button" type="button" :disabled="saving" @click="saveChanges">Save Changes</button>
+        <button class="button secondary" type="button" :disabled="saving" @click="discardChanges">Discard Changes</button>
       </div>
     </section>
   </div>
