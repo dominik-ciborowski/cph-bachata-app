@@ -36,6 +36,8 @@ const emit = defineEmits([
 ])
 
 const isAddingNewOrganizer = ref(false)
+const pendingOrganizerName = ref('')
+const modalError = ref('')
 
 const sortedOrganizers = computed(() => sortOrganizersByName(props.organizers))
 
@@ -45,13 +47,13 @@ const selectValue = computed({
   },
   set(value) {
     if (value === ADD_NEW_ORGANIZER_VALUE) {
-      isAddingNewOrganizer.value = true
-      emit('update:organizerId', '')
-      emit('update:organizerName', normalizeOrganizerName(props.newOrganizerName))
+      openNewOrganizerDialog()
       return
     }
 
     isAddingNewOrganizer.value = false
+    pendingOrganizerName.value = ''
+    modalError.value = ''
     const organizer = sortedOrganizers.value.find((item) => String(item.id) === String(value))
     emit('update:organizerId', organizer?.id || '')
     emit('update:organizerName', organizer?.name || '')
@@ -64,13 +66,38 @@ watch(
   (organizerId) => {
     if (organizerId) {
       isAddingNewOrganizer.value = false
+      pendingOrganizerName.value = ''
+      modalError.value = ''
     }
   }
 )
 
-function updateNewOrganizerName(value) {
-  emit('update:newOrganizerName', value)
-  emit('update:organizerName', normalizeOrganizerName(value))
+function openNewOrganizerDialog() {
+  isAddingNewOrganizer.value = true
+  pendingOrganizerName.value = props.newOrganizerName || ''
+  modalError.value = ''
+}
+
+function cancelNewOrganizer() {
+  isAddingNewOrganizer.value = false
+  pendingOrganizerName.value = ''
+  modalError.value = ''
+}
+
+function addNewOrganizer() {
+  const organizerName = normalizeOrganizerName(pendingOrganizerName.value)
+
+  if (!organizerName) {
+    modalError.value = 'Organizer name is required.'
+    return
+  }
+
+  emit('update:organizerId', '')
+  emit('update:organizerName', organizerName)
+  emit('update:newOrganizerName', organizerName)
+  isAddingNewOrganizer.value = true
+  pendingOrganizerName.value = organizerName
+  modalError.value = ''
 }
 </script>
 
@@ -85,14 +112,33 @@ function updateNewOrganizerName(value) {
       <option :value="ADD_NEW_ORGANIZER_VALUE">Add new organizer...</option>
     </select>
 
-    <input
-      v-if="isAddingNewOrganizer"
-      :id="newInputId"
-      :value="newOrganizerName"
-      placeholder="New organizer name"
-      @input="updateNewOrganizerName($event.target.value)"
-    />
     <p v-if="!isAddingNewOrganizer && !organizerId && organizerName" class="field-help">Current fallback organizer: {{ organizerName }}</p>
+    <p v-if="isAddingNewOrganizer && newOrganizerName" class="field-help">New organizer: {{ newOrganizerName }}</p>
     <p class="field-help">Choose an existing organizer or add a new one for review.</p>
+
+    <div v-if="isAddingNewOrganizer && !newOrganizerName" class="modal-backdrop" @click.self="cancelNewOrganizer">
+      <section
+        class="modal-dialog"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="`${newInputId}-title`"
+      >
+        <h2 :id="`${newInputId}-title`">Add new organizer</h2>
+        <div class="field">
+          <label :for="newInputId">Organizer name</label>
+          <input
+            :id="newInputId"
+            v-model="pendingOrganizerName"
+            placeholder="Organizer name"
+            @keyup.enter="addNewOrganizer"
+          />
+        </div>
+        <p v-if="modalError" class="status">{{ modalError }}</p>
+        <div class="form-actions">
+          <button class="button secondary" type="button" @click="cancelNewOrganizer">Cancel</button>
+          <button class="button" type="button" @click="addNewOrganizer">Add organizer</button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>

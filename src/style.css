@@ -1068,3 +1068,30 @@ textarea {
 .organizer-admin-form .button {
   width: fit-content;
 }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 0, 0, 0.32);
+}
+
+.modal-dialog {
+  display: grid;
+  gap: 16px;
+  width: min(100%, 420px);
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 40px rgba(2, 0, 0, 0.18);
+}
+
+.modal-dialog h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.25;
+}
