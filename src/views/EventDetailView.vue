@@ -39,7 +39,7 @@ async function loadEvent() {
 
   const { data, error: queryError } = await supabase
     .from('events')
-    .select('*')
+    .select('*, organizer_record:organizers(id,name,verified)')
     .eq('approved', true)
     .eq('id', route.params.id)
     .maybeSingle()
@@ -118,7 +118,7 @@ async function deleteEvent() {
         {{ getCategoryMeta(event.category).label }}
       </p>
       <h1>{{ event.title }}</h1>
-      <p v-if="event.organizer" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer }}</span></p>
+      <p v-if="event.organizer_display" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer_display }}</span></p>
     </section>
 
     <section class="card detail-summary">

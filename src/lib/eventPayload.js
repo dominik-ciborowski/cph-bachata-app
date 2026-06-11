@@ -5,7 +5,8 @@ function toDateTime(date, time) {
 export function buildEventPayload(form) {
   return {
     title: form.title,
-    organizer: form.organizer || null,
+    organizer_id: form.organizer_id || null,
+    organizer: form.organizer || form.newOrganizerName || null,
     category: form.category,
     location: form.location || null,
     description: form.description || null,

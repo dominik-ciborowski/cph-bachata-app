@@ -35,7 +35,7 @@ async function loadEvents() {
 
   const { data, error: queryError } = await supabase
     .from('events')
-    .select('*')
+    .select('*, organizer_record:organizers(id,name,verified)')
     .eq('approved', true)
     .gte('start_time', today.toISOString())
     .order('start_time', { ascending: true })
@@ -96,7 +96,7 @@ function matchesSearch(event) {
   const query = searchQuery.value.toLowerCase()
   return (
     (event.title || '').toLowerCase().includes(query) ||
-    (event.organizer || '').toLowerCase().includes(query) ||
+    (event.organizer_display || event.organizer || '').toLowerCase().includes(query) ||
     (event.location || '').toLowerCase().includes(query)
   )
 }

@@ -1,20 +1,25 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CalendarPlus } from 'lucide-vue-next'
+import OrganizerSelector from '../components/OrganizerSelector.vue'
 import { buildBulkEventPayloads } from '../lib/eventPayload'
+import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const { user } = useAuth()
 const status = ref('')
+const organizers = ref([])
 const dateInput = ref('')
 const selectedDates = ref([])
 
 const form = ref({
   title: '',
   organizer: '',
+  organizer_id: '',
+  newOrganizerName: '',
   category: 'social',
   location: '',
   description: '',
@@ -23,6 +28,19 @@ const form = ref({
   start_time: '18:30',
   end_time: '21:30'
 })
+
+onMounted(async () => {
+  await loadOrganizers()
+})
+
+async function loadOrganizers() {
+  try {
+    organizers.value = await fetchOrganizers()
+  } catch (organizerError) {
+    status.value = organizerError.message
+    organizers.value = []
+  }
+}
 
 function handleDateChange(value) {
   if (!value || selectedDates.value.includes(value)) {
@@ -63,7 +81,21 @@ async function saveBulk() {
 
   status.value = 'Saving...'
 
-  const rows = buildBulkEventPayloads(form.value, selectedDates.value, user.value.id)
+  let organizer
+
+  try {
+    organizer = await resolveOrganizerForEvent(form.value, user.value.id, organizers.value)
+  } catch (organizerError) {
+    status.value = organizerError.message
+    return
+  }
+
+  const eventForm = {
+    ...form.value,
+    organizer_id: organizer?.id || null,
+    organizer: organizer?.name || form.value.organizer || null
+  }
+  const rows = buildBulkEventPayloads(eventForm, selectedDates.value, user.value.id)
 
   const { error } = await supabase.from('events').insert(rows)
 
@@ -93,10 +125,14 @@ async function saveBulk() {
           <input id="bulk-title" v-model="form.title" required placeholder="Friday Social" />
         </div>
 
-        <div class="field">
-          <label for="bulk-organizer">Organizer</label>
-          <input id="bulk-organizer" v-model="form.organizer" placeholder="DanceManiacs" />
-        </div>
+        <OrganizerSelector
+          v-model:organizer-id="form.organizer_id"
+          v-model:organizer-name="form.organizer"
+          v-model:new-organizer-name="form.newOrganizerName"
+          :organizers="organizers"
+          select-id="bulk-organizer"
+          new-input-id="bulk-new-organizer"
+        />
       </div>
 
       <div class="grid-two">

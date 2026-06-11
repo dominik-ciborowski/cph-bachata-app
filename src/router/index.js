@@ -6,6 +6,7 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ManagementView from '../views/ManagementView.vue'
 import BulkAddView from '../views/BulkAddView.vue'
+import OrganizerManagementView from '../views/OrganizerManagementView.vue'
 import { getAuthState } from '../composables/useAuth'
 
 const routes = [
@@ -15,6 +16,7 @@ const routes = [
   { path: '/admin/:id', component: AdminView, meta: { requiresManagement: true } },
   { path: '/management', component: ManagementView, meta: { requiresManagement: true } },
   { path: '/management/bulk', component: BulkAddView, meta: { requiresManagement: true } },
+  { path: '/management/organizers', component: OrganizerManagementView, meta: { requiresAdmin: true } },
   { path: '/login', component: LoginView },
   { path: '/register', component: RegisterView }
 ]
@@ -32,6 +34,18 @@ router.beforeEach(async (to, from, next) => {
   if ((to.path === '/login' || to.path === '/register') && user) {
     next(canManageEvents ? '/management' : '/')
     return
+  }
+
+  if (to.meta.requiresAdmin) {
+    if (!user) {
+      next('/login')
+      return
+    }
+
+    if (role !== 'admin') {
+      next('/')
+      return
+    }
   }
 
   if (to.meta.requiresManagement) {

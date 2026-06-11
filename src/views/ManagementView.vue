@@ -49,7 +49,7 @@ async function loadEvents() {
 
   let query = supabase
     .from('events')
-    .select('*')
+    .select('*, organizer_record:organizers(id,name,verified)')
 
   if (isOrganizer.value && !isAdmin.value) {
     query = query.eq('created_by', user.value.id)
@@ -135,7 +135,7 @@ function gotoBulkAdd() {
           <p class="management-card__meta">
             {{ formatStart(event.start_time) }}
             <span v-if="event.location">• {{ event.location }}</span>
-            <span v-if="event.organizer">• {{ event.organizer }}</span>
+            <span v-if="event.organizer_display">• {{ event.organizer_display }}</span>
           </p>
         </RouterLink>
 

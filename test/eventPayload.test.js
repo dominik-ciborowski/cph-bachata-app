@@ -6,6 +6,7 @@ import { normalizeEvent } from '../src/lib/events.js'
 const form = {
   title: 'Friday Social',
   organizer: 'DanceManiacs',
+  organizer_id: 'organizer-123',
   category: 'social',
   location: 'Copenhagen',
   description: '',
@@ -27,6 +28,7 @@ describe('event payload ownership', () => {
     assert.equal(payload.created_by, 'user-123')
     assert.equal(payload.title, form.title)
     assert.equal(payload.event_link, form.event_link)
+    assert.equal(payload.organizer_id, form.organizer_id)
   })
 
   it('adds created_by to every bulk-created event payload', () => {
@@ -38,5 +40,22 @@ describe('event payload ownership', () => {
 
   it('preserves the existing created_by ownership field when normalizing events', () => {
     assert.equal(normalizeEvent({ created_by: 'user-789' }).created_by, 'user-789')
+  })
+
+  it('formats organizer names from organizer records and marks unverified organizers', () => {
+    const event = normalizeEvent({
+      organizer: 'Fallback Organizer',
+      organizer_record: { name: 'Record Organizer', verified: false }
+    })
+
+    assert.equal(event.organizer_name, 'Record Organizer')
+    assert.equal(event.organizer_display, 'Record Organizer (Unverified)')
+  })
+
+  it('falls back to organizer text when an organizer record is missing', () => {
+    const event = normalizeEvent({ organizer: 'Fallback Organizer' })
+
+    assert.equal(event.organizer_name, 'Fallback Organizer')
+    assert.equal(event.organizer_display, 'Fallback Organizer')
   })
 })
