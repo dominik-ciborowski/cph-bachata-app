@@ -35,15 +35,18 @@ const emit = defineEmits([
   'update:newOrganizerName'
 ])
 
-const isAddingNewOrganizer = ref(false)
+const isNewOrganizerDialogOpen = ref(false)
 const pendingOrganizerName = ref('')
 const modalError = ref('')
+const selectedNewOrganizerValue = '__selected_new_organizer__'
 
 const sortedOrganizers = computed(() => sortOrganizersByName(props.organizers))
 
 const selectValue = computed({
   get() {
-    return isAddingNewOrganizer.value ? ADD_NEW_ORGANIZER_VALUE : String(props.organizerId || '')
+    if (isNewOrganizerDialogOpen.value) return ADD_NEW_ORGANIZER_VALUE
+    if (props.newOrganizerName) return selectedNewOrganizerValue
+    return String(props.organizerId || '')
   },
   set(value) {
     if (value === ADD_NEW_ORGANIZER_VALUE) {
@@ -51,9 +54,14 @@ const selectValue = computed({
       return
     }
 
-    isAddingNewOrganizer.value = false
+    isNewOrganizerDialogOpen.value = false
     pendingOrganizerName.value = ''
     modalError.value = ''
+
+    if (value === selectedNewOrganizerValue) {
+      return
+    }
+
     const organizer = sortedOrganizers.value.find((item) => String(item.id) === String(value))
     emit('update:organizerId', organizer?.id || '')
     emit('update:organizerName', organizer?.name || '')
@@ -65,7 +73,7 @@ watch(
   () => props.organizerId,
   (organizerId) => {
     if (organizerId) {
-      isAddingNewOrganizer.value = false
+      isNewOrganizerDialogOpen.value = false
       pendingOrganizerName.value = ''
       modalError.value = ''
     }
@@ -73,13 +81,13 @@ watch(
 )
 
 function openNewOrganizerDialog() {
-  isAddingNewOrganizer.value = true
+  isNewOrganizerDialogOpen.value = true
   pendingOrganizerName.value = props.newOrganizerName || ''
   modalError.value = ''
 }
 
 function cancelNewOrganizer() {
-  isAddingNewOrganizer.value = false
+  isNewOrganizerDialogOpen.value = false
   pendingOrganizerName.value = ''
   modalError.value = ''
 }
@@ -95,7 +103,7 @@ function addNewOrganizer() {
   emit('update:organizerId', '')
   emit('update:organizerName', organizerName)
   emit('update:newOrganizerName', organizerName)
-  isAddingNewOrganizer.value = true
+  isNewOrganizerDialogOpen.value = false
   pendingOrganizerName.value = organizerName
   modalError.value = ''
 }
@@ -106,17 +114,15 @@ function addNewOrganizer() {
     <label :for="selectId">Organizer</label>
     <select :id="selectId" v-model="selectValue">
       <option value="">No organizer selected</option>
+      <option v-if="newOrganizerName" :value="selectedNewOrganizerValue">{{ newOrganizerName }}</option>
       <option v-for="organizer in sortedOrganizers" :key="organizer.id" :value="String(organizer.id)">
         {{ organizer.name }}
       </option>
       <option :value="ADD_NEW_ORGANIZER_VALUE">Add new organizer...</option>
     </select>
 
-    <p v-if="!isAddingNewOrganizer && !organizerId && organizerName" class="field-help">Current fallback organizer: {{ organizerName }}</p>
-    <p v-if="isAddingNewOrganizer && newOrganizerName" class="field-help">New organizer: {{ newOrganizerName }}</p>
-    <p class="field-help">Choose an existing organizer or add a new one for review.</p>
 
-    <div v-if="isAddingNewOrganizer && !newOrganizerName" class="modal-backdrop" @click.self="cancelNewOrganizer">
+    <div v-if="isNewOrganizerDialogOpen" class="modal-backdrop" @click.self="cancelNewOrganizer">
       <section
         class="modal-dialog"
         role="dialog"
