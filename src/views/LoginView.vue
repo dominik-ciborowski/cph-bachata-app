@@ -1,17 +1,14 @@
 <script setup>
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 import { authMessages, getAuthRedirectUrl, logAuthError } from '../lib/authMessages'
 
 const router = useRouter()
-const email = ref('')
+const route = useRoute()
+const email = ref(typeof route.query.email === 'string' ? route.query.email : '')
 const password = ref('')
-const resetEmail = ref('')
 const status = ref('')
-const resetStatus = ref('')
-const isResetSuccess = ref(false)
-const showForgotPassword = ref(false)
 
 async function login() {
   status.value = 'Logging in...'
@@ -27,24 +24,6 @@ async function login() {
   }
 
   router.push('/management')
-}
-
-async function sendPasswordReset() {
-  isResetSuccess.value = false
-  resetStatus.value = 'Sending reset link...'
-
-  const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.value, {
-    redirectTo: getAuthRedirectUrl('/reset-password')
-  })
-
-  if (error) {
-    logAuthError('Password reset email failed', error)
-    resetStatus.value = authMessages.forgotPasswordFailed
-    return
-  }
-
-  isResetSuccess.value = true
-  resetStatus.value = authMessages.forgotPasswordSuccess
 }
 
 async function loginWithGoogle() {
@@ -63,11 +42,11 @@ async function loginWithGoogle() {
   }
 }
 
-function toggleForgotPassword() {
-  showForgotPassword.value = !showForgotPassword.value
-  resetStatus.value = ''
-  isResetSuccess.value = false
-  if (!resetEmail.value) resetEmail.value = email.value
+function goToForgotPassword() {
+  router.push({
+    path: '/forgot-password',
+    query: email.value ? { email: email.value } : {}
+  })
 }
 </script>
 
@@ -98,23 +77,8 @@ function toggleForgotPassword() {
         <RouterLink to="/register" class="button secondary">Register</RouterLink>
       </div>
       <p v-if="status" class="status">{{ status }}</p>
-      <button class="text-button" type="button" @click="toggleForgotPassword">Forgot password?</button>
+      <button class="text-button" type="button" @click="goToForgotPassword">Forgot password?</button>
       <p class="auth-switch">Don't have an account? <RouterLink to="/register">Register</RouterLink></p>
-    </form>
-
-    <form v-if="showForgotPassword" class="card form auth-panel" @submit.prevent="sendPasswordReset">
-      <div>
-        <h2>Reset your password</h2>
-        <p class="field-help">Enter your email and we’ll send a link you can use to choose a new password.</p>
-      </div>
-
-      <div class="field">
-        <label for="reset-email">Email</label>
-        <input id="reset-email" v-model="resetEmail" type="email" required autocomplete="email" />
-      </div>
-
-      <button class="button" type="submit">Send reset link</button>
-      <p v-if="resetStatus" class="status" :class="{ 'status--success': isResetSuccess }">{{ resetStatus }}</p>
     </form>
   </div>
 </template>

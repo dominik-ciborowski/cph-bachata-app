@@ -25,6 +25,12 @@ async function changePassword() {
     return
   }
 
+  const confirmed = window.confirm('Change password?\n\nYou will need to use the new password the next time you log in.')
+
+  if (!confirmed) {
+    return
+  }
+
   status.value = 'Updating password...'
   const { error } = await supabase.auth.updateUser({ password: password.value })
 

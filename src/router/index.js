@@ -4,6 +4,7 @@ import EventDetailView from '../views/EventDetailView.vue'
 import AdminView from '../views/AdminView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
 import AccountView from '../views/AccountView.vue'
 import ManagementView from '../views/ManagementView.vue'
@@ -23,6 +24,7 @@ const routes = [
   { path: '/management/users', component: UserManagementView, meta: { requiresAdmin: true } },
   { path: '/login', component: LoginView },
   { path: '/register', component: RegisterView },
+  { path: '/forgot-password', component: ForgotPasswordView },
   { path: '/reset-password', component: ResetPasswordView },
   { path: '/account', component: AccountView, meta: { requiresAuth: true } }
 ]
