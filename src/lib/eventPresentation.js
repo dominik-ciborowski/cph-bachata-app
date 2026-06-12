@@ -69,7 +69,9 @@ export function getCategoryMeta(category) {
 
 export function isFreePrice(priceText) {
   const value = String(priceText || '').trim().toLowerCase()
-  return value === '0' || value === '0.0' || value === '0,0' || value === 'free'
+  if (!value) return true
+
+  return /^(free|gratis)$/.test(value) || /^0+([.,]0+)?(\s*(dkk|kr|kr\.))?$/.test(value)
 }
 
 export function formatPriceDisplay(priceText) {

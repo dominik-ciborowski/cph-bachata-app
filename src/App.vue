@@ -72,6 +72,7 @@ onBeforeUnmount(() => {
           <RouterLink to="/admin" class="menu-item" role="menuitem" @click="closeMenu">Add Event</RouterLink>
           <RouterLink to="/management/bulk" class="menu-item" role="menuitem" @click="closeMenu">Bulk Add Event</RouterLink>
           <RouterLink v-if="isAdmin" to="/management/organizers" class="menu-item" role="menuitem" @click="closeMenu">Organizer Management</RouterLink>
+          <RouterLink v-if="isAdmin" to="/management/users" class="menu-item" role="menuitem" @click="closeMenu">User Management</RouterLink>
           <button class="menu-item logout-item" type="button" role="menuitem" @click="handleLogout">Logout</button>
         </div>
       </div>

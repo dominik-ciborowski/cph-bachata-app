@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { supabase } from '../lib/supabase'
+import { canManageEvent } from '../lib/permissions'
 
 const user = ref(null)
 const profile = ref(null)
@@ -103,6 +104,7 @@ export function useAuth() {
   const isAdmin = computed(() => role.value === 'admin')
   const isOrganizer = computed(() => role.value === 'organizer')
   const canManageEvents = computed(() => isOrganizer.value || isAdmin.value)
+  const canManageEventRecord = (event) => canManageEvent(event, user.value, role.value)
 
   async function logout() {
     await supabase.auth.signOut()
@@ -117,6 +119,7 @@ export function useAuth() {
     isAdmin,
     isOrganizer,
     canManageEvents,
+    canManageEventRecord,
     isAuthenticated,
     loading,
     profileLoading,

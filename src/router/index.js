@@ -7,6 +7,7 @@ import RegisterView from '../views/RegisterView.vue'
 import ManagementView from '../views/ManagementView.vue'
 import BulkAddView from '../views/BulkAddView.vue'
 import OrganizerManagementView from '../views/OrganizerManagementView.vue'
+import UserManagementView from '../views/UserManagementView.vue'
 import { getAuthState } from '../composables/useAuth'
 
 const routes = [
@@ -17,6 +18,7 @@ const routes = [
   { path: '/management', component: ManagementView, meta: { requiresManagement: true } },
   { path: '/management/bulk', component: BulkAddView, meta: { requiresManagement: true } },
   { path: '/management/organizers', component: OrganizerManagementView, meta: { requiresAdmin: true } },
+  { path: '/management/users', component: UserManagementView, meta: { requiresAdmin: true } },
   { path: '/login', component: LoginView },
   { path: '/register', component: RegisterView }
 ]
