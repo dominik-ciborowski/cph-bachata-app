@@ -1203,6 +1203,13 @@ textarea {
 
 .auth-oauth-button {
   width: 100%;
+  gap: 10px;
+}
+
+.auth-oauth-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
 }
 
 .auth-divider {
@@ -1212,7 +1219,6 @@ textarea {
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 800;
-  text-transform: uppercase;
 }
 
 .auth-divider::before,

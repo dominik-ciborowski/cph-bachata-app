@@ -54,21 +54,6 @@ async function register() {
   status.value = authMessages.registrationCheckEmail
 }
 
-async function registerWithGoogle() {
-  status.value = 'Redirecting to Google...'
-
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: getAuthRedirectUrl('/')
-    }
-  })
-
-  if (error) {
-    logAuthError('Google registration/login failed', error)
-    status.value = authMessages.googleLoginFailed
-  }
-}
 </script>
 
 <template>
@@ -79,10 +64,6 @@ async function registerWithGoogle() {
     </section>
 
     <form class="card form" @submit.prevent="register">
-      <button class="button secondary auth-oauth-button" type="button" @click="registerWithGoogle">Continue with Google</button>
-
-      <div class="auth-divider"><span>or register with email</span></div>
-
       <div class="field">
         <label for="register-email">Email</label>
         <input id="register-email" v-model="email" type="email" required autocomplete="email" />
