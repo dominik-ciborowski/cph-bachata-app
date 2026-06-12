@@ -1184,3 +1184,50 @@ textarea {
   color: var(--color-text);
   font-weight: 700;
 }
+
+.text-button {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--color-text);
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.text-button:hover {
+  color: var(--color-primary);
+}
+
+.auth-oauth-button {
+  width: 100%;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--color-border);
+}
+
+.auth-panel {
+  margin-top: 18px;
+}
+
+.auth-panel h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
