@@ -7,31 +7,38 @@ import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
 
 const router = useRouter()
 const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
-const showMenu = ref(false)
-const menuRef = ref(null)
+const activeDesktopMenu = ref('')
+const mobileMenuOpen = ref(false)
+const navRef = ref(null)
 const authToastVisible = ref(false)
 const authToastMessage = ref('')
 let authToastTimeoutId = null
 
 async function handleLogout() {
   await logout()
-  closeMenu()
+  closeNavigation()
   router.push('/')
   showAuthToast(authMessages.logoutSuccess)
 }
 
-function toggleMenu() {
-  showMenu.value = !showMenu.value
+function toggleDesktopMenu(menuName) {
+  activeDesktopMenu.value = activeDesktopMenu.value === menuName ? '' : menuName
 }
 
-function closeMenu() {
-  showMenu.value = false
+function toggleMobileMenu() {
+  mobileMenuOpen.value = !mobileMenuOpen.value
+  activeDesktopMenu.value = ''
+}
+
+function closeNavigation() {
+  activeDesktopMenu.value = ''
+  mobileMenuOpen.value = false
 }
 
 function handleDocumentClick(event) {
-  if (!showMenu.value) return
-  if (menuRef.value?.contains(event.target)) return
-  closeMenu()
+  if (!activeDesktopMenu.value && !mobileMenuOpen.value) return
+  if (navRef.value?.contains(event.target)) return
+  closeNavigation()
 }
 
 function handleAppToast(event) {
@@ -72,6 +79,7 @@ onMounted(() => {
 })
 
 watch(isAuthenticated, () => {
+  closeNavigation()
   consumeLoginSuccessToast()
 })
 
@@ -84,7 +92,7 @@ onBeforeUnmount(() => {
 
 <template>
   <header class="topbar">
-    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata Calendar home" @click="closeMenu">
+    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata Calendar home" @click="closeNavigation">
       <img
         class="brand__logo"
         :src="logo"
@@ -96,35 +104,101 @@ onBeforeUnmount(() => {
       </span>
     </RouterLink>
 
-    <nav class="topnav" aria-label="Main navigation">
-      <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
-      <template v-else-if="!canManageEvents">
-        <RouterLink to="/favorites" class="button-link button-link--nav">My Events</RouterLink>
-        <RouterLink to="/account" class="button-link button-link--nav">Account</RouterLink>
-        <button class="button-link button-link--nav" type="button" @click="handleLogout">Logout</button>
-      </template>
+    <nav ref="navRef" class="topnav" aria-label="Main navigation">
+      <div class="desktop-nav">
+        <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
 
-      <div v-else ref="menuRef" class="management-menu-wrapper">
-        <button
-          class="button-link button-link--nav"
-          type="button"
-          :aria-expanded="showMenu ? 'true' : 'false'"
-          aria-haspopup="menu"
-          @click.stop="toggleMenu"
-        >
-          Management <span class="menu-caret">▼</span>
-        </button>
+        <template v-else>
+          <div v-if="canManageEvents" class="nav-menu-wrapper">
+            <button
+              class="button-link button-link--nav"
+              type="button"
+              :aria-expanded="activeDesktopMenu === 'manage' ? 'true' : 'false'"
+              aria-haspopup="menu"
+              @click.stop="toggleDesktopMenu('manage')"
+            >
+              Manage <span class="menu-caret">▼</span>
+            </button>
 
-        <div v-if="showMenu" class="management-menu" role="menu">
-          <RouterLink to="/management" class="menu-item" role="menuitem" @click="closeMenu">Dashboard</RouterLink>
-          <RouterLink to="/admin" class="menu-item" role="menuitem" @click="closeMenu">Add Event</RouterLink>
-          <RouterLink to="/management/bulk" class="menu-item" role="menuitem" @click="closeMenu">Bulk Add Event</RouterLink>
-          <RouterLink v-if="isAdmin" to="/management/organizers" class="menu-item" role="menuitem" @click="closeMenu">Organizer Management</RouterLink>
-          <RouterLink v-if="isAdmin" to="/management/users" class="menu-item" role="menuitem" @click="closeMenu">User Management</RouterLink>
-          <RouterLink to="/favorites" class="menu-item" role="menuitem" @click="closeMenu">My Events</RouterLink>
-          <RouterLink to="/account" class="menu-item" role="menuitem" @click="closeMenu">Account</RouterLink>
-          <button class="menu-item logout-item" type="button" role="menuitem" @click="handleLogout">Logout</button>
-        </div>
+            <div v-if="activeDesktopMenu === 'manage'" class="nav-menu" role="menu">
+              <RouterLink to="/management" class="menu-item" role="menuitem" @click="closeNavigation">Dashboard</RouterLink>
+              <RouterLink to="/admin" class="menu-item" role="menuitem" @click="closeNavigation">Add Event</RouterLink>
+              <RouterLink to="/management/bulk" class="menu-item" role="menuitem" @click="closeNavigation">Bulk Add Event</RouterLink>
+            </div>
+          </div>
+
+          <div v-if="isAdmin" class="nav-menu-wrapper">
+            <button
+              class="button-link button-link--nav"
+              type="button"
+              :aria-expanded="activeDesktopMenu === 'admin' ? 'true' : 'false'"
+              aria-haspopup="menu"
+              @click.stop="toggleDesktopMenu('admin')"
+            >
+              Admin <span class="menu-caret">▼</span>
+            </button>
+
+            <div v-if="activeDesktopMenu === 'admin'" class="nav-menu" role="menu">
+              <RouterLink to="/management/organizers" class="menu-item" role="menuitem" @click="closeNavigation">Organizer Management</RouterLink>
+              <RouterLink to="/management/users" class="menu-item" role="menuitem" @click="closeNavigation">User Management</RouterLink>
+            </div>
+          </div>
+
+          <div class="nav-menu-wrapper">
+            <button
+              class="button-link button-link--nav"
+              type="button"
+              :aria-expanded="activeDesktopMenu === 'account' ? 'true' : 'false'"
+              aria-haspopup="menu"
+              @click.stop="toggleDesktopMenu('account')"
+            >
+              My Account <span class="menu-caret">▼</span>
+            </button>
+
+            <div v-if="activeDesktopMenu === 'account'" class="nav-menu" role="menu">
+              <RouterLink to="/favorites" class="menu-item" role="menuitem" @click="closeNavigation">My Events</RouterLink>
+              <RouterLink to="/account" class="menu-item" role="menuitem" @click="closeNavigation">Account</RouterLink>
+              <button class="menu-item logout-item" type="button" role="menuitem" @click="handleLogout">Logout</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <button
+        class="mobile-menu-toggle"
+        type="button"
+        :aria-expanded="mobileMenuOpen ? 'true' : 'false'"
+        aria-controls="mobile-navigation"
+        :aria-label="mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'"
+        @click.stop="toggleMobileMenu"
+      >
+        <span aria-hidden="true">{{ mobileMenuOpen ? '×' : '☰' }}</span>
+      </button>
+
+      <div v-if="mobileMenuOpen" id="mobile-navigation" class="mobile-menu-panel">
+        <RouterLink v-if="!isAuthenticated" to="/login" class="mobile-menu-item" @click="closeNavigation">Login</RouterLink>
+
+        <template v-else>
+          <section v-if="canManageEvents" class="mobile-menu-section">
+            <h2>Manage</h2>
+            <RouterLink to="/management" class="mobile-menu-item" @click="closeNavigation">Dashboard</RouterLink>
+            <RouterLink to="/admin" class="mobile-menu-item" @click="closeNavigation">Add Event</RouterLink>
+            <RouterLink to="/management/bulk" class="mobile-menu-item" @click="closeNavigation">Bulk Add Event</RouterLink>
+          </section>
+
+          <section v-if="isAdmin" class="mobile-menu-section">
+            <h2>Administration</h2>
+            <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
+            <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
+          </section>
+
+          <section class="mobile-menu-section">
+            <h2>Account</h2>
+            <RouterLink to="/favorites" class="mobile-menu-item" @click="closeNavigation">My Events</RouterLink>
+            <RouterLink to="/account" class="mobile-menu-item" @click="closeNavigation">Account</RouterLink>
+            <button class="mobile-menu-item logout-item" type="button" @click="handleLogout">Logout</button>
+          </section>
+        </template>
       </div>
     </nav>
   </header>

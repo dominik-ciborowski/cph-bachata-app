@@ -160,6 +160,7 @@ button, input, textarea, select { font: inherit; }
   white-space: nowrap;
 }
 
+.nav-menu-wrapper,
 .management-menu-wrapper {
   position: relative;
   display: inline-flex;
@@ -167,6 +168,7 @@ button, input, textarea, select { font: inherit; }
   max-width: 100%;
 }
 
+.nav-menu,
 .management-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -183,6 +185,89 @@ button, input, textarea, select { font: inherit; }
   z-index: 100;
   overflow: hidden;
 }
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-menu-toggle:hover {
+  border-color: var(--color-border-strong);
+  background: #F7F4F1;
+}
+
+.mobile-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 18px;
+  left: 18px;
+  z-index: 120;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: 0 16px 34px rgba(2, 0, 0, 0.14);
+}
+
+.mobile-menu-section {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mobile-menu-section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.mobile-menu-section h2 {
+  margin: 0 0 4px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mobile-menu-item {
+  min-height: 44px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.mobile-menu-item.router-link-active,
+.mobile-menu-item:hover {
+  background: #F7F4F1;
+}
+
 
 .menu-item {
   min-height: 44px;
@@ -906,26 +991,23 @@ textarea {
 
 @media (max-width: 720px) {
   .topbar {
-    align-items: flex-start;
-    flex-wrap: wrap;
+    align-items: center;
   }
 
   .brand {
-    flex: 1 1 calc(100% - 120px);
+    flex: 1 1 auto;
   }
 
   .topnav {
-    flex: 1 1 auto;
-    width: auto;
+    flex: 0 0 auto;
   }
 
-  .management-menu {
-    min-width: 176px;
-    max-width: calc(100vw - 32px);
+  .desktop-nav {
+    display: none;
   }
 
-  .menu-item {
-    padding: 12px 14px;
+  .mobile-menu-toggle {
+    display: inline-flex;
   }
 
   .hero h1 {
@@ -991,14 +1073,9 @@ textarea {
   }
 
   .button-link--nav,
+  .nav-menu-wrapper,
   .management-menu-wrapper {
     flex: 0 1 auto;
-  }
-
-  .management-menu {
-    width: max-content;
-    min-width: 176px;
-    max-width: calc(100vw - 32px);
   }
 }
 
