@@ -62,7 +62,7 @@ async function loadEvent() {
       const favoriteIds = await loadFavoriteEventIds(user.value.id)
       isFavorited = favoriteIds.has(String(normalizedEvent.id))
     } catch (favoriteError) {
-      error.value = favoriteError.message
+      error.value = 'Could not update My Events right now. Please try again.'
       event.value = null
       loading.value = false
       return
@@ -71,6 +71,10 @@ async function loadEvent() {
 
   event.value = normalizedEvent ? { ...normalizedEvent, is_favorited: isFavorited } : null
   loading.value = false
+}
+
+function showToast(message) {
+  window.dispatchEvent(new CustomEvent('app-toast', { detail: { message } }))
 }
 
 function askLoginToFavorite() {
@@ -92,12 +96,14 @@ async function toggleFavorite() {
     if (event.value.is_favorited) {
       await unfavoriteEvent(user.value.id, event.value.id)
       event.value = { ...event.value, is_favorited: false }
+      showToast('Removed from My Events.')
     } else {
       await favoriteEvent(user.value.id, event.value.id)
       event.value = { ...event.value, is_favorited: true }
+      showToast('Added to My Events.')
     }
   } catch (favoriteError) {
-    error.value = favoriteError.message
+    error.value = 'Could not update My Events right now. Please try again.'
   } finally {
     favoriteBusy.value = false
   }
@@ -168,7 +174,7 @@ async function deleteEvent() {
       <h1>{{ event.title }}</h1>
       <p v-if="event.organizer_display" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer_display }}</span></p>
       <button
-        class="button secondary icon-text detail-favorite-button"
+        class="detail-favorite-button"
         type="button"
         :disabled="favoriteBusy"
         :aria-pressed="event.is_favorited ? 'true' : 'false'"

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import EventCard from '../components/EventCard.vue'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
@@ -83,6 +83,10 @@ async function loadEvents() {
   loading.value = false
 }
 
+function showToast(message) {
+  window.dispatchEvent(new CustomEvent('app-toast', { detail: { message } }))
+}
+
 function askLoginToFavorite() {
   sessionStorage.setItem('flash_message', 'Log in first to save events to My Events.')
   router.push('/login')
@@ -101,14 +105,16 @@ async function toggleFavorite(event) {
     if (event.is_favorited) {
       await unfavoriteEvent(user.value.id, event.id)
       favoriteIds.value.delete(String(event.id))
+      showToast('Removed from My Events.')
     } else {
       await favoriteEvent(user.value.id, event.id)
       favoriteIds.value.add(String(event.id))
+      showToast('Added to My Events.')
     }
 
     events.value = applyFavoriteState(events.value, favoriteIds.value)
   } catch (favoriteError) {
-    error.value = favoriteError.message
+    error.value = 'Could not update My Events right now. Please try again.'
   } finally {
     favoriteBusyId.value = null
   }
@@ -241,7 +247,6 @@ const groupedEvents = computed(() => {
       <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
       <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
       <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
-      <RouterLink v-if="!isFavoritesView" to="/favorites" class="filter-button filter-button--link">My Events</RouterLink>
     </section>
 
     <label class="category-filter">

@@ -34,6 +34,12 @@ function handleDocumentClick(event) {
   closeMenu()
 }
 
+function handleAppToast(event) {
+  const message = event.detail?.message
+  if (!message) return
+  showAuthToast(message)
+}
+
 function showAuthToast(message) {
   authToastMessage.value = message
   authToastVisible.value = true
@@ -61,6 +67,7 @@ function consumeLoginSuccessToast() {
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  window.addEventListener('app-toast', handleAppToast)
   consumeLoginSuccessToast()
 })
 
@@ -70,6 +77,7 @@ watch(isAuthenticated, () => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
+  window.removeEventListener('app-toast', handleAppToast)
   if (authToastTimeoutId) window.clearTimeout(authToastTimeoutId)
 })
 </script>

@@ -36,43 +36,51 @@ function formatTimeRange(startValue, endValue) {
 </script>
 
 <template>
-  <article class="event-card">
-  <RouterLink class="event-card__link" :to="`/events/${event.id}`">
-    <div class="event-card__date">
-      <span class="icon-text"><CalendarDays class="icon icon--sm" />{{ formatDate(event.start_time) }}</span>
-      <strong>{{ formatTimeRange(event.start_time, event.end_time) }}</strong>
-    </div>
-
-    <div class="event-card__body">
-      <div class="event-card__topline">
-        <span class="pill" :class="getCategoryMeta(event.category).className">
-          <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
-          {{ getCategoryMeta(event.category).label }}
-        </span>
-        <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
-      </div>
-
-      <h2>{{ event.title }}</h2>
-
-      <div class="event-card__meta">
-        <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
-        <span v-if="event.organizer_display" class="icon-text"><User class="icon icon--sm" />{{ event.organizer_display }}</span>
-      </div>
-
-      <p v-if="event.description">{{ event.description }}</p>
-    </div>
-    </RouterLink>
-
-    <button
-      class="favorite-button"
-      :class="{ 'favorite-button--active': event.is_favorited }"
-      type="button"
-      :disabled="favoriteBusy"
-      :aria-label="event.is_favorited ? `Remove ${event.title} from My Events` : `Save ${event.title} to My Events`"
-      :aria-pressed="event.is_favorited ? 'true' : 'false'"
-      @click.stop="$emit('toggle-favorite', event)"
+  <RouterLink v-slot="{ navigate }" custom :to="`/events/${event.id}`">
+    <article
+      class="event-card"
+      role="link"
+      tabindex="0"
+      @click="navigate"
+      @keydown.enter.prevent="navigate"
+      @keydown.space.prevent="navigate"
     >
-      <Heart class="icon" :fill="event.is_favorited ? 'currentColor' : 'none'" />
-    </button>
-  </article>
+      <div class="event-card__date">
+        <span class="icon-text"><CalendarDays class="icon icon--sm" />{{ formatDate(event.start_time) }}</span>
+        <strong>{{ formatTimeRange(event.start_time, event.end_time) }}</strong>
+      </div>
+
+      <div class="event-card__body">
+        <div class="event-card__topline">
+          <span class="pill" :class="getCategoryMeta(event.category).className">
+            <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
+            {{ getCategoryMeta(event.category).label }}
+          </span>
+          <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
+        </div>
+
+        <div class="event-card__title-row">
+          <h2>{{ event.title }}</h2>
+          <button
+            class="favorite-button"
+            :class="{ 'favorite-button--active': event.is_favorited }"
+            type="button"
+            :disabled="favoriteBusy"
+            :aria-label="event.is_favorited ? `Remove ${event.title} from My Events` : `Save ${event.title} to My Events`"
+            :aria-pressed="event.is_favorited ? 'true' : 'false'"
+            @click.stop="$emit('toggle-favorite', event)"
+          >
+            <Heart class="icon" :fill="event.is_favorited ? 'currentColor' : 'none'" />
+          </button>
+        </div>
+
+        <div class="event-card__meta">
+          <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
+          <span v-if="event.organizer_display" class="icon-text"><User class="icon icon--sm" />{{ event.organizer_display }}</span>
+        </div>
+
+        <p v-if="event.description">{{ event.description }}</p>
+      </div>
+    </article>
+  </RouterLink>
 </template>
