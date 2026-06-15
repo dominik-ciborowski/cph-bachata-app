@@ -1264,8 +1264,8 @@ textarea {
 
 .toast {
   position: fixed;
+  top: calc(76px + env(safe-area-inset-top));
   right: 18px;
-  bottom: 18px;
   z-index: 200;
   display: inline-flex;
   align-items: center;
@@ -1295,4 +1295,15 @@ textarea {
 
 .toast__dismiss:hover {
   background: rgba(36, 90, 54, 0.18);
+}
+
+
+@media (max-width: 720px) {
+  .toast {
+    top: calc(112px + env(safe-area-inset-top));
+    right: 14px;
+    left: 14px;
+    max-width: none;
+    justify-content: space-between;
+  }
 }

@@ -9,13 +9,15 @@ const router = useRouter()
 const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
 const showMenu = ref(false)
 const menuRef = ref(null)
-const loginToastVisible = ref(false)
-let loginToastTimeoutId = null
+const authToastVisible = ref(false)
+const authToastMessage = ref('')
+let authToastTimeoutId = null
 
 async function handleLogout() {
   await logout()
   closeMenu()
   router.push('/')
+  showAuthToast(authMessages.logoutSuccess)
 }
 
 function toggleMenu() {
@@ -32,19 +34,20 @@ function handleDocumentClick(event) {
   closeMenu()
 }
 
-function showLoginSuccessToast() {
-  loginToastVisible.value = true
-  if (loginToastTimeoutId) window.clearTimeout(loginToastTimeoutId)
-  loginToastTimeoutId = window.setTimeout(() => {
-    loginToastVisible.value = false
+function showAuthToast(message) {
+  authToastMessage.value = message
+  authToastVisible.value = true
+  if (authToastTimeoutId) window.clearTimeout(authToastTimeoutId)
+  authToastTimeoutId = window.setTimeout(() => {
+    authToastVisible.value = false
   }, 3500)
 }
 
-function dismissLoginToast() {
-  loginToastVisible.value = false
-  if (loginToastTimeoutId) {
-    window.clearTimeout(loginToastTimeoutId)
-    loginToastTimeoutId = null
+function dismissAuthToast() {
+  authToastVisible.value = false
+  if (authToastTimeoutId) {
+    window.clearTimeout(authToastTimeoutId)
+    authToastTimeoutId = null
   }
 }
 
@@ -53,7 +56,7 @@ function consumeLoginSuccessToast() {
   if (sessionStorage.getItem(loginSuccessStorageKey) !== 'true') return
 
   sessionStorage.removeItem(loginSuccessStorageKey)
-  showLoginSuccessToast()
+  showAuthToast(authMessages.loginSuccess)
 }
 
 onMounted(() => {
@@ -67,7 +70,7 @@ watch(isAuthenticated, () => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
-  if (loginToastTimeoutId) window.clearTimeout(loginToastTimeoutId)
+  if (authToastTimeoutId) window.clearTimeout(authToastTimeoutId)
 })
 </script>
 
@@ -116,9 +119,9 @@ onBeforeUnmount(() => {
     </nav>
   </header>
 
-  <div v-if="loginToastVisible" class="toast" role="status" aria-live="polite">
-    <span>{{ authMessages.loginSuccess }}</span>
-    <button class="toast__dismiss" type="button" aria-label="Dismiss notification" @click="dismissLoginToast">×</button>
+  <div v-if="authToastVisible" class="toast" role="status" aria-live="polite">
+    <span>{{ authToastMessage }}</span>
+    <button class="toast__dismiss" type="button" aria-label="Dismiss notification" @click="dismissAuthToast">×</button>
   </div>
 
   <main class="container">

@@ -17,7 +17,8 @@ export const authMessages = {
   passwordRequired: 'Please enter a new password.',
   passwordUpdateSuccess: 'Your password has been updated.',
   loginRequiredForPasswordUpdate: 'Please use the password reset link from your email to update your password.',
-  loginSuccess: 'Successfully logged in.'
+  loginSuccess: 'Successfully logged in.',
+  logoutSuccess: 'Successfully logged out.'
 }
 
 export const loginSuccessStorageKey = 'auth_login_success_pending'
