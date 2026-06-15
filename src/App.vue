@@ -1,18 +1,23 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
+import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
 
 const router = useRouter()
 const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
 const showMenu = ref(false)
 const menuRef = ref(null)
+const authToastVisible = ref(false)
+const authToastMessage = ref('')
+let authToastTimeoutId = null
 
 async function handleLogout() {
   await logout()
   closeMenu()
   router.push('/')
+  showAuthToast(authMessages.logoutSuccess)
 }
 
 function toggleMenu() {
@@ -29,12 +34,43 @@ function handleDocumentClick(event) {
   closeMenu()
 }
 
+function showAuthToast(message) {
+  authToastMessage.value = message
+  authToastVisible.value = true
+  if (authToastTimeoutId) window.clearTimeout(authToastTimeoutId)
+  authToastTimeoutId = window.setTimeout(() => {
+    authToastVisible.value = false
+  }, 3500)
+}
+
+function dismissAuthToast() {
+  authToastVisible.value = false
+  if (authToastTimeoutId) {
+    window.clearTimeout(authToastTimeoutId)
+    authToastTimeoutId = null
+  }
+}
+
+function consumeLoginSuccessToast() {
+  if (!isAuthenticated.value) return
+  if (sessionStorage.getItem(loginSuccessStorageKey) !== 'true') return
+
+  sessionStorage.removeItem(loginSuccessStorageKey)
+  showAuthToast(authMessages.loginSuccess)
+}
+
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  consumeLoginSuccessToast()
+})
+
+watch(isAuthenticated, () => {
+  consumeLoginSuccessToast()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
+  if (authToastTimeoutId) window.clearTimeout(authToastTimeoutId)
 })
 </script>
 
@@ -54,7 +90,10 @@ onBeforeUnmount(() => {
 
     <nav class="topnav" aria-label="Main navigation">
       <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
-      <button v-else-if="!canManageEvents" class="button-link button-link--nav" type="button" @click="handleLogout">Logout</button>
+      <template v-else-if="!canManageEvents">
+        <RouterLink to="/account" class="button-link button-link--nav">Account</RouterLink>
+        <button class="button-link button-link--nav" type="button" @click="handleLogout">Logout</button>
+      </template>
 
       <div v-else ref="menuRef" class="management-menu-wrapper">
         <button
@@ -73,11 +112,17 @@ onBeforeUnmount(() => {
           <RouterLink to="/management/bulk" class="menu-item" role="menuitem" @click="closeMenu">Bulk Add Event</RouterLink>
           <RouterLink v-if="isAdmin" to="/management/organizers" class="menu-item" role="menuitem" @click="closeMenu">Organizer Management</RouterLink>
           <RouterLink v-if="isAdmin" to="/management/users" class="menu-item" role="menuitem" @click="closeMenu">User Management</RouterLink>
+          <RouterLink to="/account" class="menu-item" role="menuitem" @click="closeMenu">Account</RouterLink>
           <button class="menu-item logout-item" type="button" role="menuitem" @click="handleLogout">Logout</button>
         </div>
       </div>
     </nav>
   </header>
+
+  <div v-if="authToastVisible" class="toast" role="status" aria-live="polite">
+    <span>{{ authToastMessage }}</span>
+    <button class="toast__dismiss" type="button" aria-label="Dismiss notification" @click="dismissAuthToast">×</button>
+  </div>
 
   <main class="container">
     <RouterView />

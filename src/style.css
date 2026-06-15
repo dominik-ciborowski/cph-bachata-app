@@ -1184,3 +1184,126 @@ textarea {
   color: var(--color-text);
   font-weight: 700;
 }
+
+.text-button {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--color-text);
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.text-button:hover {
+  color: var(--color-primary);
+}
+
+.auth-oauth-button {
+  width: 100%;
+  gap: 10px;
+}
+
+.auth-oauth-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--color-border);
+}
+
+.auth-panel {
+  margin-top: 18px;
+}
+
+.auth-panel h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.account-info-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.account-info-list div {
+  display: grid;
+  gap: 4px;
+}
+
+.account-info-list dt {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.account-info-list dd {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.toast {
+  position: fixed;
+  top: calc(76px + env(safe-area-inset-top));
+  right: 18px;
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 12px 14px;
+  border: 1px solid #D8E8DD;
+  border-radius: 14px;
+  background: #F3FFF6;
+  color: #245A36;
+  box-shadow: 0 10px 24px rgba(2, 0, 0, 0.12);
+  font-weight: 800;
+}
+
+.toast__dismiss {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(36, 90, 54, 0.1);
+  color: #245A36;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.toast__dismiss:hover {
+  background: rgba(36, 90, 54, 0.18);
+}
+
+
+@media (max-width: 720px) {
+  .toast {
+    top: calc(112px + env(safe-area-inset-top));
+    right: 14px;
+    left: 14px;
+    max-width: none;
+    justify-content: space-between;
+  }
+}

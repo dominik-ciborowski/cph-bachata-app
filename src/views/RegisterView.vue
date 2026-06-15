@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
+import { authMessages, getAuthRedirectUrl, logAuthError } from '../lib/authMessages'
 
 const router = useRouter()
 const email = ref('')
@@ -13,7 +14,7 @@ const isSuccess = ref(false)
 function validateForm() {
   if (!email.value) return 'Email is required.'
   if (!password.value) return 'Password is required.'
-  if (password.value !== confirmPassword.value) return 'Passwords must match.'
+  if (password.value !== confirmPassword.value) return authMessages.passwordsDoNotMatch
   return ''
 }
 
@@ -26,28 +27,33 @@ async function register() {
     return
   }
 
-  status.value = 'Creating account...'
+  status.value = 'Submitting registration...'
 
   const { data, error } = await supabase.auth.signUp({
     email: email.value,
-    password: password.value
+    password: password.value,
+    options: {
+      emailRedirectTo: getAuthRedirectUrl('/')
+    }
   })
 
   if (error) {
-    status.value = error.message
+    logAuthError('Registration failed', error)
+    status.value = authMessages.registrationFailed
     return
   }
 
   isSuccess.value = true
 
   if (data.session) {
-    status.value = 'Account created. Redirecting...'
+    status.value = 'Registration complete. Redirecting...'
     router.push('/')
     return
   }
 
-  status.value = 'Account created. Please check your email to confirm your account before logging in.'
+  status.value = authMessages.registrationCheckEmail
 }
+
 </script>
 
 <template>
