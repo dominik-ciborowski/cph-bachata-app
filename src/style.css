@@ -1398,17 +1398,17 @@ textarea {
 
 .event-card__title-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 2px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .favorite-button {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
-  margin-top: -6px;
+  margin-top: 0;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface);
@@ -1471,12 +1471,13 @@ textarea {
 
 @media (max-width: 720px) {
   .event-card__title-row {
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
   }
 
   .favorite-button {
     width: 44px;
     height: 44px;
-    margin-top: -8px;
   }
 }
