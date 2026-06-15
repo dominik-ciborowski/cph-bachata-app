@@ -16,8 +16,11 @@ export const authMessages = {
   passwordsDoNotMatch: 'Passwords must match.',
   passwordRequired: 'Please enter a new password.',
   passwordUpdateSuccess: 'Your password has been updated.',
-  loginRequiredForPasswordUpdate: 'Please use the password reset link from your email to update your password.'
+  loginRequiredForPasswordUpdate: 'Please use the password reset link from your email to update your password.',
+  loginSuccess: 'Successfully logged in.'
 }
+
+export const loginSuccessStorageKey = 'auth_login_success_pending'
 
 export function getAuthRedirectUrl(path = '') {
   const baseUrl = redirectBase()

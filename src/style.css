@@ -1261,3 +1261,38 @@ textarea {
   color: var(--color-text);
   font-weight: 700;
 }
+
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 12px 14px;
+  border: 1px solid #D8E8DD;
+  border-radius: 14px;
+  background: #F3FFF6;
+  color: #245A36;
+  box-shadow: 0 10px 24px rgba(2, 0, 0, 0.12);
+  font-weight: 800;
+}
+
+.toast__dismiss {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(36, 90, 54, 0.1);
+  color: #245A36;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.toast__dismiss:hover {
+  background: rgba(36, 90, 54, 0.18);
+}

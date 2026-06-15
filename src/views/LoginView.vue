@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
-import { authMessages, getAuthRedirectUrl, logAuthError } from '../lib/authMessages'
+import { authMessages, getAuthRedirectUrl, loginSuccessStorageKey, logAuthError } from '../lib/authMessages'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,11 +23,13 @@ async function login() {
     return
   }
 
+  sessionStorage.setItem(loginSuccessStorageKey, 'true')
   router.push('/management')
 }
 
 async function loginWithGoogle() {
   status.value = 'Redirecting to Google...'
+  sessionStorage.setItem(loginSuccessStorageKey, 'true')
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -37,6 +39,7 @@ async function loginWithGoogle() {
   })
 
   if (error) {
+    sessionStorage.removeItem(loginSuccessStorageKey)
     logAuthError('Google login failed', error)
     status.value = authMessages.googleLoginFailed
   }

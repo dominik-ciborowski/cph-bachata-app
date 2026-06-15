@@ -1,13 +1,16 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
+import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
 
 const router = useRouter()
 const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
 const showMenu = ref(false)
 const menuRef = ref(null)
+const loginToastVisible = ref(false)
+let loginToastTimeoutId = null
 
 async function handleLogout() {
   await logout()
@@ -29,12 +32,42 @@ function handleDocumentClick(event) {
   closeMenu()
 }
 
+function showLoginSuccessToast() {
+  loginToastVisible.value = true
+  if (loginToastTimeoutId) window.clearTimeout(loginToastTimeoutId)
+  loginToastTimeoutId = window.setTimeout(() => {
+    loginToastVisible.value = false
+  }, 3500)
+}
+
+function dismissLoginToast() {
+  loginToastVisible.value = false
+  if (loginToastTimeoutId) {
+    window.clearTimeout(loginToastTimeoutId)
+    loginToastTimeoutId = null
+  }
+}
+
+function consumeLoginSuccessToast() {
+  if (!isAuthenticated.value) return
+  if (sessionStorage.getItem(loginSuccessStorageKey) !== 'true') return
+
+  sessionStorage.removeItem(loginSuccessStorageKey)
+  showLoginSuccessToast()
+}
+
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  consumeLoginSuccessToast()
+})
+
+watch(isAuthenticated, () => {
+  consumeLoginSuccessToast()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
+  if (loginToastTimeoutId) window.clearTimeout(loginToastTimeoutId)
 })
 </script>
 
@@ -82,6 +115,11 @@ onBeforeUnmount(() => {
       </div>
     </nav>
   </header>
+
+  <div v-if="loginToastVisible" class="toast" role="status" aria-live="polite">
+    <span>{{ authMessages.loginSuccess }}</span>
+    <button class="toast__dismiss" type="button" aria-label="Dismiss notification" @click="dismissLoginToast">×</button>
+  </div>
 
   <main class="container">
     <RouterView />
