@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 import { authMessages, getAuthRedirectUrl, loginSuccessStorageKey, logAuthError } from '../lib/authMessages'
@@ -9,6 +9,13 @@ const route = useRoute()
 const email = ref(typeof route.query.email === 'string' ? route.query.email : '')
 const password = ref('')
 const status = ref('')
+
+onMounted(() => {
+  const storedFlashMessage = sessionStorage.getItem('flash_message')
+  if (!storedFlashMessage) return
+  status.value = storedFlashMessage
+  sessionStorage.removeItem('flash_message')
+})
 
 async function login() {
   status.value = 'Logging in...'
@@ -24,7 +31,7 @@ async function login() {
   }
 
   sessionStorage.setItem(loginSuccessStorageKey, 'true')
-  router.push('/management')
+  router.push(typeof route.query.redirect === 'string' ? route.query.redirect : '/management')
 }
 
 async function loginWithGoogle() {

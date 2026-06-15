@@ -91,6 +91,7 @@ onBeforeUnmount(() => {
     <nav class="topnav" aria-label="Main navigation">
       <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
       <template v-else-if="!canManageEvents">
+        <RouterLink to="/favorites" class="button-link button-link--nav">My Events</RouterLink>
         <RouterLink to="/account" class="button-link button-link--nav">Account</RouterLink>
         <button class="button-link button-link--nav" type="button" @click="handleLogout">Logout</button>
       </template>
@@ -112,6 +113,7 @@ onBeforeUnmount(() => {
           <RouterLink to="/management/bulk" class="menu-item" role="menuitem" @click="closeMenu">Bulk Add Event</RouterLink>
           <RouterLink v-if="isAdmin" to="/management/organizers" class="menu-item" role="menuitem" @click="closeMenu">Organizer Management</RouterLink>
           <RouterLink v-if="isAdmin" to="/management/users" class="menu-item" role="menuitem" @click="closeMenu">User Management</RouterLink>
+          <RouterLink to="/favorites" class="menu-item" role="menuitem" @click="closeMenu">My Events</RouterLink>
           <RouterLink to="/account" class="menu-item" role="menuitem" @click="closeMenu">Account</RouterLink>
           <button class="menu-item logout-item" type="button" role="menuitem" @click="handleLogout">Logout</button>
         </div>

@@ -16,6 +16,7 @@ import { getAuthState } from '../composables/useAuth'
 const routes = [
   { path: '/', component: EventListView },
   { path: '/events/:id', component: EventDetailView },
+  { path: '/favorites', component: EventListView, meta: { requiresAuth: true } },
   { path: '/admin', component: AdminView, meta: { requiresManagement: true } },
   { path: '/admin/:id', component: AdminView, meta: { requiresManagement: true } },
   { path: '/management', component: ManagementView, meta: { requiresManagement: true } },
@@ -46,7 +47,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.meta.requiresAuth) {
     if (!user) {
-      next('/login')
+      next({ path: '/login', query: { redirect: to.fullPath } })
       return
     }
   }

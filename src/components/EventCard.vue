@@ -1,14 +1,20 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { CalendarDays, MapPin, User } from 'lucide-vue-next'
+import { CalendarDays, Heart, MapPin, User } from 'lucide-vue-next'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
 defineProps({
   event: {
     type: Object,
     required: true
+  },
+  favoriteBusy: {
+    type: Boolean,
+    default: false
   }
 })
+
+defineEmits(['toggle-favorite'])
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('en-DK', {
@@ -30,7 +36,8 @@ function formatTimeRange(startValue, endValue) {
 </script>
 
 <template>
-  <RouterLink class="event-card" :to="`/events/${event.id}`">
+  <article class="event-card">
+  <RouterLink class="event-card__link" :to="`/events/${event.id}`">
     <div class="event-card__date">
       <span class="icon-text"><CalendarDays class="icon icon--sm" />{{ formatDate(event.start_time) }}</span>
       <strong>{{ formatTimeRange(event.start_time, event.end_time) }}</strong>
@@ -54,5 +61,18 @@ function formatTimeRange(startValue, endValue) {
 
       <p v-if="event.description">{{ event.description }}</p>
     </div>
-  </RouterLink>
+    </RouterLink>
+
+    <button
+      class="favorite-button"
+      :class="{ 'favorite-button--active': event.is_favorited }"
+      type="button"
+      :disabled="favoriteBusy"
+      :aria-label="event.is_favorited ? `Remove ${event.title} from My Events` : `Save ${event.title} to My Events`"
+      :aria-pressed="event.is_favorited ? 'true' : 'false'"
+      @click.stop="$emit('toggle-favorite', event)"
+    >
+      <Heart class="icon" :fill="event.is_favorited ? 'currentColor' : 'none'" />
+    </button>
+  </article>
 </template>

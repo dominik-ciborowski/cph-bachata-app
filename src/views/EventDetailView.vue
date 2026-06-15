@@ -1,18 +1,20 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { CalendarDays, MapPin, Pencil, Trash2 } from 'lucide-vue-next'
+import { CalendarDays, Heart, MapPin, Pencil, Trash2 } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
+import { favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
 import { EventLinkIcon, formatPriceDisplay, getCategoryMeta } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
-const { canManageEventRecord } = useAuth()
+const { canManageEventRecord, isAuthenticated, user } = useAuth()
 const event = ref(null)
 const loading = ref(true)
 const error = ref('')
+const favoriteBusy = ref(false)
 const canManageCurrentEvent = computed(() => canManageEventRecord(event.value))
 
 function getBackTarget() {
@@ -52,8 +54,53 @@ async function loadEvent() {
     return
   }
 
-  event.value = normalizeEvent(data)
+  const normalizedEvent = normalizeEvent(data)
+  let isFavorited = false
+
+  if (user.value && normalizedEvent) {
+    try {
+      const favoriteIds = await loadFavoriteEventIds(user.value.id)
+      isFavorited = favoriteIds.has(String(normalizedEvent.id))
+    } catch (favoriteError) {
+      error.value = favoriteError.message
+      event.value = null
+      loading.value = false
+      return
+    }
+  }
+
+  event.value = normalizedEvent ? { ...normalizedEvent, is_favorited: isFavorited } : null
   loading.value = false
+}
+
+function askLoginToFavorite() {
+  sessionStorage.setItem('flash_message', 'Log in first to save events to My Events.')
+  router.push('/login')
+}
+
+async function toggleFavorite() {
+  if (!event.value) return
+  if (!isAuthenticated.value || !user.value) {
+    askLoginToFavorite()
+    return
+  }
+
+  favoriteBusy.value = true
+  error.value = ''
+
+  try {
+    if (event.value.is_favorited) {
+      await unfavoriteEvent(user.value.id, event.value.id)
+      event.value = { ...event.value, is_favorited: false }
+    } else {
+      await favoriteEvent(user.value.id, event.value.id)
+      event.value = { ...event.value, is_favorited: true }
+    }
+  } catch (favoriteError) {
+    error.value = favoriteError.message
+  } finally {
+    favoriteBusy.value = false
+  }
 }
 
 function formatDate(value) {
@@ -120,6 +167,16 @@ async function deleteEvent() {
       </p>
       <h1>{{ event.title }}</h1>
       <p v-if="event.organizer_display" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer_display }}</span></p>
+      <button
+        class="button secondary icon-text detail-favorite-button"
+        type="button"
+        :disabled="favoriteBusy"
+        :aria-pressed="event.is_favorited ? 'true' : 'false'"
+        @click="toggleFavorite"
+      >
+        <Heart class="icon icon--sm" :fill="event.is_favorited ? 'currentColor' : 'none'" />
+        {{ event.is_favorited ? 'Saved to My Events' : 'Save to My Events' }}
+      </button>
     </section>
 
     <section class="card detail-summary">
