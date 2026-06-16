@@ -56,23 +56,23 @@ function formatTimeRange(startValue, endValue) {
             <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
             {{ getCategoryMeta(event.category).label }}
           </span>
-          <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
+          <div class="event-card__actions">
+            <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
+            <button
+              class="favorite-button"
+              :class="{ 'favorite-button--active': event.is_favorited }"
+              type="button"
+              :disabled="favoriteBusy"
+              :aria-label="event.is_favorited ? `Remove ${event.title} from My Events` : `Save ${event.title} to My Events`"
+              :aria-pressed="event.is_favorited ? 'true' : 'false'"
+              @click.stop="$emit('toggle-favorite', event)"
+            >
+              <Heart class="icon" :fill="event.is_favorited ? 'currentColor' : 'none'" />
+            </button>
+          </div>
         </div>
 
-        <div class="event-card__title-row">
-          <h2>{{ event.title }}</h2>
-          <button
-            class="favorite-button"
-            :class="{ 'favorite-button--active': event.is_favorited }"
-            type="button"
-            :disabled="favoriteBusy"
-            :aria-label="event.is_favorited ? `Remove ${event.title} from My Events` : `Save ${event.title} to My Events`"
-            :aria-pressed="event.is_favorited ? 'true' : 'false'"
-            @click.stop="$emit('toggle-favorite', event)"
-          >
-            <Heart class="icon" :fill="event.is_favorited ? 'currentColor' : 'none'" />
-          </button>
-        </div>
+        <h2>{{ event.title }}</h2>
 
         <div class="event-card__meta">
           <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>

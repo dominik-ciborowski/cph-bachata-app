@@ -164,7 +164,10 @@ onBeforeUnmount(() => {
         </template>
       </div>
 
+      <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav mobile-login-link">Login</RouterLink>
+
       <button
+        v-else
         class="mobile-menu-toggle"
         type="button"
         :aria-expanded="mobileMenuOpen ? 'true' : 'false'"
@@ -175,10 +178,7 @@ onBeforeUnmount(() => {
         <span aria-hidden="true">{{ mobileMenuOpen ? '×' : '☰' }}</span>
       </button>
 
-      <div v-if="mobileMenuOpen" id="mobile-navigation" class="mobile-menu-panel">
-        <RouterLink v-if="!isAuthenticated" to="/login" class="mobile-menu-item" @click="closeNavigation">Login</RouterLink>
-
-        <template v-else>
+      <div v-if="mobileMenuOpen && isAuthenticated" id="mobile-navigation" class="mobile-menu-panel">
           <section v-if="canManageEvents" class="mobile-menu-section">
             <h2>Manage</h2>
             <RouterLink to="/management" class="mobile-menu-item" @click="closeNavigation">Dashboard</RouterLink>
@@ -198,7 +198,6 @@ onBeforeUnmount(() => {
             <RouterLink to="/account" class="mobile-menu-item" @click="closeNavigation">Account</RouterLink>
             <button class="mobile-menu-item logout-item" type="button" @click="handleLogout">Logout</button>
           </section>
-        </template>
       </div>
     </nav>
   </header>
