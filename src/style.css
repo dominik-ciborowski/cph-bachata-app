@@ -1553,3 +1553,53 @@ textarea {
     color: var(--color-danger);
   }
 }
+
+.event-card__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  row-gap: 8px;
+  align-content: start;
+}
+
+.event-card__topline {
+  display: contents;
+  margin-bottom: 0;
+}
+
+.event-card__topline .pill {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.event-card__actions {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+
+.event-card h2 {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.event-card__meta {
+  grid-column: 1;
+  grid-row: 3;
+  margin-top: 0;
+}
+
+.event-card p {
+  grid-column: 1 / -1;
+  grid-row: 4;
+}
+
+@media (max-width: 720px) {
+  .event-card__body {
+    column-gap: 10px;
+    row-gap: 6px;
+  }
+
+  .event-card__topline {
+    display: contents;
+  }
+}
