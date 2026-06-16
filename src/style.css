@@ -1401,11 +1401,17 @@ textarea {
   outline-offset: 4px;
 }
 
+.event-card__topline {
+  align-items: flex-start;
+}
+
 .event-card__actions {
   display: grid;
   justify-items: end;
+  align-self: flex-start;
   gap: 8px;
   flex: 0 0 auto;
+  min-width: 44px;
 }
 
 .favorite-button {
