@@ -1489,3 +1489,23 @@ textarea {
     height: 44px;
   }
 }
+
+.detail-hero .detail-category {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 720px) {
+  .event-card__body {
+    width: 100%;
+  }
+
+  .event-card__topline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .event-card__actions {
+    justify-self: end;
+  }
+}
