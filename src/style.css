@@ -1509,3 +1509,8 @@ textarea {
     justify-self: end;
   }
 }
+
+.event-card__topline .pill {
+  width: fit-content;
+  justify-self: start;
+}
