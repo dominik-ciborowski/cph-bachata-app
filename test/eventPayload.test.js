@@ -1,8 +1,8 @@
-import { describe, it } from 'node:test'
-import assert from 'node:assert/strict'
+import { describe, expect, it } from 'vitest'
 import { buildBulkEventPayloads, buildEventPayload, buildNewEventPayload } from '../src/lib/eventPayload.js'
 import { normalizeEvent } from '../src/lib/events.js'
 import { isFreePrice } from '../src/lib/eventPresentation.js'
+import { canManageEvent } from '../src/lib/permissions.js'
 
 const form = {
   title: 'Friday Social',
@@ -20,27 +20,27 @@ const form = {
 
 describe('event payload ownership', () => {
   it('omits created_by from update payloads', () => {
-    assert.equal('created_by' in buildEventPayload(form), false)
+    expect('created_by' in buildEventPayload(form)).toBe(false)
   })
 
   it('adds authenticated user id as created_by for new single events', () => {
     const payload = buildNewEventPayload(form, 'user-123')
 
-    assert.equal(payload.created_by, 'user-123')
-    assert.equal(payload.title, form.title)
-    assert.equal(payload.event_link, form.event_link)
-    assert.equal(payload.organizer_id, form.organizer_id)
+    expect(payload.created_by).toBe('user-123')
+    expect(payload.title).toBe(form.title)
+    expect(payload.event_link).toBe(form.event_link)
+    expect(payload.organizer_id).toBe(form.organizer_id)
   })
 
   it('adds created_by to every bulk-created event payload', () => {
     const rows = buildBulkEventPayloads(form, ['2026-06-12', '2026-06-19'], 'user-456')
 
-    assert.equal(rows.length, 2)
-    assert.deepEqual(rows.map((row) => row.created_by), ['user-456', 'user-456'])
+    expect(rows).toHaveLength(2)
+    expect(rows.map((row) => row.created_by)).toEqual(['user-456', 'user-456'])
   })
 
   it('preserves the existing created_by ownership field when normalizing events', () => {
-    assert.equal(normalizeEvent({ created_by: 'user-789' }).created_by, 'user-789')
+    expect(normalizeEvent({ created_by: 'user-789' }).created_by).toBe('user-789')
   })
 
   it('formats organizer names from organizer records and marks unverified organizers', () => {
@@ -49,40 +49,40 @@ describe('event payload ownership', () => {
       organizer_record: { name: 'Record Organizer', verified: false }
     })
 
-    assert.equal(event.organizer_name, 'Record Organizer')
-    assert.equal(event.organizer_display, 'Record Organizer (Unverified)')
+    expect(event.organizer_name).toBe('Record Organizer')
+    expect(event.organizer_display).toBe('Record Organizer (Unverified)')
   })
 
   it('falls back to organizer text when an organizer record is missing', () => {
     const event = normalizeEvent({ organizer: 'Fallback Organizer' })
 
-    assert.equal(event.organizer_name, 'Fallback Organizer')
-    assert.equal(event.organizer_display, 'Fallback Organizer')
+    expect(event.organizer_name).toBe('Fallback Organizer')
+    expect(event.organizer_display).toBe('Fallback Organizer')
   })
 })
 
-it('matches admin and organizer ownership rules for event management permissions', async () => {
-  const { canManageEvent } = await import('../src/lib/permissions.js')
-  const event = { created_by: 'organizer-1' }
+describe('event management permissions', () => {
+  it('matches admin and organizer ownership rules', () => {
+    const event = { created_by: 'organizer-1' }
 
-  assert.equal(canManageEvent(event, { id: 'admin-1' }, 'admin'), true)
-  assert.equal(canManageEvent(event, { id: 'organizer-1' }, 'organizer'), true)
-  assert.equal(canManageEvent(event, { id: 'organizer-2' }, 'organizer'), false)
-  assert.equal(canManageEvent(event, { id: 'user-1' }, 'user'), false)
-  assert.equal(canManageEvent(event, null, 'admin'), false)
+    expect(canManageEvent(event, { id: 'admin-1' }, 'admin')).toBe(true)
+    expect(canManageEvent(event, { id: 'organizer-1' }, 'organizer')).toBe(true)
+    expect(canManageEvent(event, { id: 'organizer-2' }, 'organizer')).toBe(false)
+    expect(canManageEvent(event, { id: 'user-1' }, 'user')).toBe(false)
+    expect(canManageEvent(event, null, 'admin')).toBe(false)
+  })
 })
-
 
 describe('free price detection', () => {
   it('matches prices displayed as free by the current price formatter', () => {
     for (const priceText of [null, '', ' ', '0', '0.0', '0,0', '0 DKK', '0 kr', 'free', 'gratis']) {
-      assert.equal(isFreePrice(priceText), true)
+      expect(isFreePrice(priceText)).toBe(true)
     }
   })
 
   it('does not include paid prices in the free filter', () => {
     for (const priceText of ['50', '50 DKK', '100 kr', '0-50 DKK', 'donation']) {
-      assert.equal(isFreePrice(priceText), false)
+      expect(isFreePrice(priceText)).toBe(false)
     }
   })
 })

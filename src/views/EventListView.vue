@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import EventCard from '../components/EventCard.vue'
 import { normalizeEvent } from '../lib/events'
-import { getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
+import { getCategoryMeta } from '../lib/eventPresentation'
+import { filterEvents, getStartOfDay } from '../lib/eventFilters'
 import { supabase } from '../lib/supabase'
 
 const filter = ref('all')
@@ -13,8 +14,7 @@ const loading = ref(true)
 const error = ref('')
 const flashMessage = ref('')
 
-const today = new Date()
-today.setHours(0, 0, 0, 0)
+const today = getStartOfDay()
 
 onMounted(async () => {
   const storedFlashMessage = sessionStorage.getItem('flash_message')
@@ -51,56 +51,6 @@ async function loadEvents() {
   loading.value = false
 }
 
-function isThisWeekend(event) {
-  const eventDate = new Date(event.start_time)
-  const weekendRange = getWeekendRange()
-  return eventDate >= weekendRange.start && eventDate < weekendRange.end
-}
-
-function getWeekendRange() {
-  const day = today.getDay()
-  const start = new Date(today)
-
-  if (day >= 1 && day <= 4) {
-    start.setDate(today.getDate() + (5 - day))
-  }
-
-  if (day === 0) {
-    start.setDate(today.getDate())
-  }
-
-  const end = new Date(start)
-
-  if (day === 0) {
-    end.setDate(start.getDate() + 1)
-  } else if (day === 6) {
-    end.setDate(start.getDate() + 2)
-  } else {
-    end.setDate(start.getDate() + 3)
-  }
-
-  return { start, end }
-}
-
-function isToday(event) {
-  const date = new Date(event.start_time)
-  return date.toDateString() === today.toDateString()
-}
-
-function isFree(event) {
-  return isFreePrice(event.price_text)
-}
-
-function matchesSearch(event) {
-  if (!searchQuery.value) return true
-  const query = searchQuery.value.toLowerCase()
-  return (
-    (event.title || '').toLowerCase().includes(query) ||
-    (event.organizer_display || event.organizer || '').toLowerCase().includes(query) ||
-    (event.location || '').toLowerCase().includes(query)
-  )
-}
-
 function formatDateGroup(date) {
   return new Intl.DateTimeFormat('en-DK', {
     weekday: 'long',
@@ -117,16 +67,12 @@ const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
 
-const visibleEvents = computed(() => {
-  return events.value
-    .filter(event => new Date(event.start_time) >= today)
-    .filter(event => filter.value !== 'today' || isToday(event))
-    .filter(event => filter.value !== 'weekend' || isThisWeekend(event))
-    .filter(event => filter.value !== 'free' || isFree(event))
-    .filter(event => category.value === 'all' || event.category === category.value)
-    .filter(matchesSearch)
-    .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
-})
+const visibleEvents = computed(() => filterEvents(events.value, {
+  filter: filter.value,
+  category: category.value,
+  searchQuery: searchQuery.value,
+  referenceDate: today
+}))
 
 const groupedEvents = computed(() => {
   const groups = {}

@@ -5,6 +5,10 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [vue()],
+  test: {
+    include: ['src/**/*.test.js', 'src/**/*.spec.js', 'test/**/*.test.js', 'test/**/*.spec.js'],
+    exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**']
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
