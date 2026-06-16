@@ -1454,12 +1454,19 @@ textarea {
   height: 20px;
 }
 
-.detail-favorite-button {
+.detail-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.detail-favorite-button,
+.detail-calendar-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   width: fit-content;
-  margin-top: 12px;
   padding: 7px 10px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -1473,10 +1480,19 @@ textarea {
 
 .detail-favorite-button:hover,
 .detail-favorite-button:focus-visible,
-.detail-favorite-button[aria-pressed="true"] {
+.detail-favorite-button[aria-pressed="true"],
+.detail-calendar-button:hover,
+.detail-calendar-button:focus-visible {
   border-color: #F1C1A4;
   background: #FFF4ED;
   color: var(--color-primary);
+}
+
+.detail-action-error {
+  margin: 8px 0 0;
+  color: #9D2B1F;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 @media (max-width: 720px) {
