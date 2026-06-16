@@ -1514,3 +1514,42 @@ textarea {
   width: fit-content;
   justify-self: start;
 }
+
+@media (max-width: 720px) {
+  .event-card__topline {
+    margin-bottom: 4px;
+  }
+
+  .event-card__actions {
+    gap: 4px;
+  }
+
+  .mobile-menu-section {
+    gap: 4px;
+  }
+
+  .mobile-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 42px;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    box-shadow: none;
+    color: var(--color-text);
+  }
+
+  .mobile-menu-item.router-link-active,
+  .mobile-menu-item:hover,
+  .mobile-menu-item:focus-visible {
+    background: #F7F4F1;
+    box-shadow: none;
+    color: var(--color-text);
+    outline: none;
+  }
+
+  .mobile-menu-item.logout-item {
+    color: var(--color-danger);
+  }
+}
