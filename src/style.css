@@ -1619,3 +1619,33 @@ textarea {
     display: contents;
   }
 }
+
+.my-events-export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.my-events-export h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.my-events-export p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.my-events-export__error {
+  flex-basis: 100%;
+}
+
+@media (max-width: 720px) {
+  .my-events-export {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

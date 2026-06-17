@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { CalendarPlus } from 'lucide-vue-next'
 import EventCard from '../components/EventCard.vue'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { applyFavoriteState, favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
+import { downloadIcsCalendar } from '../lib/calendarExport'
 import { getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
@@ -21,6 +23,7 @@ const error = ref('')
 const flashMessage = ref('')
 const favoriteIds = ref(new Set())
 const favoriteBusyId = ref(null)
+const calendarExportError = ref('')
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 
@@ -186,6 +189,15 @@ const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
 
+const savedUpcomingEvents = computed(() => {
+  const now = new Date()
+
+  return events.value
+    .filter(event => event.is_favorited)
+    .filter(event => new Date(event.start_time) >= now)
+    .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
+})
+
 const visibleEvents = computed(() => {
   return events.value
     .filter(event => new Date(event.start_time) >= today)
@@ -197,6 +209,23 @@ const visibleEvents = computed(() => {
     .filter(matchesSearch)
     .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
 })
+
+function exportMyEvents() {
+  calendarExportError.value = ''
+
+  if (savedUpcomingEvents.value.length === 0) {
+    calendarExportError.value = 'No saved upcoming events to export yet.'
+    return
+  }
+
+  try {
+    downloadIcsCalendar(savedUpcomingEvents.value, 'copenhagen-bachata-my-events.ics')
+    showToast('My Events calendar file downloaded.')
+  } catch (exportError) {
+    console.error('[calendar] My Events export failed', exportError)
+    calendarExportError.value = 'Could not create the calendar file. Please try again.'
+  }
+}
 
 const groupedEvents = computed(() => {
   const groups = {}
@@ -232,6 +261,20 @@ const groupedEvents = computed(() => {
     </section>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
+
+    <section v-if="isFavoritesView && savedUpcomingEvents.length > 0" class="card my-events-export">
+      <div>
+        <h2>Export My Events</h2>
+        <p>Download your saved upcoming events as one calendar file.</p>
+      </div>
+      <button class="button secondary icon-text" type="button" @click="exportMyEvents">
+        <CalendarPlus class="icon icon--sm" />
+        Export My Events
+      </button>
+      <p v-if="calendarExportError" class="detail-action-error my-events-export__error">{{ calendarExportError }}</p>
+    </section>
+
+    <p v-else-if="isFavoritesView && calendarExportError" class="empty-state">{{ calendarExportError }}</p>
 
     <div class="search-section">
       <input

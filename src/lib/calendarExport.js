@@ -88,7 +88,7 @@ function getDescription(event) {
   return parts.join('\n\n') || 'Copenhagen Bachata event.'
 }
 
-export function buildEventIcs(event) {
+function getEventIcsLines(event, timestamp) {
   if (!event) throw new Error('Event is missing.')
 
   const title = compact(event.title) || 'Copenhagen Bachata event'
@@ -98,6 +98,26 @@ export function buildEventIcs(event) {
   if (!startTime) throw new Error('Event start time is missing.')
 
   const lines = [
+    'BEGIN:VEVENT',
+    `UID:${escapeIcsText(getEventUid(event))}`,
+    `DTSTAMP:${timestamp}`,
+    `DTSTART;TZID=${CALENDAR_TIME_ZONE}:${formatCopenhagenDateTime(startTime)}`,
+    `DTEND;TZID=${CALENDAR_TIME_ZONE}:${formatCopenhagenDateTime(endTime)}`,
+    `SUMMARY:${escapeIcsText(title)}`,
+    `DESCRIPTION:${escapeIcsText(getDescription(event))}`,
+    `LOCATION:${escapeIcsText(event.location || '')}`
+  ]
+
+  if (compact(event.event_link)) {
+    lines.push(`URL:${escapeIcsText(event.event_link)}`)
+  }
+
+  lines.push('END:VEVENT')
+  return lines
+}
+
+function getCalendarHeaderLines() {
+  return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     `PRODID:${PRODUCT_ID}`,
@@ -120,36 +140,48 @@ export function buildEventIcs(event) {
     'DTSTART:19701025T030000',
     'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
     'END:STANDARD',
-    'END:VTIMEZONE',
-    'BEGIN:VEVENT',
-    `UID:${escapeIcsText(getEventUid(event))}`,
-    `DTSTAMP:${formatUtcDateTime(new Date())}`,
-    `DTSTART;TZID=${CALENDAR_TIME_ZONE}:${formatCopenhagenDateTime(startTime)}`,
-    `DTEND;TZID=${CALENDAR_TIME_ZONE}:${formatCopenhagenDateTime(endTime)}`,
-    `SUMMARY:${escapeIcsText(title)}`,
-    `DESCRIPTION:${escapeIcsText(getDescription(event))}`,
-    `LOCATION:${escapeIcsText(event.location || '')}`
+    'END:VTIMEZONE'
   ]
+}
 
-  if (compact(event.event_link)) {
-    lines.push(`URL:${escapeIcsText(event.event_link)}`)
+export function generateIcsCalendar(events) {
+  const eventList = Array.isArray(events) ? events.filter(Boolean) : []
+
+  if (eventList.length === 0) {
+    throw new Error('No events to export.')
   }
 
-  lines.push('END:VEVENT', 'END:VCALENDAR')
+  const timestamp = formatUtcDateTime(new Date())
+  const sortedEvents = [...eventList].sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
+  const lines = getCalendarHeaderLines()
+
+  sortedEvents.forEach((event) => {
+    lines.push(...getEventIcsLines(event, timestamp))
+  })
+
+  lines.push('END:VCALENDAR')
 
   return `${lines.map(foldIcsLine).join('\r\n')}\r\n`
 }
 
-export function downloadEventIcs(event) {
-  const icsContent = buildEventIcs(event)
+export function buildEventIcs(event) {
+  return generateIcsCalendar([event])
+}
+
+export function downloadIcsCalendar(events, fileName = 'copenhagen-bachata-events.ics') {
+  const icsContent = generateIcsCalendar(events)
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
 
   link.href = url
-  link.download = getSafeFileName(event?.title)
+  link.download = fileName
   document.body.appendChild(link)
   link.click()
   link.remove()
   URL.revokeObjectURL(url)
+}
+
+export function downloadEventIcs(event) {
+  downloadIcsCalendar([event], getSafeFileName(event?.title))
 }

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { buildEventIcs, escapeIcsText } from '../src/lib/calendarExport.js'
+import { buildEventIcs, escapeIcsText, generateIcsCalendar } from '../src/lib/calendarExport.js'
 
 test('escapeIcsText escapes calendar special characters', () => {
   assert.equal(escapeIcsText('Line 1\nComma, semi; slash\\'), 'Line 1\\nComma\\, semi\\; slash\\\\')
@@ -31,4 +31,31 @@ test('buildEventIcs creates a single Copenhagen timezone event', () => {
   assert.match(unfoldedIcs, /LOCATION:Copenhagen\\, DK/)
   assert.match(unfoldedIcs, /URL:https:\/\/example.com\/event/)
   assert.match(ics, /END:VCALENDAR\r\n$/)
+})
+
+test('generateIcsCalendar creates multiple events in chronological order', () => {
+  const ics = generateIcsCalendar([
+    {
+      id: 'later',
+      title: 'Later Event',
+      start_time: '2026-06-22T18:00:00.000Z',
+      end_time: '2026-06-22T19:00:00.000Z'
+    },
+    {
+      id: 'earlier',
+      title: 'Earlier Event',
+      start_time: '2026-06-21T18:00:00.000Z',
+      end_time: '2026-06-21T19:00:00.000Z'
+    }
+  ])
+  const unfoldedIcs = ics.replace(/\r\n[ \t]/g, '')
+
+  assert.equal((unfoldedIcs.match(/BEGIN:VEVENT/g) || []).length, 2)
+  assert.ok(unfoldedIcs.indexOf('SUMMARY:Earlier Event') < unfoldedIcs.indexOf('SUMMARY:Later Event'))
+  assert.match(unfoldedIcs, /DTSTART;TZID=Europe\/Copenhagen:20260621T200000/)
+  assert.match(unfoldedIcs, /DTSTART;TZID=Europe\/Copenhagen:20260622T200000/)
+})
+
+test('generateIcsCalendar rejects empty exports', () => {
+  assert.throws(() => generateIcsCalendar([]), /No events to export/)
 })
