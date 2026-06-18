@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import EventCard from './EventCard.vue'
 
@@ -21,6 +21,9 @@ today.setHours(0, 0, 0, 0)
 
 const visibleMonth = ref(new Date(today.getFullYear(), today.getMonth(), 1))
 const selectedDate = ref(new Date(today))
+const calendarSection = ref(null)
+const selectedEventsSection = ref(null)
+const showBackToCalendar = ref(false)
 
 function getDateKey(value) {
   const date = new Date(value)
@@ -38,8 +41,16 @@ function changeMonth(offset) {
   visibleMonth.value = new Date(visibleMonth.value.getFullYear(), visibleMonth.value.getMonth() + offset, 1)
 }
 
-function selectDate(date) {
+async function selectDate(date) {
   selectedDate.value = new Date(date)
+  showBackToCalendar.value = true
+
+  await nextTick()
+  selectedEventsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function scrollToCalendar() {
+  calendarSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 const monthLabel = computed(() => new Intl.DateTimeFormat('en-DK', {
@@ -111,7 +122,7 @@ watch(visibleMonth, (month) => {
 </script>
 
 <template>
-  <section class="calendar-view" aria-label="Calendar event results">
+  <section ref="calendarSection" class="calendar-view" aria-label="Calendar event results">
     <div class="calendar-view__header">
       <button class="calendar-nav-button" type="button" aria-label="Previous month" @click="changeMonth(-1)">
         <ChevronLeft class="icon icon--sm" />
@@ -135,7 +146,8 @@ watch(visibleMonth, (month) => {
           'calendar-day--muted': !day.isCurrentMonth,
           'calendar-day--today': day.isToday,
           'calendar-day--selected': day.isSelected,
-          'calendar-day--has-events': day.eventCount > 0
+          'calendar-day--has-events': day.eventCount > 0,
+          'calendar-day--has-multiple-events': day.eventCount > 1
         }"
         type="button"
         role="gridcell"
@@ -143,12 +155,15 @@ watch(visibleMonth, (month) => {
         @click="selectDate(day.date)"
       >
         <span class="calendar-day__number">{{ day.dayNumber }}</span>
-        <span v-if="day.eventCount > 0" class="calendar-day__event-count" :aria-label="`${day.eventCount} events`">{{ day.eventCount }}</span>
+        <span v-if="day.eventCount > 1" class="calendar-day__event-count" :aria-label="`${day.eventCount} events`">{{ day.eventCount }}</span>
       </button>
     </div>
 
-    <section class="calendar-selected-events" aria-live="polite">
-      <h3>{{ selectedDateLabel }}</h3>
+    <section ref="selectedEventsSection" class="calendar-selected-events" aria-live="polite">
+      <div class="calendar-selected-events__header">
+        <h3>{{ selectedDateLabel }}</h3>
+        <button v-if="showBackToCalendar" class="scroll-action-button" type="button" @click="scrollToCalendar">Back to Calendar</button>
+      </div>
       <p v-if="selectedDateEvents.length === 0" class="empty-state calendar-empty-state">No events on this date.</p>
       <div v-else class="event-list">
         <EventCard

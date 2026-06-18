@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CalendarPlus } from 'lucide-vue-next'
 import EventCalendarView from '../components/EventCalendarView.vue'
@@ -26,6 +26,9 @@ const favoriteIds = ref(new Set())
 const favoriteBusyId = ref(null)
 const calendarExportError = ref('')
 const viewMode = ref('list')
+const calendarFiltersOpen = ref(false)
+const discoveryControls = ref(null)
+const showListBackToTop = ref(false)
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 
@@ -33,6 +36,7 @@ const today = new Date()
 today.setHours(0, 0, 0, 0)
 
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
   const storedFlashMessage = sessionStorage.getItem('flash_message')
   if (storedFlashMessage) {
     flashMessage.value = storedFlashMessage
@@ -50,7 +54,12 @@ watch(user, async () => {
 })
 
 watch(isFavoritesView, async () => {
+  handleScroll()
   await loadEvents()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 
 async function loadEvents() {
@@ -90,6 +99,15 @@ async function loadEvents() {
 
 function showToast(message) {
   window.dispatchEvent(new CustomEvent('app-toast', { detail: { message } }))
+}
+
+function handleScroll() {
+  if (viewMode.value !== 'list' || isFavoritesView.value) {
+    showListBackToTop.value = false
+    return
+  }
+
+  showListBackToTop.value = window.scrollY > 520
 }
 
 function askLoginToFavorite() {
@@ -181,10 +199,34 @@ function setQuickFilter(nextFilter) {
 
 function setViewMode(nextViewMode) {
   viewMode.value = nextViewMode
+  calendarFiltersOpen.value = false
+  handleScroll()
+}
+
+function toggleCalendarFilters() {
+  calendarFiltersOpen.value = !calendarFiltersOpen.value
+}
+
+function clearFilters() {
+  filter.value = 'all'
+  category.value = 'all'
+  searchQuery.value = ''
+}
+
+function scrollToDiscoveryControls() {
+  discoveryControls.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
+})
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filter.value !== 'all') count += 1
+  if (category.value !== 'all') count += 1
+  if (searchQuery.value.trim()) count += 1
+  return count
 })
 
 const savedUpcomingEvents = computed(() => {
@@ -256,53 +298,89 @@ function exportMyEvents() {
 
     <p v-else-if="isFavoritesView && calendarExportError" class="empty-state">{{ calendarExportError }}</p>
 
-    <div class="search-section">
-      <input
-        v-model="searchQuery"
-        type="text"
-        class="search-input"
-        placeholder="Search by title, organizer, or location..."
-      />
-    </div>
+    <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
+      <template v-if="viewMode === 'list' || isFavoritesView">
+        <div class="search-section">
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            placeholder="Search by title, organizer, or location..."
+          />
+        </div>
 
-    <section class="filters" aria-label="Event filters">
-      <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
-      <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
-      <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
-      <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
-    </section>
+        <section class="filters" aria-label="Event filters">
+          <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
+          <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
+          <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
+          <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
+        </section>
+      </template>
 
-    <div class="event-controls-row">
-      <label class="category-filter">
-        <span>Category</span>
-        <select v-model="category">
-          <option v-for="item in categories" :key="item" :value="item">
-            {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-          </option>
-        </select>
-      </label>
-
-      <div v-if="!isFavoritesView" class="view-toggle" aria-label="Event view">
+      <section v-else class="calendar-filter-panel" aria-label="Calendar filters">
         <button
+          class="calendar-filter-toggle"
           type="button"
-          class="view-toggle__button"
-          :class="{ active: viewMode === 'list' }"
-          :aria-pressed="viewMode === 'list' ? 'true' : 'false'"
-          @click="setViewMode('list')"
+          :aria-expanded="calendarFiltersOpen ? 'true' : 'false'"
+          @click="toggleCalendarFilters"
         >
-          List
+          <span>Filters</span>
+          <span v-if="activeFilterCount > 0" class="calendar-filter-toggle__count">{{ activeFilterCount }}</span>
         </button>
-        <button
-          type="button"
-          class="view-toggle__button"
-          :class="{ active: viewMode === 'calendar' }"
-          :aria-pressed="viewMode === 'calendar' ? 'true' : 'false'"
-          @click="setViewMode('calendar')"
-        >
-          Calendar
-        </button>
+
+        <div v-if="calendarFiltersOpen" class="calendar-filter-panel__content">
+          <section class="filters" aria-label="Calendar quick filters">
+            <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
+            <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
+            <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
+            <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
+          </section>
+
+          <label class="category-filter">
+            <span>Category</span>
+            <select v-model="category">
+              <option v-for="item in categories" :key="item" :value="item">
+                {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+              </option>
+            </select>
+          </label>
+
+          <button class="button secondary button--compact" type="button" @click="clearFilters">Clear Filters</button>
+        </div>
+      </section>
+
+      <div class="event-controls-row">
+        <label v-if="viewMode === 'list' || isFavoritesView" class="category-filter">
+          <span>Category</span>
+          <select v-model="category">
+            <option v-for="item in categories" :key="item" :value="item">
+              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+            </option>
+          </select>
+        </label>
+
+        <div v-if="!isFavoritesView" class="view-toggle" aria-label="Event view">
+          <button
+            type="button"
+            class="view-toggle__button"
+            :class="{ active: viewMode === 'list' }"
+            :aria-pressed="viewMode === 'list' ? 'true' : 'false'"
+            @click="setViewMode('list')"
+          >
+            List
+          </button>
+          <button
+            type="button"
+            class="view-toggle__button"
+            :class="{ active: viewMode === 'calendar' }"
+            :aria-pressed="viewMode === 'calendar' ? 'true' : 'false'"
+            @click="setViewMode('calendar')"
+          >
+            Calendar
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
 
     <p v-if="loading" class="empty-state">Loading events...</p>
 
@@ -323,5 +401,14 @@ function exportMyEvents() {
       :favorite-busy-id="favoriteBusyId"
       @toggle-favorite="toggleFavorite"
     />
+
+    <button
+      v-if="showListBackToTop"
+      class="scroll-action-button scroll-action-button--floating"
+      type="button"
+      @click="scrollToDiscoveryControls"
+    >
+      Back to Top
+    </button>
   </div>
 </template>

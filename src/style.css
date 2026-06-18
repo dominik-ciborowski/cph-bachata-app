@@ -1855,3 +1855,118 @@ textarea {
     min-height: 58px;
   }
 }
+
+.discovery-controls {
+  scroll-margin-top: 92px;
+}
+
+.calendar-filter-panel {
+  margin-bottom: 12px;
+}
+
+.calendar-filter-toggle {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 900;
+}
+
+.calendar-filter-toggle__count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-size: 12px;
+  line-height: 22px;
+}
+
+.calendar-filter-panel__content {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+}
+
+.calendar-filter-panel__content .filters,
+.calendar-filter-panel__content .category-filter {
+  margin-bottom: 0;
+}
+
+.calendar-day--has-events:not(.calendar-day--selected):not(.calendar-day--has-multiple-events)::after {
+  content: '';
+  position: absolute;
+  bottom: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.calendar-day--has-multiple-events:not(.calendar-day--selected)::after {
+  content: none;
+}
+
+.calendar-selected-events {
+  scroll-margin-top: 92px;
+}
+
+.calendar-selected-events__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scroll-action-button {
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 8px 20px rgba(2, 0, 0, 0.08);
+}
+
+.scroll-action-button:hover,
+.scroll-action-button:focus-visible {
+  border-color: #F1C1A4;
+  color: var(--color-primary);
+}
+
+.scroll-action-button--floating {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9;
+}
+
+@media (min-width: 720px) {
+  .calendar-filter-toggle {
+    width: fit-content;
+    min-width: 180px;
+  }
+
+  .calendar-view {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+  }
+}
