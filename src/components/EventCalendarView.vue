@@ -55,14 +55,13 @@ function scrollToCalendar() {
 
 function updateBackToCalendarVisibility() {
   const calendarRect = calendarSection.value?.getBoundingClientRect()
-  const selectedEventsRect = selectedEventsSection.value?.getBoundingClientRect()
 
-  if (!calendarRect || !selectedEventsRect) {
+  if (!calendarRect) {
     showBackToCalendar.value = false
     return
   }
 
-  showBackToCalendar.value = calendarRect.bottom < 80 && selectedEventsRect.top < window.innerHeight
+  showBackToCalendar.value = calendarRect.bottom < 80
 }
 
 onMounted(() => {

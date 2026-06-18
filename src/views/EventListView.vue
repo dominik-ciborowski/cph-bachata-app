@@ -102,12 +102,13 @@ function showToast(message) {
 }
 
 function handleScroll() {
-  if (viewMode.value !== 'list' || isFavoritesView.value) {
+  if (viewMode.value !== 'list') {
     showListBackToTop.value = false
     return
   }
 
-  showListBackToTop.value = window.scrollY > 520
+  const controlsRect = discoveryControls.value?.getBoundingClientRect()
+  showListBackToTop.value = Boolean(controlsRect && controlsRect.bottom < 80)
 }
 
 function askLoginToFavorite() {
