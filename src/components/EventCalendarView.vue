@@ -22,6 +22,7 @@ today.setHours(0, 0, 0, 0)
 const visibleMonth = ref(new Date(today.getFullYear(), today.getMonth(), 1))
 const selectedDate = ref(new Date(today))
 const calendarSection = ref(null)
+const calendarGridSection = ref(null)
 const selectedEventsSection = ref(null)
 const showBackToCalendar = ref(false)
 
@@ -49,12 +50,12 @@ async function selectDate(date) {
 }
 
 function scrollToCalendar() {
-  calendarSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  calendarGridSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   showBackToCalendar.value = false
 }
 
 function updateBackToCalendarVisibility() {
-  const calendarRect = calendarSection.value?.getBoundingClientRect()
+  const calendarRect = calendarGridSection.value?.getBoundingClientRect()
 
   if (!calendarRect) {
     showBackToCalendar.value = false
@@ -142,40 +143,42 @@ watch(visibleMonth, (month) => {
 
 <template>
   <section ref="calendarSection" class="calendar-view" aria-label="Calendar event results">
-    <div class="calendar-view__header">
-      <button class="calendar-nav-button" type="button" aria-label="Previous month" @click="changeMonth(-1)">
-        <ChevronLeft class="icon icon--sm" />
-      </button>
-      <div>
-        <h2>{{ monthLabel }}</h2>
-        <p>{{ currentMonthEventCount > 0 ? `${currentMonthEventCount} event${currentMonthEventCount === 1 ? '' : 's'} this month` : 'No events this month' }}</p>
+    <div ref="calendarGridSection" class="calendar-view__calendar">
+      <div class="calendar-view__header">
+        <button class="calendar-nav-button" type="button" aria-label="Previous month" @click="changeMonth(-1)">
+          <ChevronLeft class="icon icon--sm" />
+        </button>
+        <div>
+          <h2>{{ monthLabel }}</h2>
+          <p>{{ currentMonthEventCount > 0 ? `${currentMonthEventCount} event${currentMonthEventCount === 1 ? '' : 's'} this month` : 'No events this month' }}</p>
+        </div>
+        <button class="calendar-nav-button" type="button" aria-label="Next month" @click="changeMonth(1)">
+          <ChevronRight class="icon icon--sm" />
+        </button>
       </div>
-      <button class="calendar-nav-button" type="button" aria-label="Next month" @click="changeMonth(1)">
-        <ChevronRight class="icon icon--sm" />
-      </button>
-    </div>
 
-    <div class="calendar-grid" role="grid" aria-label="Month calendar">
-      <div v-for="weekday in weekdayLabels" :key="weekday" class="calendar-weekday">{{ weekday }}</div>
-      <button
-        v-for="day in calendarDays"
-        :key="day.dateKey"
-        class="calendar-day"
-        :class="{
-          'calendar-day--muted': !day.isCurrentMonth,
-          'calendar-day--today': day.isToday,
-          'calendar-day--selected': day.isSelected,
-          'calendar-day--has-events': day.eventCount > 0,
-          'calendar-day--has-multiple-events': day.eventCount > 1
-        }"
-        type="button"
-        role="gridcell"
-        :aria-pressed="day.isSelected ? 'true' : 'false'"
-        @click="selectDate(day.date)"
-      >
-        <span class="calendar-day__number">{{ day.dayNumber }}</span>
-        <span v-if="day.eventCount > 1" class="calendar-day__event-count" :aria-label="`${day.eventCount} events`">{{ day.eventCount }}</span>
-      </button>
+      <div class="calendar-grid" role="grid" aria-label="Month calendar">
+        <div v-for="weekday in weekdayLabels" :key="weekday" class="calendar-weekday">{{ weekday }}</div>
+        <button
+          v-for="day in calendarDays"
+          :key="day.dateKey"
+          class="calendar-day"
+          :class="{
+            'calendar-day--muted': !day.isCurrentMonth,
+            'calendar-day--today': day.isToday,
+            'calendar-day--selected': day.isSelected,
+            'calendar-day--has-events': day.eventCount > 0,
+            'calendar-day--has-multiple-events': day.eventCount > 1
+          }"
+          type="button"
+          role="gridcell"
+          :aria-pressed="day.isSelected ? 'true' : 'false'"
+          @click="selectDate(day.date)"
+        >
+          <span class="calendar-day__number">{{ day.dayNumber }}</span>
+          <span v-if="day.eventCount > 1" class="calendar-day__event-count" :aria-label="`${day.eventCount} events`">{{ day.eventCount }}</span>
+        </button>
+      </div>
     </div>
 
     <section ref="selectedEventsSection" class="calendar-selected-events" aria-live="polite">

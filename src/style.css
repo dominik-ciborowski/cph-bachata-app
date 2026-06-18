@@ -1970,3 +1970,9 @@ textarea {
     margin: 0;
   }
 }
+
+.calendar-view__calendar {
+  display: grid;
+  gap: 16px;
+  scroll-margin-top: 92px;
+}
