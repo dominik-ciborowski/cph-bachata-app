@@ -2,7 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CalendarPlus } from 'lucide-vue-next'
-import EventCard from '../components/EventCard.vue'
+import EventCalendarView from '../components/EventCalendarView.vue'
+import EventListResultsView from '../components/EventListView.vue'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { applyFavoriteState, favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
@@ -24,6 +25,7 @@ const flashMessage = ref('')
 const favoriteIds = ref(new Set())
 const favoriteBusyId = ref(null)
 const calendarExportError = ref('')
+const viewMode = ref('list')
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 
@@ -173,16 +175,12 @@ function matchesSearch(event) {
   )
 }
 
-function formatDateGroup(date) {
-  return new Intl.DateTimeFormat('en-DK', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long'
-  }).format(date)
-}
-
 function setQuickFilter(nextFilter) {
   filter.value = filter.value === nextFilter && nextFilter !== 'all' ? 'all' : nextFilter
+}
+
+function setViewMode(nextViewMode) {
+  viewMode.value = nextViewMode
 }
 
 const categories = computed(() => {
@@ -226,24 +224,6 @@ function exportMyEvents() {
     calendarExportError.value = 'Could not create the calendar file. Please try again.'
   }
 }
-
-const groupedEvents = computed(() => {
-  const groups = {}
-
-  visibleEvents.value.forEach(event => {
-    const dateKey = new Date(event.start_time).toDateString()
-    if (!groups[dateKey]) {
-      groups[dateKey] = []
-    }
-    groups[dateKey].push(event)
-  })
-
-  return Object.entries(groups).map(([dateStr, eventsInGroup]) => ({
-    date: new Date(dateStr),
-    dateLabel: formatDateGroup(new Date(dateStr)),
-    events: eventsInGroup
-  }))
-})
 
 </script>
 
@@ -292,34 +272,56 @@ const groupedEvents = computed(() => {
       <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
     </section>
 
-    <label class="category-filter">
-      <span>Category</span>
-      <select v-model="category">
-      <option v-for="item in categories" :key="item" :value="item">
-        {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-      </option>
-    </select>
-  </label>
+    <div class="event-controls-row">
+      <label class="category-filter">
+        <span>Category</span>
+        <select v-model="category">
+          <option v-for="item in categories" :key="item" :value="item">
+            {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+          </option>
+        </select>
+      </label>
+
+      <div v-if="!isFavoritesView" class="view-toggle" aria-label="Event view">
+        <button
+          type="button"
+          class="view-toggle__button"
+          :class="{ active: viewMode === 'list' }"
+          :aria-pressed="viewMode === 'list' ? 'true' : 'false'"
+          @click="setViewMode('list')"
+        >
+          List
+        </button>
+        <button
+          type="button"
+          class="view-toggle__button"
+          :class="{ active: viewMode === 'calendar' }"
+          :aria-pressed="viewMode === 'calendar' ? 'true' : 'false'"
+          @click="setViewMode('calendar')"
+        >
+          Calendar
+        </button>
+      </div>
+    </div>
 
     <p v-if="loading" class="empty-state">Loading events...</p>
 
     <p v-else-if="error" class="empty-state">Could not load events: {{ error }}</p>
 
-    <p v-else-if="groupedEvents.length === 0" class="empty-state">{{ isFavoritesView ? 'No saved upcoming events yet.' : 'No events match these filters yet.' }}</p>
+    <p v-else-if="visibleEvents.length === 0" class="empty-state">{{ isFavoritesView ? 'No saved upcoming events yet.' : 'No events match these filters yet.' }}</p>
 
-    <section v-else aria-label="Bachata event results">
-      <div v-for="group in groupedEvents" :key="group.date.toISOString()" class="event-date-group">
-        <h2 class="event-date-header">{{ group.dateLabel }}</h2>
-        <div class="event-list">
-          <EventCard
-            v-for="event in group.events"
-            :key="event.id"
-            :event="event"
-            :favorite-busy="favoriteBusyId === event.id"
-            @toggle-favorite="toggleFavorite"
-          />
-        </div>
-      </div>
-    </section>
+    <EventCalendarView
+      v-else-if="!isFavoritesView && viewMode === 'calendar'"
+      :events="visibleEvents"
+      :favorite-busy-id="favoriteBusyId"
+      @toggle-favorite="toggleFavorite"
+    />
+
+    <EventListResultsView
+      v-else
+      :events="visibleEvents"
+      :favorite-busy-id="favoriteBusyId"
+      @toggle-favorite="toggleFavorite"
+    />
   </div>
 </template>
