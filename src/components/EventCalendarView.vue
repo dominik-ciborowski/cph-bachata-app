@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import EventCard from './EventCard.vue'
 
@@ -43,15 +43,35 @@ function changeMonth(offset) {
 
 async function selectDate(date) {
   selectedDate.value = new Date(date)
-  showBackToCalendar.value = true
-
   await nextTick()
   selectedEventsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  updateBackToCalendarVisibility()
 }
 
 function scrollToCalendar() {
   calendarSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  showBackToCalendar.value = false
 }
+
+function updateBackToCalendarVisibility() {
+  const calendarRect = calendarSection.value?.getBoundingClientRect()
+  const selectedEventsRect = selectedEventsSection.value?.getBoundingClientRect()
+
+  if (!calendarRect || !selectedEventsRect) {
+    showBackToCalendar.value = false
+    return
+  }
+
+  showBackToCalendar.value = calendarRect.bottom < 80 && selectedEventsRect.top < window.innerHeight
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', updateBackToCalendarVisibility, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', updateBackToCalendarVisibility)
+})
 
 const monthLabel = computed(() => new Intl.DateTimeFormat('en-DK', {
   month: 'long',
@@ -162,7 +182,6 @@ watch(visibleMonth, (month) => {
     <section ref="selectedEventsSection" class="calendar-selected-events" aria-live="polite">
       <div class="calendar-selected-events__header">
         <h3>{{ selectedDateLabel }}</h3>
-        <button v-if="showBackToCalendar" class="scroll-action-button" type="button" @click="scrollToCalendar">Back to Calendar</button>
       </div>
       <p v-if="selectedDateEvents.length === 0" class="empty-state calendar-empty-state">No events on this date.</p>
       <div v-else class="event-list">
@@ -175,5 +194,14 @@ watch(visibleMonth, (month) => {
         />
       </div>
     </section>
+
+    <button
+      v-if="showBackToCalendar"
+      class="scroll-action-button scroll-action-button--floating"
+      type="button"
+      @click="scrollToCalendar"
+    >
+      ↑ Calendar
+    </button>
   </section>
 </template>

@@ -408,7 +408,7 @@ function exportMyEvents() {
       type="button"
       @click="scrollToDiscoveryControls"
     >
-      Back to Top
+      ↑ Top
     </button>
   </div>
 </template>
