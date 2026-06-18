@@ -207,10 +207,18 @@ function toggleCalendarFilters() {
   calendarFiltersOpen.value = !calendarFiltersOpen.value
 }
 
+function setCalendarFilter(nextFilter) {
+  filter.value = nextFilter
+}
+
+function isCalendarFilterActive(currentFilter) {
+  if (currentFilter === 'all') return filter.value !== 'free'
+  return filter.value === currentFilter
+}
+
 function clearFilters() {
   filter.value = 'all'
   category.value = 'all'
-  searchQuery.value = ''
 }
 
 function scrollToDiscoveryControls() {
@@ -223,9 +231,8 @@ const categories = computed(() => {
 
 const activeFilterCount = computed(() => {
   let count = 0
-  if (filter.value !== 'all') count += 1
+  if (filter.value === 'free') count += 1
   if (category.value !== 'all') count += 1
-  if (searchQuery.value.trim()) count += 1
   return count
 })
 
@@ -239,14 +246,16 @@ const savedUpcomingEvents = computed(() => {
 })
 
 const visibleEvents = computed(() => {
+  const shouldApplyListFilters = viewMode.value === 'list' || isFavoritesView.value
+
   return events.value
     .filter(event => new Date(event.start_time) >= today)
-    .filter(event => filter.value !== 'today' || isToday(event))
-    .filter(event => filter.value !== 'weekend' || isThisWeekend(event))
+    .filter(event => !shouldApplyListFilters || filter.value !== 'today' || isToday(event))
+    .filter(event => !shouldApplyListFilters || filter.value !== 'weekend' || isThisWeekend(event))
     .filter(event => !isFavoritesView.value || event.is_favorited)
     .filter(event => filter.value !== 'free' || isFree(event))
     .filter(event => category.value === 'all' || event.category === category.value)
-    .filter(matchesSearch)
+    .filter(event => !shouldApplyListFilters || matchesSearch(event))
     .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
 })
 
@@ -330,10 +339,8 @@ function exportMyEvents() {
 
         <div v-if="calendarFiltersOpen" class="calendar-filter-panel__content">
           <section class="filters" aria-label="Calendar quick filters">
-            <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
-            <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
-            <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
-            <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
+            <button type="button" class="filter-button" :class="{ active: isCalendarFilterActive('all') }" :aria-pressed="isCalendarFilterActive('all') ? 'true' : 'false'" @click="setCalendarFilter('all')">All Events</button>
+            <button type="button" class="filter-button" :class="{ active: isCalendarFilterActive('free') }" :aria-pressed="isCalendarFilterActive('free') ? 'true' : 'false'" @click="setCalendarFilter('free')">Free</button>
           </section>
 
           <label class="category-filter">
