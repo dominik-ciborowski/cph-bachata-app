@@ -1048,6 +1048,7 @@ textarea {
     font-size: 32px;
   }
 
+
   .event-card {
     flex-direction: column;
   }
@@ -1646,6 +1647,70 @@ textarea {
 
   .event-card__topline {
     display: contents;
+  }
+}
+
+
+.login-benefits-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  border-color: rgba(233, 91, 0, 0.16);
+  background: linear-gradient(135deg, #FFF8F1 0%, #FFFFFF 100%);
+}
+
+.login-benefits-banner__content {
+  min-width: 0;
+}
+
+.login-benefits-banner h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.login-benefits-banner p {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.login-benefits-banner__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.login-benefits-banner__actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.login-benefits-banner__dismiss {
+  min-width: 42px;
+  padding-inline: 10px;
+}
+
+@media (max-width: 720px) {
+  .login-benefits-banner {
+    flex-direction: column;
+  }
+
+  .login-benefits-banner__actions {
+    width: 100%;
+  }
+
+  .login-benefits-banner__actions .button:first-child {
+    flex: 1;
   }
 }
 
