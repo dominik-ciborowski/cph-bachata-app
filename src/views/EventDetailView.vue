@@ -1,10 +1,11 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { CalendarDays, Heart, MapPin, Pencil, Trash2 } from 'lucide-vue-next'
+import { CalendarDays, CalendarPlus, Heart, MapPin, Pencil, Trash2 } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
+import { downloadEventIcs } from '../lib/calendarExport'
 import { EventLinkIcon, formatPriceDisplay, getCategoryMeta } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
@@ -15,6 +16,7 @@ const event = ref(null)
 const loading = ref(true)
 const error = ref('')
 const favoriteBusy = ref(false)
+const calendarExportError = ref('')
 const canManageCurrentEvent = computed(() => canManageEventRecord(event.value))
 
 function getBackTarget() {
@@ -129,6 +131,20 @@ function getMapsUrl(location) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
 }
 
+function addToCalendar() {
+  if (!event.value) return
+
+  calendarExportError.value = ''
+
+  try {
+    downloadEventIcs(event.value)
+    showToast('Calendar file downloaded.')
+  } catch (exportError) {
+    console.error('[calendar] Event export failed', exportError)
+    calendarExportError.value = 'Could not create the calendar file. Please try again.'
+  }
+}
+
 async function deleteEvent() {
   if (!confirm('Are you sure you want to delete this event?')) {
     return
@@ -173,16 +189,27 @@ async function deleteEvent() {
       </p>
       <h1>{{ event.title }}</h1>
       <p v-if="event.organizer_display" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer_display }}</span></p>
-      <button
-        class="detail-favorite-button"
-        type="button"
-        :disabled="favoriteBusy"
-        :aria-pressed="event.is_favorited ? 'true' : 'false'"
-        @click="toggleFavorite"
-      >
-        <Heart class="icon icon--sm" :fill="event.is_favorited ? 'currentColor' : 'none'" />
-        {{ event.is_favorited ? 'Saved to My Events' : 'Save to My Events' }}
-      </button>
+      <div class="detail-event-actions">
+        <button
+          class="detail-favorite-button"
+          type="button"
+          :disabled="favoriteBusy"
+          :aria-pressed="event.is_favorited ? 'true' : 'false'"
+          @click="toggleFavorite"
+        >
+          <Heart class="icon icon--sm" :fill="event.is_favorited ? 'currentColor' : 'none'" />
+          {{ event.is_favorited ? 'Saved to My Events' : 'Save to My Events' }}
+        </button>
+        <button
+          class="detail-calendar-button"
+          type="button"
+          @click="addToCalendar"
+        >
+          <CalendarPlus class="icon icon--sm" />
+          Add to Calendar
+        </button>
+      </div>
+      <p v-if="calendarExportError" class="detail-action-error">{{ calendarExportError }}</p>
     </section>
 
     <section class="card detail-summary">

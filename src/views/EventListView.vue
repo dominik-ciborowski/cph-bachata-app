@@ -1,10 +1,13 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import EventCard from '../components/EventCard.vue'
+import { CalendarPlus } from 'lucide-vue-next'
+import EventCalendarView from '../components/EventCalendarView.vue'
+import EventListResultsView from '../components/EventListView.vue'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { applyFavoriteState, favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
+import { downloadIcsCalendar } from '../lib/calendarExport'
 import { getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
@@ -21,6 +24,11 @@ const error = ref('')
 const flashMessage = ref('')
 const favoriteIds = ref(new Set())
 const favoriteBusyId = ref(null)
+const calendarExportError = ref('')
+const viewMode = ref('list')
+const calendarFiltersOpen = ref(false)
+const discoveryControls = ref(null)
+const showListBackToTop = ref(false)
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 
@@ -28,6 +36,7 @@ const today = new Date()
 today.setHours(0, 0, 0, 0)
 
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
   const storedFlashMessage = sessionStorage.getItem('flash_message')
   if (storedFlashMessage) {
     flashMessage.value = storedFlashMessage
@@ -45,7 +54,12 @@ watch(user, async () => {
 })
 
 watch(isFavoritesView, async () => {
+  handleScroll()
   await loadEvents()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 
 async function loadEvents() {
@@ -85,6 +99,16 @@ async function loadEvents() {
 
 function showToast(message) {
   window.dispatchEvent(new CustomEvent('app-toast', { detail: { message } }))
+}
+
+function handleScroll() {
+  if (viewMode.value !== 'list') {
+    showListBackToTop.value = false
+    return
+  }
+
+  const controlsRect = discoveryControls.value?.getBoundingClientRect()
+  showListBackToTop.value = Boolean(controlsRect && controlsRect.bottom < 80)
 }
 
 function askLoginToFavorite() {
@@ -170,51 +194,88 @@ function matchesSearch(event) {
   )
 }
 
-function formatDateGroup(date) {
-  return new Intl.DateTimeFormat('en-DK', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long'
-  }).format(date)
-}
-
 function setQuickFilter(nextFilter) {
   filter.value = filter.value === nextFilter && nextFilter !== 'all' ? 'all' : nextFilter
+}
+
+function setViewMode(nextViewMode) {
+  viewMode.value = nextViewMode
+  calendarFiltersOpen.value = false
+  handleScroll()
+}
+
+function toggleCalendarFilters() {
+  calendarFiltersOpen.value = !calendarFiltersOpen.value
+}
+
+function setCalendarFilter(nextFilter) {
+  filter.value = nextFilter
+}
+
+function isCalendarFilterActive(currentFilter) {
+  if (currentFilter === 'all') return filter.value !== 'free'
+  return filter.value === currentFilter
+}
+
+function clearFilters() {
+  filter.value = 'all'
+  category.value = 'all'
+}
+
+function scrollToDiscoveryControls() {
+  discoveryControls.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
 
-const visibleEvents = computed(() => {
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filter.value === 'free') count += 1
+  if (category.value !== 'all') count += 1
+  return count
+})
+
+const savedUpcomingEvents = computed(() => {
+  const now = new Date()
+
   return events.value
-    .filter(event => new Date(event.start_time) >= today)
-    .filter(event => filter.value !== 'today' || isToday(event))
-    .filter(event => filter.value !== 'weekend' || isThisWeekend(event))
-    .filter(event => !isFavoritesView.value || event.is_favorited)
-    .filter(event => filter.value !== 'free' || isFree(event))
-    .filter(event => category.value === 'all' || event.category === category.value)
-    .filter(matchesSearch)
+    .filter(event => event.is_favorited)
+    .filter(event => new Date(event.start_time) >= now)
     .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
 })
 
-const groupedEvents = computed(() => {
-  const groups = {}
+const visibleEvents = computed(() => {
+  const shouldApplyListFilters = viewMode.value === 'list' || isFavoritesView.value
 
-  visibleEvents.value.forEach(event => {
-    const dateKey = new Date(event.start_time).toDateString()
-    if (!groups[dateKey]) {
-      groups[dateKey] = []
-    }
-    groups[dateKey].push(event)
-  })
-
-  return Object.entries(groups).map(([dateStr, eventsInGroup]) => ({
-    date: new Date(dateStr),
-    dateLabel: formatDateGroup(new Date(dateStr)),
-    events: eventsInGroup
-  }))
+  return events.value
+    .filter(event => new Date(event.start_time) >= today)
+    .filter(event => !shouldApplyListFilters || filter.value !== 'today' || isToday(event))
+    .filter(event => !shouldApplyListFilters || filter.value !== 'weekend' || isThisWeekend(event))
+    .filter(event => !isFavoritesView.value || event.is_favorited)
+    .filter(event => filter.value !== 'free' || isFree(event))
+    .filter(event => category.value === 'all' || event.category === category.value)
+    .filter(event => !shouldApplyListFilters || matchesSearch(event))
+    .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
 })
+
+function exportMyEvents() {
+  calendarExportError.value = ''
+
+  if (savedUpcomingEvents.value.length === 0) {
+    calendarExportError.value = 'No saved upcoming events to export yet.'
+    return
+  }
+
+  try {
+    downloadIcsCalendar(savedUpcomingEvents.value, 'copenhagen-bachata-my-events.ics')
+    showToast('My Events calendar file downloaded.')
+  } catch (exportError) {
+    console.error('[calendar] My Events export failed', exportError)
+    calendarExportError.value = 'Could not create the calendar file. Please try again.'
+  }
+}
 
 </script>
 
@@ -233,50 +294,129 @@ const groupedEvents = computed(() => {
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
 
-    <div class="search-section">
-      <input
-        v-model="searchQuery"
-        type="text"
-        class="search-input"
-        placeholder="Search by title, organizer, or location..."
-      />
-    </div>
-
-    <section class="filters" aria-label="Event filters">
-      <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
-      <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
-      <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
-      <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
+    <section v-if="isFavoritesView && savedUpcomingEvents.length > 0" class="card my-events-export">
+      <div>
+        <h2>Export My Events</h2>
+        <p>Download your saved upcoming events as one calendar file.</p>
+      </div>
+      <button class="button secondary icon-text" type="button" @click="exportMyEvents">
+        <CalendarPlus class="icon icon--sm" />
+        Export My Events
+      </button>
+      <p v-if="calendarExportError" class="detail-action-error my-events-export__error">{{ calendarExportError }}</p>
     </section>
 
-    <label class="category-filter">
-      <span>Category</span>
-      <select v-model="category">
-      <option v-for="item in categories" :key="item" :value="item">
-        {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-      </option>
-    </select>
-  </label>
+    <p v-else-if="isFavoritesView && calendarExportError" class="empty-state">{{ calendarExportError }}</p>
+
+    <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
+      <template v-if="viewMode === 'list' || isFavoritesView">
+        <div class="search-section">
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            placeholder="Search by title, organizer, or location..."
+          />
+        </div>
+
+        <section class="filters" aria-label="Event filters">
+          <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
+          <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
+          <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
+          <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
+        </section>
+      </template>
+
+      <section v-else class="calendar-filter-panel" aria-label="Calendar filters">
+        <button
+          class="calendar-filter-toggle"
+          type="button"
+          :aria-expanded="calendarFiltersOpen ? 'true' : 'false'"
+          @click="toggleCalendarFilters"
+        >
+          <span>Filters</span>
+          <span v-if="activeFilterCount > 0" class="calendar-filter-toggle__count">{{ activeFilterCount }}</span>
+        </button>
+
+        <div v-if="calendarFiltersOpen" class="calendar-filter-panel__content">
+          <section class="filters" aria-label="Calendar quick filters">
+            <button type="button" class="filter-button" :class="{ active: isCalendarFilterActive('all') }" :aria-pressed="isCalendarFilterActive('all') ? 'true' : 'false'" @click="setCalendarFilter('all')">All Events</button>
+            <button type="button" class="filter-button" :class="{ active: isCalendarFilterActive('free') }" :aria-pressed="isCalendarFilterActive('free') ? 'true' : 'false'" @click="setCalendarFilter('free')">Free</button>
+          </section>
+
+          <label class="category-filter">
+            <span>Category</span>
+            <select v-model="category">
+              <option v-for="item in categories" :key="item" :value="item">
+                {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+              </option>
+            </select>
+          </label>
+
+          <button class="button secondary button--compact" type="button" @click="clearFilters">Clear Filters</button>
+        </div>
+      </section>
+
+      <div class="event-controls-row">
+        <label v-if="viewMode === 'list' || isFavoritesView" class="category-filter">
+          <span>Category</span>
+          <select v-model="category">
+            <option v-for="item in categories" :key="item" :value="item">
+              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+            </option>
+          </select>
+        </label>
+
+        <div v-if="!isFavoritesView" class="view-toggle" aria-label="Event view">
+          <button
+            type="button"
+            class="view-toggle__button"
+            :class="{ active: viewMode === 'list' }"
+            :aria-pressed="viewMode === 'list' ? 'true' : 'false'"
+            @click="setViewMode('list')"
+          >
+            List
+          </button>
+          <button
+            type="button"
+            class="view-toggle__button"
+            :class="{ active: viewMode === 'calendar' }"
+            :aria-pressed="viewMode === 'calendar' ? 'true' : 'false'"
+            @click="setViewMode('calendar')"
+          >
+            Calendar
+          </button>
+        </div>
+      </div>
+    </section>
 
     <p v-if="loading" class="empty-state">Loading events...</p>
 
     <p v-else-if="error" class="empty-state">Could not load events: {{ error }}</p>
 
-    <p v-else-if="groupedEvents.length === 0" class="empty-state">{{ isFavoritesView ? 'No saved upcoming events yet.' : 'No events match these filters yet.' }}</p>
+    <p v-else-if="visibleEvents.length === 0" class="empty-state">{{ isFavoritesView ? 'No saved upcoming events yet.' : 'No events match these filters yet.' }}</p>
 
-    <section v-else aria-label="Bachata event results">
-      <div v-for="group in groupedEvents" :key="group.date.toISOString()" class="event-date-group">
-        <h2 class="event-date-header">{{ group.dateLabel }}</h2>
-        <div class="event-list">
-          <EventCard
-            v-for="event in group.events"
-            :key="event.id"
-            :event="event"
-            :favorite-busy="favoriteBusyId === event.id"
-            @toggle-favorite="toggleFavorite"
-          />
-        </div>
-      </div>
-    </section>
+    <EventCalendarView
+      v-else-if="!isFavoritesView && viewMode === 'calendar'"
+      :events="visibleEvents"
+      :favorite-busy-id="favoriteBusyId"
+      @toggle-favorite="toggleFavorite"
+    />
+
+    <EventListResultsView
+      v-else
+      :events="visibleEvents"
+      :favorite-busy-id="favoriteBusyId"
+      @toggle-favorite="toggleFavorite"
+    />
+
+    <button
+      v-if="showListBackToTop"
+      class="scroll-action-button scroll-action-button--floating"
+      type="button"
+      @click="scrollToDiscoveryControls"
+    >
+      ↑ Top
+    </button>
   </div>
 </template>
