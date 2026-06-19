@@ -12,6 +12,7 @@ const loading = ref(true)
 const error = ref('')
 const reviewingId = ref(null)
 const activeStatus = ref('pending')
+const submitterProfiles = ref({})
 
 const activeStatusLabel = computed(() => activeStatus.value === 'pending' ? 'Pending' : 'Rejected')
 
@@ -35,7 +36,34 @@ async function loadSubmissions() {
   }
 
   submissions.value = (data || []).map(normalizeEvent)
+  await loadSubmitterProfiles(submissions.value)
   loading.value = false
+}
+
+async function loadSubmitterProfiles(events) {
+  const submitterIds = [...new Set(
+    events
+      .map((event) => event.submitted_by)
+      .filter(Boolean)
+      .map(String)
+  )]
+
+  if (submitterIds.length === 0) {
+    submitterProfiles.value = {}
+    return
+  }
+
+  const { data, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,email')
+    .in('id', submitterIds)
+
+  if (profileError) {
+    submitterProfiles.value = {}
+    return
+  }
+
+  submitterProfiles.value = Object.fromEntries((data || []).map((profile) => [String(profile.id), profile]))
 }
 
 async function updateSubmissionStatus(event, nextStatus) {
@@ -78,6 +106,11 @@ function getStatusMessage(nextStatus) {
 
 function showToast(message) {
   window.dispatchEvent(new CustomEvent('app-toast', { detail: { message } }))
+}
+
+function getSubmitterLabel(event) {
+  if (!event?.submitted_by) return ''
+  return submitterProfiles.value[String(event.submitted_by)]?.email || event.submitted_by
 }
 
 function formatDate(value) {
@@ -140,16 +173,28 @@ function formatSubmittedDate(value) {
       <article v-for="event in submissions" :key="event.id" class="card management-card">
         <div class="management-card__content">
           <h2 class="management-card__title">{{ event.title }}</h2>
-          <p class="management-card__meta">
-            {{ formatDate(event.start_time) }}
-            <span v-if="event.location">• {{ event.location }}</span>
-            <span v-if="event.organizer_display || event.organizer">• {{ event.organizer_display || event.organizer }}</span>
-          </p>
-          <p v-if="event.submitted_by || event.submitted_at" class="management-card__meta">
-            <span v-if="event.submitted_by">Submitted by {{ event.submitted_by }}</span>
-            <span v-if="event.submitted_by && event.submitted_at"> • </span>
-            <span v-if="event.submitted_at">Submitted {{ formatSubmittedDate(event.submitted_at) }}</span>
-          </p>
+          <dl class="submission-meta">
+            <div class="submission-meta__item">
+              <dt>Date</dt>
+              <dd>{{ formatDate(event.start_time) }}</dd>
+            </div>
+            <div v-if="event.location" class="submission-meta__item">
+              <dt>Location</dt>
+              <dd>{{ event.location }}</dd>
+            </div>
+            <div v-if="event.organizer_display || event.organizer" class="submission-meta__item">
+              <dt>Organizer</dt>
+              <dd>{{ event.organizer_display || event.organizer }}</dd>
+            </div>
+            <div v-if="event.submitted_by" class="submission-meta__item">
+              <dt>Submitted by</dt>
+              <dd>{{ getSubmitterLabel(event) }}</dd>
+            </div>
+            <div v-if="event.submitted_at" class="submission-meta__item">
+              <dt>Submitted</dt>
+              <dd>{{ formatSubmittedDate(event.submitted_at) }}</dd>
+            </div>
+          </dl>
         </div>
 
         <div class="management-card__actions">
