@@ -18,6 +18,7 @@ const organizers = ref([])
 const isEditing = ref(false)
 const eventId = ref(null)
 const reviewMode = ref(false)
+const reviewStatus = ref('')
 
 const form = ref({
   title: '',
@@ -90,7 +91,8 @@ async function loadEvent(id, options = {}) {
 
   eventId.value = data.id
   isEditing.value = true
-  reviewMode.value = route.query.review === 'submission' && data.status === 'pending'
+  reviewStatus.value = data.status || ''
+  reviewMode.value = route.query.review === 'submission' && ['pending', 'rejected'].includes(data.status)
 }
 
 async function loadOrganizers() {
@@ -123,7 +125,7 @@ async function saveEvent() {
     ...form.value,
     organizer_id: organizer?.id || null,
     organizer: organizer?.name || form.value.organizer || null,
-    status: reviewMode.value ? 'pending' : 'approved'
+    status: reviewMode.value ? reviewStatus.value : 'approved'
   }
   const payload = isEditing.value
     ? buildEventPayload(eventForm)
@@ -141,6 +143,29 @@ async function saveEvent() {
 
   sessionStorage.setItem('flash_message', isEditing.value ? 'Event updated successfully.' : 'Event created successfully.')
   router.push(reviewMode.value ? '/admin/submissions' : '/management')
+}
+
+async function restoreSubmission() {
+  if (!isAdmin.value || !eventId.value) return
+
+  status.value = 'Restoring submission to pending review...'
+
+  const { error } = await supabase
+    .from('events')
+    .update({
+      status: 'pending',
+      reviewed_by: null,
+      reviewed_at: null
+    })
+    .eq('id', eventId.value)
+
+  if (error) {
+    status.value = error.message
+    return
+  }
+
+  sessionStorage.setItem('flash_message', 'Submission restored to pending review.')
+  router.push('/admin/submissions')
 }
 
 async function reviewSubmission(nextStatus) {
@@ -291,7 +316,8 @@ async function deleteEvent() {
         </button>
         <RouterLink :to="reviewMode ? '/admin/submissions' : '/management'" class="button secondary">Cancel</RouterLink>
         <button v-if="reviewMode && isAdmin" class="button" type="button" @click="reviewSubmission('approved')">Approve submission</button>
-        <button v-if="reviewMode && isAdmin" class="button danger" type="button" @click="reviewSubmission('rejected')">Reject submission</button>
+        <button v-if="reviewMode && isAdmin && reviewStatus === 'pending'" class="button danger" type="button" @click="reviewSubmission('rejected')">Reject submission</button>
+        <button v-if="reviewMode && isAdmin && reviewStatus === 'rejected'" class="button secondary" type="button" @click="restoreSubmission">Restore to Pending</button>
         <button v-if="isEditing && !reviewMode" class="button danger icon-text" type="button" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
       </div>
 
