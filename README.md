@@ -62,16 +62,16 @@ The goal is to make event discovery easier for everyone in the Copenhagen bachat
 
 ## Created By
 
-Copenhagen Bachata Calendar is created and maintained by:
+Copenhagen Bachata Calendar is created and maintained by Dancemaniacs Kasia & Dominik.
 
-**Dancemaniacs Kasia & Dominik**
+International bachata teachers, performers, DJs, and community organizers based in Copenhagen, they have taught, performed, judged competitions, and contributed to dance events across Denmark and abroad. They are also the creators of the Bachata Freedom concept, which focuses on musicality, creativity, connection, and freedom of expression in partner dancing.
 
-We are active members of the Copenhagen bachata community and created this project to make event discovery easier for dancers, organizers, and newcomers.
+They created Copenhagen Bachata Calendar to make event discovery easier for dancers, organizers, and newcomers by bringing scattered event information into one community-driven platform.
 
 Social media:
 
-- Instagram: [www.instagram.com/dancemaniacs_kasiadominik](https://www.instagram.com/dancemaniacs_kasiadominik)
-- Facebook: [www.facebook.com/dancemaniacskd](https://www.facebook.com/dancemaniacskd)
+- Instagram: <https://www.instagram.com/dancemaniacs_kasiadominik>
+- Facebook: <https://www.facebook.com/dancemaniacskd>
 
 ## Contact & Community
 
