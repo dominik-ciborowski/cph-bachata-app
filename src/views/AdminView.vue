@@ -12,11 +12,12 @@ import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { user } = useAuth()
+const { user, isAdmin } = useAuth()
 const status = ref('')
 const organizers = ref([])
 const isEditing = ref(false)
 const eventId = ref(null)
+const reviewMode = ref(false)
 
 const form = ref({
   title: '',
@@ -89,6 +90,7 @@ async function loadEvent(id, options = {}) {
 
   eventId.value = data.id
   isEditing.value = true
+  reviewMode.value = route.query.review === 'submission' && data.status === 'pending'
 }
 
 async function loadOrganizers() {
@@ -120,7 +122,8 @@ async function saveEvent() {
   const eventForm = {
     ...form.value,
     organizer_id: organizer?.id || null,
-    organizer: organizer?.name || form.value.organizer || null
+    organizer: organizer?.name || form.value.organizer || null,
+    status: reviewMode.value ? 'pending' : 'approved'
   }
   const payload = isEditing.value
     ? buildEventPayload(eventForm)
@@ -137,7 +140,50 @@ async function saveEvent() {
   }
 
   sessionStorage.setItem('flash_message', isEditing.value ? 'Event updated successfully.' : 'Event created successfully.')
-  router.push('/management')
+  router.push(reviewMode.value ? '/admin/submissions' : '/management')
+}
+
+async function reviewSubmission(nextStatus) {
+  if (!isAdmin.value || !eventId.value || !user.value) return
+
+  status.value = nextStatus === 'approved' ? 'Adding submission to calendar...' : 'Rejecting submission...'
+
+  let reviewPayload = {}
+
+  if (nextStatus === 'approved') {
+    let organizer
+
+    try {
+      organizer = await resolveOrganizerForEvent(form.value, user.value.id, organizers.value)
+    } catch (organizerError) {
+      status.value = organizerError.message
+      return
+    }
+
+    reviewPayload = buildEventPayload({
+      ...form.value,
+      organizer_id: organizer?.id || null,
+      organizer: organizer?.name || form.value.organizer || null
+    })
+  }
+
+  const { error } = await supabase
+    .from('events')
+    .update({
+      ...reviewPayload,
+      status: nextStatus,
+      reviewed_by: user.value.id,
+      reviewed_at: new Date().toISOString()
+    })
+    .eq('id', eventId.value)
+
+  if (error) {
+    status.value = error.message
+    return
+  }
+
+  sessionStorage.setItem('flash_message', nextStatus === 'approved' ? 'Submission approved and added to the calendar.' : 'Submission rejected.')
+  router.push('/admin/submissions')
 }
 
 async function deleteEvent() {
@@ -163,8 +209,8 @@ async function deleteEvent() {
 <template>
   <div class="management-page">
     <section class="hero">
-      <h1>{{ isEditing ? 'Edit event' : 'Add event' }}</h1>
-      <p>{{ isEditing ? 'Update the event details and save changes.' : 'Add one event occurrence to the public calendar.' }}</p>
+      <h1>{{ reviewMode ? 'Review submission' : (isEditing ? 'Edit event' : 'Add event') }}</h1>
+      <p>{{ reviewMode ? 'Edit the submitted event details before adding it to the calendar or rejecting it.' : (isEditing ? 'Update the event details and save changes.' : 'Add one event occurrence to the public calendar.') }}</p>
     </section>
 
     <form class="card form" @submit.prevent="saveEvent">
@@ -241,10 +287,12 @@ async function deleteEvent() {
       <div class="form-actions">
         <button class="button icon-text" type="submit">
           <component :is="isEditing ? Pencil : Plus" class="icon icon--sm" />
-          {{ isEditing ? 'Save changes' : 'Create event' }}
+          {{ reviewMode ? 'Save edits' : (isEditing ? 'Save changes' : 'Create event') }}
         </button>
-        <RouterLink to="/management" class="button secondary">Cancel</RouterLink>
-        <button v-if="isEditing" class="button danger icon-text" type="button" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
+        <RouterLink :to="reviewMode ? '/admin/submissions' : '/management'" class="button secondary">Cancel</RouterLink>
+        <button v-if="reviewMode && isAdmin" class="button" type="button" @click="reviewSubmission('approved')">Approve submission</button>
+        <button v-if="reviewMode && isAdmin" class="button danger" type="button" @click="reviewSubmission('rejected')">Reject submission</button>
+        <button v-if="isEditing && !reviewMode" class="button danger icon-text" type="button" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
       </div>
 
       <p v-if="status" class="status">{{ status }}</p>

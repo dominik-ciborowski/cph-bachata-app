@@ -82,7 +82,7 @@ async function loadEvents() {
   const { data, error: queryError } = await supabase
     .from('events')
     .select('*, organizer_record:organizers(id,name,verified)')
-    .eq('approved', true)
+    .eq('status', 'approved')
     .gte('start_time', today.toISOString())
     .order('start_time', { ascending: true })
 

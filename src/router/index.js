@@ -11,13 +11,17 @@ import ManagementView from '../views/ManagementView.vue'
 import BulkAddView from '../views/BulkAddView.vue'
 import OrganizerManagementView from '../views/OrganizerManagementView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
+import SubmitEventView from '../views/SubmitEventView.vue'
+import PendingSubmissionsView from '../views/PendingSubmissionsView.vue'
 import { getAuthState } from '../composables/useAuth'
 
 const routes = [
   { path: '/', component: EventListView },
   { path: '/events/:id', component: EventDetailView },
   { path: '/favorites', component: EventListView, meta: { requiresAuth: true } },
+  { path: '/submit-event', component: SubmitEventView, meta: { requiresAuth: true } },
   { path: '/admin', component: AdminView, meta: { requiresManagement: true } },
+  { path: '/admin/submissions', component: PendingSubmissionsView, meta: { requiresAdmin: true } },
   { path: '/admin/:id', component: AdminView, meta: { requiresManagement: true } },
   { path: '/management', component: ManagementView, meta: { requiresManagement: true } },
   { path: '/management/bulk', component: BulkAddView, meta: { requiresManagement: true } },

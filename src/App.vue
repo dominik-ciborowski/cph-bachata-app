@@ -140,6 +140,7 @@ onBeforeUnmount(() => {
 
             <div v-if="activeDesktopMenu === 'admin'" class="nav-menu" role="menu">
               <RouterLink to="/management/organizers" class="menu-item" role="menuitem" @click="closeNavigation">Organizer Management</RouterLink>
+              <RouterLink to="/admin/submissions" class="menu-item" role="menuitem" @click="closeNavigation">Pending Submissions</RouterLink>
               <RouterLink to="/management/users" class="menu-item" role="menuitem" @click="closeNavigation">User Management</RouterLink>
             </div>
           </div>
@@ -157,6 +158,7 @@ onBeforeUnmount(() => {
 
             <div v-if="activeDesktopMenu === 'account'" class="nav-menu" role="menu">
               <RouterLink to="/favorites" class="menu-item" role="menuitem" @click="closeNavigation">My Events</RouterLink>
+              <RouterLink to="/submit-event" class="menu-item" role="menuitem" @click="closeNavigation">Submit Event</RouterLink>
               <RouterLink to="/account" class="menu-item" role="menuitem" @click="closeNavigation">Account</RouterLink>
               <button class="menu-item logout-item" type="button" role="menuitem" @click="handleLogout">Logout</button>
             </div>
@@ -189,12 +191,14 @@ onBeforeUnmount(() => {
           <section v-if="isAdmin" class="mobile-menu-section">
             <h2>Administration</h2>
             <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
+            <RouterLink to="/admin/submissions" class="mobile-menu-item" @click="closeNavigation">Pending Submissions</RouterLink>
             <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
           </section>
 
           <section class="mobile-menu-section">
             <h2>Account</h2>
             <RouterLink to="/favorites" class="mobile-menu-item" @click="closeNavigation">My Events</RouterLink>
+            <RouterLink to="/submit-event" class="mobile-menu-item" @click="closeNavigation">Submit Event</RouterLink>
             <RouterLink to="/account" class="mobile-menu-item" @click="closeNavigation">Account</RouterLink>
             <button class="mobile-menu-item logout-item" type="button" @click="handleLogout">Logout</button>
           </section>

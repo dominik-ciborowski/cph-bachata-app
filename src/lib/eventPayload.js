@@ -14,14 +14,24 @@ export function buildEventPayload(form) {
     event_link: form.event_link || null,
     start_time: toDateTime(form.date, form.start_time),
     end_time: form.end_time ? toDateTime(form.date, form.end_time) : null,
-    approved: true
+    status: form.status || 'approved'
   }
 }
 
 export function buildNewEventPayload(form, userId) {
   return {
     ...buildEventPayload(form),
+    status: form.status || 'approved',
     created_by: userId
+  }
+}
+
+export function buildSubmittedEventPayload(form, userId) {
+  return {
+    ...buildEventPayload({ ...form, status: 'pending' }),
+    created_by: userId,
+    submitted_by: userId,
+    submitted_at: new Date().toISOString()
   }
 }
 
