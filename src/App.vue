@@ -106,6 +106,7 @@ onBeforeUnmount(() => {
 
     <nav ref="navRef" class="topnav" aria-label="Main navigation">
       <div class="desktop-nav">
+        <RouterLink to="/help" class="button-link button-link--nav">Help & About</RouterLink>
         <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login / Register</RouterLink>
 
         <template v-else>
@@ -166,6 +167,8 @@ onBeforeUnmount(() => {
         </template>
       </div>
 
+      <RouterLink v-if="!isAuthenticated" to="/help" class="button-link button-link--nav mobile-login-link">Help</RouterLink>
+
       <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav mobile-login-link">Login / Register</RouterLink>
 
       <button
@@ -193,6 +196,11 @@ onBeforeUnmount(() => {
             <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
             <RouterLink to="/admin/submissions" class="mobile-menu-item" @click="closeNavigation">Pending Submissions</RouterLink>
             <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
+          </section>
+
+          <section class="mobile-menu-section">
+            <h2>Help</h2>
+            <RouterLink to="/help" class="mobile-menu-item" @click="closeNavigation">Help & About</RouterLink>
           </section>
 
           <section class="mobile-menu-section">

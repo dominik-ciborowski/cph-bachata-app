@@ -13,12 +13,14 @@ import OrganizerManagementView from '../views/OrganizerManagementView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
 import SubmitEventView from '../views/SubmitEventView.vue'
 import PendingSubmissionsView from '../views/PendingSubmissionsView.vue'
+import HelpAboutView from '../views/HelpAboutView.vue'
 import { getAuthState } from '../composables/useAuth'
 
 const routes = [
   { path: '/', component: EventListView },
   { path: '/events/:id', component: EventDetailView },
   { path: '/favorites', component: EventListView, meta: { requiresAuth: true } },
+  { path: '/help', component: HelpAboutView },
   { path: '/submit-event', component: SubmitEventView, meta: { requiresAuth: true } },
   { path: '/admin', component: AdminView, meta: { requiresManagement: true } },
   { path: '/admin/submissions', component: PendingSubmissionsView, meta: { requiresAdmin: true } },

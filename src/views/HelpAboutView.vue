@@ -1,0 +1,60 @@
+<template>
+  <div class="help-page">
+    <section class="hero">
+      <h1>Help &amp; About</h1>
+      <p>Learn how Copenhagen Bachata Calendar works, who created it, and how you can help keep it useful for the community.</p>
+    </section>
+
+    <section class="card help-section">
+      <h2>What is Copenhagen Bachata Calendar?</h2>
+      <p>Community-driven calendar for discovering bachata events in and around Copenhagen.</p>
+      <p>The goal is to make it easier for dancers to discover socials, workshops, festivals, and parties while keeping event information in one place.</p>
+      <ul class="help-list">
+        <li>Browse events</li>
+        <li>Save events to My Events</li>
+        <li>Export events to their personal calendar</li>
+        <li>Submit missing events to help keep the calendar up to date</li>
+      </ul>
+    </section>
+
+    <section class="card help-section">
+      <h2>Created By</h2>
+      <p>Copenhagen Bachata Calendar is created and maintained by Dancemaniacs Kasia &amp; Dominik.</p>
+      <p>International bachata teachers, performers, DJs, and community organizers based in Copenhagen. They have taught, performed, judged competitions, and contributed to dance events across Denmark and internationally.</p>
+      <p>They are also the creators of Bachata Freedom, a concept focused on musicality, creativity, connection, and freedom of expression in partner dancing.</p>
+      <div class="help-social-links" aria-label="Dancemaniacs social links">
+        <a href="https://www.instagram.com/dancemaniacs_kasiadominik" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a href="https://www.facebook.com/dancemaniacskd" target="_blank" rel="noopener noreferrer">Facebook</a>
+      </div>
+    </section>
+
+    <section class="card help-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details>
+          <summary>How do I save events?</summary>
+          <p>Create a free account, then use the heart button on an event to save it to My Events.</p>
+        </details>
+        <details>
+          <summary>How do I export events to my calendar?</summary>
+          <p>Open an event and use Add to Calendar, or save events to My Events and export all saved events from there.</p>
+        </details>
+        <details>
+          <summary>How do I submit a missing event?</summary>
+          <p>Log in and use Submit Event. Our team will review the information and add it to the calendar if everything looks correct.</p>
+        </details>
+        <details>
+          <summary>Why is my submitted event not visible yet?</summary>
+          <p>Submitted events are reviewed before they appear publicly so the calendar stays accurate and useful.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="card help-section">
+      <h2>Get Involved</h2>
+      <p>Found a problem, missing information, or have an idea for improvement?</p>
+      <p>For now, reach out through Instagram or Facebook. This project is community-driven and welcomes contributions and suggestions.</p>
+      <p class="field-help">Future versions of the platform may include Submit Feedback, Suggest Feature, and Report Issue tools.</p>
+    </section>
+  </div>
+</template>
