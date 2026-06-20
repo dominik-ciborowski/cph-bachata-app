@@ -117,5 +117,10 @@ function sendFeedback() {
       <p>You can also email us directly at <a :href="`mailto:${feedbackEmail}`">{{ feedbackEmail }}</a>.</p>
       <p class="field-help">Future versions of the platform may include Submit Feedback, Suggest Feature, and Report Issue tools.</p>
     </section>
+
+    <section class="card help-section">
+      <h2>Additional Information</h2>
+      <RouterLink to="/privacy" class="help-inline-link">Privacy</RouterLink>
+    </section>
   </div>
 </template>

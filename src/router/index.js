@@ -14,6 +14,7 @@ import UserManagementView from '../views/UserManagementView.vue'
 import SubmitEventView from '../views/SubmitEventView.vue'
 import PendingSubmissionsView from '../views/PendingSubmissionsView.vue'
 import HelpAboutView from '../views/HelpAboutView.vue'
+import PrivacyView from '../views/PrivacyView.vue'
 import { getAuthState } from '../composables/useAuth'
 
 const routes = [
@@ -21,6 +22,7 @@ const routes = [
   { path: '/events/:id', component: EventDetailView },
   { path: '/favorites', component: EventListView, meta: { requiresAuth: true } },
   { path: '/help', component: HelpAboutView },
+  { path: '/privacy', component: PrivacyView },
   { path: '/submit-event', component: SubmitEventView, meta: { requiresAuth: true } },
   { path: '/admin', component: AdminView, meta: { requiresManagement: true } },
   { path: '/admin/submissions', component: PendingSubmissionsView, meta: { requiresAdmin: true } },

@@ -1679,6 +1679,12 @@ textarea {
 }
 
 
+
+.help-inline-link {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
 .feedback-form {
   display: grid;
   gap: 14px;
