@@ -1,3 +1,46 @@
+<script setup>
+import { ref } from 'vue'
+
+const feedbackEmail = 'bachata.calendar@gmail.com'
+const feedbackTypes = [
+  'Problem / Bug',
+  'Incorrect event information',
+  'Feature idea',
+  'General feedback'
+]
+
+const feedbackType = ref(feedbackTypes[0])
+const feedbackMessage = ref('')
+const contactEmail = ref('')
+const feedbackError = ref('')
+
+function sendFeedback() {
+  feedbackError.value = ''
+
+  const message = feedbackMessage.value.trim()
+  if (!message) {
+    feedbackError.value = 'Please add a message before sending feedback.'
+    return
+  }
+
+  const bodyLines = [
+    `Feedback type: ${feedbackType.value}`,
+    '',
+    'Message:',
+    message,
+    '',
+    contactEmail.value.trim() ? `Contact email: ${contactEmail.value.trim()}` : '',
+    `Current page: ${window.location.href}`,
+    `Timestamp: ${new Date().toISOString()}`
+  ].filter((line) => line !== '')
+
+  const subject = `Copenhagen Bachata Calendar Feedback - ${feedbackType.value}`
+  const mailtoUrl = `mailto:${feedbackEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`
+
+  window.location.href = mailtoUrl
+}
+</script>
+
 <template>
   <div class="help-page">
     <section class="hero">
@@ -53,7 +96,35 @@
     <section class="card help-section">
       <h2>Get Involved</h2>
       <p>Found a problem, missing information, or have an idea for improvement?</p>
-      <p>For now, reach out through Instagram or Facebook. This project is community-driven and welcomes contributions and suggestions.</p>
+      <p>Help us make Copenhagen Bachata Calendar better.</p>
+
+      <form class="feedback-form" @submit.prevent="sendFeedback">
+        <div class="field">
+          <label for="feedback-type">Feedback type</label>
+          <select id="feedback-type" v-model="feedbackType">
+            <option v-for="type in feedbackTypes" :key="type" :value="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="feedback-message">Message *</label>
+          <textarea id="feedback-message" v-model="feedbackMessage" required placeholder="Tell us what you noticed or what could be improved." />
+        </div>
+
+        <div class="field">
+          <label for="feedback-contact">Optional contact email</label>
+          <input id="feedback-contact" v-model="contactEmail" type="email" placeholder="you@example.com" />
+          <p class="field-help">Add this only if you would like us to be able to reply.</p>
+        </div>
+
+        <p v-if="feedbackError" class="status">{{ feedbackError }}</p>
+
+        <div class="form-actions">
+          <button class="button" type="submit">Send Feedback</button>
+        </div>
+      </form>
+
+      <p>You can also email us directly at <a :href="`mailto:${feedbackEmail}`">{{ feedbackEmail }}</a>.</p>
       <p class="field-help">Future versions of the platform may include Submit Feedback, Suggest Feature, and Report Issue tools.</p>
     </section>
   </div>

@@ -1693,6 +1693,17 @@ textarea {
   font-weight: 800;
 }
 
+
+.feedback-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.feedback-form textarea {
+  min-height: 120px;
+}
+
 .faq-list {
   display: grid;
   gap: 10px;
