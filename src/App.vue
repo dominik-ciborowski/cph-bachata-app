@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
 
     <nav ref="navRef" class="topnav" aria-label="Main navigation">
       <div class="desktop-nav">
-        <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login</RouterLink>
+        <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav">Login / Register</RouterLink>
 
         <template v-else>
           <div v-if="canManageEvents" class="nav-menu-wrapper">
@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
         </template>
       </div>
 
-      <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav mobile-login-link">Login</RouterLink>
+      <RouterLink v-if="!isAuthenticated" to="/login" class="button-link button-link--nav mobile-login-link">Login / Register</RouterLink>
 
       <button
         v-else

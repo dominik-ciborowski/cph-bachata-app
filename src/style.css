@@ -1652,11 +1652,11 @@ textarea {
 
 
 .login-benefits-banner {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  position: relative;
+  display: grid;
+  gap: 14px;
   margin-bottom: 16px;
+  padding-right: 54px;
   border-color: rgba(233, 91, 0, 0.16);
   background: linear-gradient(135deg, #FFF8F1 0%, #FFFFFF 100%);
 }
@@ -1666,21 +1666,15 @@ textarea {
 }
 
 .login-benefits-banner h2 {
-  margin: 0 0 6px;
+  margin: 0 0 10px;
+  padding-right: 8px;
   font-size: 20px;
   line-height: 1.25;
 }
 
-.login-benefits-banner p {
-  margin: 0 0 8px;
-  color: var(--color-text-muted);
-  font-weight: 700;
-}
-
 .login-benefits-banner__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
+  display: grid;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1691,25 +1685,38 @@ textarea {
 
 .login-benefits-banner__actions {
   display: flex;
+  align-items: center;
   gap: 8px;
-  flex: 0 0 auto;
 }
 
 .login-benefits-banner__dismiss {
-  min-width: 42px;
-  padding-inline: 10px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(68, 47, 35, 0.08);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.login-benefits-banner__dismiss:hover,
+.login-benefits-banner__dismiss:focus-visible {
+  background: rgba(68, 47, 35, 0.14);
+  color: var(--color-text);
 }
 
 @media (max-width: 720px) {
   .login-benefits-banner {
-    flex-direction: column;
+    padding-right: 50px;
   }
 
-  .login-benefits-banner__actions {
-    width: 100%;
-  }
-
-  .login-benefits-banner__actions .button:first-child {
+  .login-benefits-banner__actions .button {
     flex: 1;
   }
 }

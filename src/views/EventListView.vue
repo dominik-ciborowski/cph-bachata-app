@@ -337,18 +337,17 @@ function exportMyEvents() {
     <section v-if="showLoginBenefitsBanner" class="card login-benefits-banner" aria-labelledby="login-benefits-title">
       <div class="login-benefits-banner__content">
         <h2 id="login-benefits-title">✨ Get more from the calendar</h2>
-        <p>Create a free account to:</p>
         <ul class="login-benefits-banner__list">
           <li>❤️ Save favorite events</li>
           <li>📅 Export events to your calendar</li>
           <li>📝 Submit missing events</li>
         </ul>
       </div>
+      <button class="login-benefits-banner__dismiss" type="button" aria-label="Dismiss login benefits" @click="dismissLoginBenefitsBanner">
+        <X class="icon icon--sm" />
+      </button>
       <div class="login-benefits-banner__actions">
         <RouterLink to="/login" class="button button--compact">Login / Register</RouterLink>
-        <button class="button secondary button--compact login-benefits-banner__dismiss" type="button" aria-label="Dismiss login benefits" @click="dismissLoginBenefitsBanner">
-          <X class="icon icon--sm" />
-        </button>
       </div>
     </section>
 
