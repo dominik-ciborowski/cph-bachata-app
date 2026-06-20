@@ -3,15 +3,14 @@ import { ref } from 'vue'
 
 const feedbackEmail = 'bachata.calendar@gmail.com'
 const feedbackTypes = [
-  'Problem / Bug',
-  'Incorrect event information',
-  'Feature idea',
+  'Report a problem',
+  'Event information needs updating',
+  'Suggest an improvement',
   'General feedback'
 ]
 
 const feedbackType = ref(feedbackTypes[0])
 const feedbackMessage = ref('')
-const contactEmail = ref('')
 const feedbackError = ref('')
 
 function sendFeedback() {
@@ -29,10 +28,8 @@ function sendFeedback() {
     'Message:',
     message,
     '',
-    contactEmail.value.trim() ? `Contact email: ${contactEmail.value.trim()}` : '',
-    `Current page: ${window.location.href}`,
-    `Timestamp: ${new Date().toISOString()}`
-  ].filter((line) => line !== '')
+    `Submitted: ${new Date().toISOString()}`
+  ]
 
   const subject = `Copenhagen Bachata Calendar Feedback - ${feedbackType.value}`
   const mailtoUrl = `mailto:${feedbackEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`
@@ -110,17 +107,10 @@ function sendFeedback() {
           <label for="feedback-message">Message *</label>
           <textarea id="feedback-message" v-model="feedbackMessage" required placeholder="Tell us what you noticed or what could be improved." />
         </div>
-
-        <div class="field">
-          <label for="feedback-contact">Optional contact email</label>
-          <input id="feedback-contact" v-model="contactEmail" type="email" placeholder="you@example.com" />
-          <p class="field-help">Add this only if you would like us to be able to reply.</p>
-        </div>
-
         <p v-if="feedbackError" class="status">{{ feedbackError }}</p>
 
         <div class="form-actions">
-          <button class="button" type="submit">Send Feedback</button>
+          <button class="button" type="submit">Continue in Email</button>
         </div>
       </form>
 

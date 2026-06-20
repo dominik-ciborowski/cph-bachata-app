@@ -185,19 +185,8 @@ button, input, textarea, select { font: inherit; }
   z-index: 100;
   overflow: hidden;
 }
-.desktop-nav {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.mobile-login-link {
-  display: none;
-}
-
 .mobile-menu-toggle {
-  display: none;
+  display: inline-flex;
   width: 42px;
   height: 42px;
   border: 1px solid var(--color-border);
@@ -220,8 +209,8 @@ button, input, textarea, select { font: inherit; }
 .mobile-menu-panel {
   position: absolute;
   top: calc(100% + 8px);
-  right: 18px;
-  left: 18px;
+  right: 0;
+  width: min(320px, calc(100vw - 36px));
   z-index: 120;
   display: grid;
   gap: 14px;
@@ -1035,13 +1024,9 @@ textarea {
     flex: 0 0 auto;
   }
 
-  .desktop-nav {
-    display: none;
-  }
-
-  .mobile-login-link,
-  .mobile-menu-toggle {
-    display: inline-flex;
+  .mobile-menu-panel {
+    right: 18px;
+    width: auto;
   }
 
   .hero h1 {
