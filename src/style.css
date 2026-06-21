@@ -413,12 +413,6 @@ button, input, textarea, select { font: inherit; }
   color: var(--color-text);
 }
 
-.event-card p {
-  margin: 10px 0 0;
-  color: var(--color-text-muted);
-  line-height: 1.55;
-}
-
 .meta {
   display: flex;
   gap: 10px;
@@ -1400,7 +1394,6 @@ textarea {
   background: rgba(36, 90, 54, 0.18);
 }
 
-
 @media (max-width: 720px) {
   .toast {
     top: calc(112px + env(safe-area-inset-top));
@@ -1623,11 +1616,6 @@ textarea {
   grid-column: 1;
   grid-row: 3;
   margin-top: 0;
-}
-
-.event-card p {
-  grid-column: 1 / -1;
-  grid-row: 4;
 }
 
 @media (max-width: 720px) {
