@@ -680,6 +680,11 @@ button, input, textarea, select { font: inherit; }
   line-height: 1.55;
 }
 
+.event-description {
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
 .detail-cta {
   display: grid;
   gap: 16px;
