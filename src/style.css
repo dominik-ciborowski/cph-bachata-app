@@ -318,7 +318,13 @@ button, input, textarea, select { font: inherit; }
 }
 
 .app-hero {
-  padding: 18px 0 8px;
+  padding: 14px 0 6px;
+}
+
+.app-hero__attribution {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .eyebrow {
