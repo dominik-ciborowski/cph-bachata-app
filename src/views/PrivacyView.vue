@@ -16,10 +16,9 @@
       <p>Depending on how you use the platform, we may store:</p>
       <ul class="help-list">
         <li>Your email address</li>
-        <li>Authentication information required for account access</li>
+        <li>Account information required for login and account access</li>
         <li>Saved favorite events (My Events)</li>
         <li>Events you submit through the platform</li>
-        <li>User role information (user, organizer, admin)</li>
       </ul>
     </section>
 
@@ -30,7 +29,6 @@
         <li>Allow users to create and access accounts</li>
         <li>Save favorite events</li>
         <li>Enable event submissions</li>
-        <li>Manage organizer and admin permissions</li>
         <li>Keep the calendar accurate and useful</li>
       </ul>
       <p>We only collect information necessary to provide these features.</p>
@@ -55,7 +53,7 @@
     <section class="card help-section">
       <h2>Requesting Data Removal</h2>
       <p>If you would like your account or associated data removed, please contact: <a href="mailto:bachata.calendar@gmail.com">bachata.calendar@gmail.com</a></p>
-      <p>We will make reasonable efforts to remove your information from the platform.</p>
+      <p>We will make reasonable efforts to remove your account and associated data from the platform.</p>
     </section>
 
     <section class="card help-section">
