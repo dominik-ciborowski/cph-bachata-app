@@ -185,19 +185,8 @@ button, input, textarea, select { font: inherit; }
   z-index: 100;
   overflow: hidden;
 }
-.desktop-nav {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.mobile-login-link {
-  display: none;
-}
-
 .mobile-menu-toggle {
-  display: none;
+  display: inline-flex;
   width: 42px;
   height: 42px;
   border: 1px solid var(--color-border);
@@ -220,8 +209,8 @@ button, input, textarea, select { font: inherit; }
 .mobile-menu-panel {
   position: absolute;
   top: calc(100% + 8px);
-  right: 18px;
-  left: 18px;
+  right: 0;
+  width: min(320px, calc(100vw - 36px));
   z-index: 120;
   display: grid;
   gap: 14px;
@@ -910,6 +899,35 @@ textarea {
   line-height: 1.45;
 }
 
+
+.submission-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px 16px;
+  margin: 8px 0 0;
+}
+
+.submission-meta__item {
+  min-width: 0;
+}
+
+.submission-meta dt {
+  margin: 0 0 2px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.submission-meta dd {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .management-card__actions {
   display: flex;
   gap: 8px;
@@ -1006,18 +1024,15 @@ textarea {
     flex: 0 0 auto;
   }
 
-  .desktop-nav {
-    display: none;
-  }
-
-  .mobile-login-link,
-  .mobile-menu-toggle {
-    display: inline-flex;
+  .mobile-menu-panel {
+    right: 18px;
+    width: auto;
   }
 
   .hero h1 {
     font-size: 32px;
   }
+
 
   .event-card {
     flex-direction: column;
@@ -1617,6 +1632,158 @@ textarea {
 
   .event-card__topline {
     display: contents;
+  }
+}
+
+
+
+.help-page {
+  display: grid;
+  gap: 16px;
+}
+
+.help-section {
+  display: grid;
+  gap: 12px;
+}
+
+.help-section h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.help-section p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.help-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.help-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.help-social-links a {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+
+
+.help-inline-link {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.feedback-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.feedback-form textarea {
+  min-height: 120px;
+}
+
+.faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+.faq-list details {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: #FFFCF8;
+  padding: 12px 14px;
+}
+
+.faq-list summary {
+  cursor: pointer;
+  color: var(--color-text);
+  font-weight: 900;
+}
+
+.faq-list details p {
+  margin-top: 10px;
+}
+
+.login-benefits-banner {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-right: 54px;
+  border-color: rgba(233, 91, 0, 0.16);
+  background: linear-gradient(135deg, #FFF8F1 0%, #FFFFFF 100%);
+}
+
+.login-benefits-banner__content {
+  min-width: 0;
+}
+
+.login-benefits-banner h2 {
+  margin: 0 0 10px;
+  padding-right: 8px;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.login-benefits-banner__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.login-benefits-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-benefits-banner__dismiss {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(68, 47, 35, 0.08);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.login-benefits-banner__dismiss:hover,
+.login-benefits-banner__dismiss:focus-visible {
+  background: rgba(68, 47, 35, 0.14);
+  color: var(--color-text);
+}
+
+@media (max-width: 720px) {
+  .login-benefits-banner {
+    padding-right: 50px;
+  }
+
+  .login-benefits-banner__actions .button {
+    flex: 1;
   }
 }
 

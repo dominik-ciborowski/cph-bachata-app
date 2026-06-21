@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CalendarPlus } from 'lucide-vue-next'
+import { CalendarPlus, X } from 'lucide-vue-next'
 import EventCalendarView from '../components/EventCalendarView.vue'
 import EventListResultsView from '../components/EventListView.vue'
 import { useAuth } from '../composables/useAuth'
@@ -13,7 +13,7 @@ import { supabase } from '../lib/supabase'
 
 const route = useRoute()
 const router = useRouter()
-const { user, isAuthenticated } = useAuth()
+const { user, isAuthenticated, loading: authLoading } = useAuth()
 
 const filter = ref('all')
 const category = ref('all')
@@ -29,6 +29,10 @@ const viewMode = ref('list')
 const calendarFiltersOpen = ref(false)
 const discoveryControls = ref(null)
 const showListBackToTop = ref(false)
+const showLoginBenefitsBanner = ref(false)
+
+const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
+const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 
@@ -46,14 +50,21 @@ onMounted(async () => {
     }, 4000)
   }
 
+  updateLoginBenefitsBannerVisibility()
   await loadEvents()
 })
 
 watch(user, async () => {
+  updateLoginBenefitsBannerVisibility()
   await loadEvents()
 })
 
+watch(authLoading, () => {
+  updateLoginBenefitsBannerVisibility()
+})
+
 watch(isFavoritesView, async () => {
+  updateLoginBenefitsBannerVisibility()
   handleScroll()
   await loadEvents()
 })
@@ -61,6 +72,35 @@ watch(isFavoritesView, async () => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
+
+
+function updateLoginBenefitsBannerVisibility() {
+  if (authLoading.value || isAuthenticated.value || isFavoritesView.value) {
+    showLoginBenefitsBanner.value = false
+    return
+  }
+
+  const dismissedUntil = getLoginBenefitsDismissedUntil()
+  showLoginBenefitsBanner.value = !dismissedUntil || dismissedUntil <= Date.now()
+}
+
+function getLoginBenefitsDismissedUntil() {
+  try {
+    return Number(localStorage.getItem(loginBenefitsDismissedUntilKey) || 0)
+  } catch {
+    return 0
+  }
+}
+
+function dismissLoginBenefitsBanner() {
+  showLoginBenefitsBanner.value = false
+
+  try {
+    localStorage.setItem(loginBenefitsDismissedUntilKey, String(Date.now() + loginBenefitsDismissDurationMs))
+  } catch {
+    // Ignore storage failures; the banner is still dismissed for this session.
+  }
+}
 
 async function loadEvents() {
   loading.value = true
@@ -82,7 +122,7 @@ async function loadEvents() {
   const { data, error: queryError } = await supabase
     .from('events')
     .select('*, organizer_record:organizers(id,name,verified)')
-    .eq('approved', true)
+    .eq('status', 'approved')
     .gte('start_time', today.toISOString())
     .order('start_time', { ascending: true })
 
@@ -293,6 +333,23 @@ function exportMyEvents() {
     </section>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
+
+    <section v-if="showLoginBenefitsBanner" class="card login-benefits-banner" aria-labelledby="login-benefits-title">
+      <div class="login-benefits-banner__content">
+        <h2 id="login-benefits-title">✨ Get more from the calendar</h2>
+        <ul class="login-benefits-banner__list">
+          <li>❤️ Save favorite events</li>
+          <li>📅 Export events to your calendar</li>
+          <li>📝 Submit missing events</li>
+        </ul>
+      </div>
+      <button class="login-benefits-banner__dismiss" type="button" aria-label="Dismiss login benefits" @click="dismissLoginBenefitsBanner">
+        <X class="icon icon--sm" />
+      </button>
+      <div class="login-benefits-banner__actions">
+        <RouterLink to="/login" class="button button--compact">Login / Register</RouterLink>
+      </div>
+    </section>
 
     <section v-if="isFavoritesView && savedUpcomingEvents.length > 0" class="card my-events-export">
       <div>

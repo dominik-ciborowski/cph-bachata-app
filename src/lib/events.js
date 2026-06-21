@@ -12,7 +12,7 @@
  * @property {string | null} location
  * @property {string | null} description
  * @property {string | null} price_text
- * @property {boolean} approved
+ * @property {string} status
  */
 
 import { formatOrganizerDisplay, getOrganizerDisplayName, getOrganizerRecord } from './organizerDisplay.js'

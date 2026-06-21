@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildBulkEventPayloads, buildEventPayload, buildNewEventPayload } from '../src/lib/eventPayload.js'
+import { buildBulkEventPayloads, buildEventPayload, buildNewEventPayload, buildSubmittedEventPayload } from '../src/lib/eventPayload.js'
 import { normalizeEvent } from '../src/lib/events.js'
 import { isFreePrice } from '../src/lib/eventPresentation.js'
 
@@ -30,6 +30,7 @@ describe('event payload ownership', () => {
     assert.equal(payload.title, form.title)
     assert.equal(payload.event_link, form.event_link)
     assert.equal(payload.organizer_id, form.organizer_id)
+    assert.equal(payload.status, 'approved')
   })
 
   it('adds created_by to every bulk-created event payload', () => {
@@ -37,6 +38,16 @@ describe('event payload ownership', () => {
 
     assert.equal(rows.length, 2)
     assert.deepEqual(rows.map((row) => row.created_by), ['user-456', 'user-456'])
+    assert.deepEqual(rows.map((row) => row.status), ['approved', 'approved'])
+  })
+
+  it('marks community submissions as pending with submitter metadata', () => {
+    const payload = buildSubmittedEventPayload(form, 'user-789')
+
+    assert.equal(payload.status, 'pending')
+    assert.equal(payload.created_by, 'user-789')
+    assert.equal(payload.submitted_by, 'user-789')
+    assert.match(payload.submitted_at, /T/)
   })
 
   it('preserves the existing created_by ownership field when normalizing events', () => {

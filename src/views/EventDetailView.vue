@@ -45,7 +45,7 @@ async function loadEvent() {
   const { data, error: queryError } = await supabase
     .from('events')
     .select('*, organizer_record:organizers(id,name,verified)')
-    .eq('approved', true)
+    .eq('status', 'approved')
     .eq('id', route.params.id)
     .maybeSingle()
 
@@ -272,7 +272,7 @@ async function deleteEvent() {
   <section v-else class="hero">
     <p class="eyebrow">Event</p>
     <h1>Event not found</h1>
-    <p>This event is not available or is no longer approved.</p>
+    <p>This event is not available.</p>
     <RouterLink :to="getBackTarget()" class="button">{{ getBackLabel() }}</RouterLink>
   </section>
 </template>

@@ -1,8 +1,100 @@
 # Copenhagen Bachata Calendar
 
-Community-oriented Vue + Supabase application for collecting and displaying Copenhagen bachata events. Created by Dancemaniacs for the broader Copenhagen bachata community and all organizers.
+A community-driven calendar for discovering bachata events in and around Copenhagen.
 
-## Setup
+Copenhagen Bachata Calendar helps dancers, organizers, and newcomers find what is happening in the local bachata scene without having to search across many different channels.
+
+The goal of the project is to make it easier for dancers to:
+
+- Discover upcoming socials, parties, workshops, and festivals.
+- Save events they are interested in.
+- Export events to their personal calendar.
+- Browse events in both list and calendar views.
+- Help keep the calendar up to date by submitting missing events.
+
+## Why this project exists
+
+Event information is often scattered across:
+
+- Facebook events
+- WhatsApp groups
+- Messenger chats
+- Individual organizer pages
+- Social media posts
+
+Copenhagen Bachata Calendar aims to provide a single place where the community can discover and track upcoming events.
+
+## Features
+
+Current functionality includes:
+
+### Event Discovery
+
+- Browse events in a list view.
+- Browse events in a calendar view.
+- Search and filter events.
+- View detailed event information.
+
+### Personal Planning
+
+- Save events to My Events.
+- Export individual events to calendar (`.ics`).
+- Export all saved events.
+
+### Community Contributions
+
+- Submit missing events.
+- Admin review workflow for community submissions.
+
+### Administration
+
+- Organizer event management.
+- Admin moderation tools.
+- Pending submission review.
+
+## Community Focus
+
+This project is intended to be community-driven.
+
+If you notice an event missing from the calendar, you can submit it directly through the application and it will be reviewed before being published.
+
+The goal is to make event discovery easier for everyone in the Copenhagen bachata community.
+
+## Created By
+
+Copenhagen Bachata Calendar is created and maintained by Dancemaniacs Kasia & Dominik.
+
+International bachata teachers, performers, DJs, and community organizers based in Copenhagen, they have taught, performed, judged competitions, and contributed to dance events across Denmark and abroad. They are also the creators of the Bachata Freedom concept, which focuses on musicality, creativity, connection, and freedom of expression in partner dancing.
+
+They created Copenhagen Bachata Calendar to make event discovery easier for dancers, organizers, and newcomers by bringing scattered event information into one community-driven platform.
+
+Social media:
+
+- Instagram: <https://www.instagram.com/dancemaniacs_kasiadominik>
+- Facebook: <https://www.facebook.com/dancemaniacskd>
+
+## Contact & Community
+
+If you notice:
+
+- Missing events
+- Incorrect event information
+- Duplicate events
+
+Please use the Submit Event feature inside the application.
+
+## Roadmap
+
+Potential future improvements:
+
+- Native mobile calendar sharing.
+- Additional event categories and filters.
+- Improved mobile discovery experience.
+- Organizer ownership and collaboration features.
+
+## Technical Information
+
+### Setup
 
 ```bash
 npm install
@@ -12,37 +104,16 @@ npm run dev
 
 Fill `.env` with your Supabase project URL and anon key.
 
-## Supabase SQL
+### Build
 
-Run this in Supabase SQL editor:
+```bash
+npm run build
+```
 
-```sql
-create table public.events (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  organizer text,
-  facebook_url text not null,
-  location text,
-  start_time timestamptz not null,
-  end_time timestamptz,
-  category text default 'social',
-  price_text text,
-  description text,
-  approved boolean default true,
-  created_at timestamptz default now()
-);
+### Tests
 
-alter table public.events enable row level security;
-
-create policy "Public can read approved events"
-on public.events for select
-using (approved = true);
-
-create policy "Authenticated users can manage events"
-on public.events for all
-to authenticated
-using (true)
-with check (true);
+```bash
+npm test
 ```
 
 ## Hosting
