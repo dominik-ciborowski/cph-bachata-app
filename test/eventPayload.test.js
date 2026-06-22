@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test'
+import { describe, it } from 'vitest'
 import assert from 'node:assert/strict'
 import { buildBulkEventPayloads, buildEventPayload, buildNewEventPayload, buildSubmittedEventPayload } from '../src/lib/eventPayload.js'
 import { normalizeEvent } from '../src/lib/events.js'
