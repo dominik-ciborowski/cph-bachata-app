@@ -667,6 +667,10 @@ button, input, textarea, select { font: inherit; }
   line-height: 1.45;
 }
 
+.detail-description {
+  white-space: pre-line;
+}
+
 .detail-section h2,
 .detail-cta h2 {
   margin: 0 0 8px;

@@ -78,8 +78,6 @@ function formatTimeRange(startValue, endValue) {
           <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
           <span v-if="event.organizer_display" class="icon-text"><User class="icon icon--sm" />{{ event.organizer_display }}</span>
         </div>
-
-        <p v-if="event.description">{{ event.description }}</p>
       </div>
     </article>
   </RouterLink>

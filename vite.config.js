@@ -9,5 +9,10 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  test: {
+    include: ['src/**/*.{test,spec}.js', 'test/**/*.{test,spec}.js'],
+    exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
+    environment: 'node'
   }
 })

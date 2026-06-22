@@ -121,6 +121,7 @@ onBeforeUnmount(() => {
           <section class="mobile-menu-section">
             <RouterLink to="/favorites" class="mobile-menu-item" @click="closeNavigation">My Events</RouterLink>
             <RouterLink to="/submit-event" class="mobile-menu-item" @click="closeNavigation">Submit Event</RouterLink>
+            <RouterLink to="/account" class="mobile-menu-item" @click="closeNavigation">Account</RouterLink>
             <RouterLink to="/help" class="mobile-menu-item" @click="closeNavigation">Help & About</RouterLink>
             <button class="mobile-menu-item logout-item" type="button" @click="handleLogout">Logout</button>
           </section>

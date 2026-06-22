@@ -249,7 +249,7 @@ async function deleteEvent() {
 
     <section v-if="event.description" class="card detail-section">
       <h2>About this event</h2>
-      <p>{{ event.description }}</p>
+      <p class="detail-description">{{ event.description }}</p>
     </section>
 
     <section v-if="event.event_link" class="card detail-cta">
