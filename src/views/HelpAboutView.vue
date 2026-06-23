@@ -120,7 +120,10 @@ function sendFeedback() {
 
     <section class="card help-section">
       <h2>Additional Information</h2>
-      <RouterLink to="/privacy" class="help-inline-link">Privacy</RouterLink>
+      <div class="help-social-links" aria-label="Additional information links">
+        <RouterLink to="/privacy">Privacy</RouterLink>
+        <RouterLink to="/terms">Terms of Use</RouterLink>
+      </div>
     </section>
   </div>
 </template>

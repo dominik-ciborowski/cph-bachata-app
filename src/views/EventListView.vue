@@ -322,14 +322,15 @@ function exportMyEvents() {
 <template>
   <div class="public-page">
     <section class="hero app-hero">
-      <p class="eyebrow">Copenhagen Bachata Calendar</p>
-      <h1>{{ isFavoritesView ? 'My Events' : 'Find your next dance night.' }}</h1>
+      <p v-if="isFavoritesView" class="eyebrow">Copenhagen Bachata Calendar</p>
+      <h1>{{ isFavoritesView ? 'My Events' : 'Find your next dance event.' }}</h1>
       <p>
         {{ isFavoritesView
           ? 'Your saved upcoming bachata events in Copenhagen.'
-          : 'Created by Dancemaniacs for the Copenhagen bachata community — a shared calendar for socials, classes, workshops and parties from all local organizers.'
+          : 'Discover bachata socials, classes and workshops across Copenhagen.'
         }}
       </p>
+      <p v-if="!isFavoritesView" class="app-hero__attribution">Created by Dancemaniacs for the Copenhagen bachata community.</p>
     </section>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
