@@ -67,24 +67,6 @@ export function getCategoryMeta(category) {
   }
 }
 
-export function isFreePrice(priceText) {
-  const value = String(priceText || '').trim().toLowerCase()
-  if (!value) return true
-
-  return /^(free|gratis)$/.test(value) || /^0+([.,]0+)?(\s*(dkk|kr|kr\.))?$/.test(value)
-}
-
-export function formatPriceDisplay(priceText) {
-  const rawValue = String(priceText || '').trim()
-
-  if (!rawValue) return 'FREE'
-  if (isFreePrice(rawValue)) return 'FREE'
-
-  if (/^\d+([.,]\d+)?$/.test(rawValue)) {
-    return `${rawValue} DKK`
-  }
-
-  return rawValue
-}
+export { formatPriceDisplay, getPriceDetails, getPriceNote, isFreePrice } from './pricing.js'
 
 export const EventLinkIcon = ExternalLink

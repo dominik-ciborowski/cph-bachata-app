@@ -3,8 +3,10 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CalendarPlus } from 'lucide-vue-next'
 import OrganizerSelector from '../components/OrganizerSelector.vue'
+import PriceFields from '../components/PriceFields.vue'
 import { buildBulkEventPayloads } from '../lib/eventPayload'
 import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
+import { createDefaultPrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
@@ -23,7 +25,7 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: '',
+  price: createDefaultPrice(),
   event_link: '',
   start_time: '18:30',
   end_time: '21:30'
@@ -158,11 +160,7 @@ async function saveBulk() {
       </div>
 
       <div class="grid-two">
-        <div class="field">
-          <label for="bulk-price">Price (DKK)</label>
-          <input id="bulk-price" v-model="form.price_text" placeholder="0, 80, 120" />
-          <p class="field-help">If the event is free, enter 0.</p>
-        </div>
+        <PriceFields v-model="form.price" />
 
         <div class="field">
           <label for="bulk-link">Event Link</label>

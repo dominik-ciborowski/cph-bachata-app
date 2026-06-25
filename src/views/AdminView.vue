@@ -3,10 +3,11 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import OrganizerSelector from '../components/OrganizerSelector.vue'
+import PriceFields from '../components/PriceFields.vue'
 import { normalizeEvent } from '../lib/events'
 import { buildEventPayload, buildNewEventPayload } from '../lib/eventPayload'
 import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
-import { isFreePrice } from '../lib/eventPresentation'
+import { createDefaultPrice, normalizePrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
@@ -28,7 +29,7 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: '',
+  price: createDefaultPrice(),
   event_link: '',
   date: '',
   start_time: '18:30',
@@ -60,7 +61,7 @@ function applyEventToForm(data) {
     category: event.category || 'social',
     location: event.location || '',
     description: event.description || '',
-    price_text: isFreePrice(event.price_text) ? '0' : (event.price_text || ''),
+    price: normalizePrice(event.price_text),
     event_link: event.event_link || '',
     date: startDate.toISOString().slice(0, 10),
     start_time: startDate.toTimeString().slice(0, 5),
@@ -280,11 +281,7 @@ async function deleteEvent() {
       </div>
 
       <div class="grid-two">
-        <div class="field">
-          <label for="event-price">Price (DKK)</label>
-          <input id="event-price" v-model="form.price_text" placeholder="0, 80, 120" />
-          <p class="field-help">If the event is free, enter 0.</p>
-        </div>
+        <PriceFields v-model="form.price" />
 
         <div class="field">
           <label for="event-link">Event Link</label>

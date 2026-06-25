@@ -1,3 +1,4 @@
+import { serializePrice } from './pricing.js'
 function toDateTime(date, time) {
   return new Date(`${date}T${time}:00`).toISOString()
 }
@@ -10,7 +11,7 @@ export function buildEventPayload(form) {
     category: form.category,
     location: form.location || null,
     description: form.description || null,
-    price_text: form.price_text || null,
+    price_text: serializePrice(form.price),
     event_link: form.event_link || null,
     start_time: toDateTime(form.date, form.start_time),
     end_time: form.end_time ? toDateTime(form.date, form.end_time) : null,

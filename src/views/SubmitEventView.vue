@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from 'vue'
 import { CalendarPlus } from 'lucide-vue-next'
+import PriceFields from '../components/PriceFields.vue'
 import { buildSubmittedEventPayload } from '../lib/eventPayload'
+import { createDefaultPrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
@@ -17,7 +19,7 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: '',
+  price: createDefaultPrice(),
   event_link: '',
   date: '',
   start_time: '18:30',
@@ -33,7 +35,7 @@ function resetForm() {
     category: 'social',
     location: '',
     description: '',
-    price_text: '',
+    price: createDefaultPrice(),
     event_link: '',
     date: '',
     start_time: '18:30',
@@ -111,11 +113,7 @@ async function submitEvent() {
       </div>
 
       <div class="grid-two">
-        <div class="field">
-          <label for="submit-price">Price (DKK)</label>
-          <input id="submit-price" v-model="form.price_text" placeholder="0, 80, 120" />
-          <p class="field-help">If the event is free, enter 0.</p>
-        </div>
+        <PriceFields v-model="form.price" />
 
         <div class="field">
           <label for="submit-link">Event Link</label>

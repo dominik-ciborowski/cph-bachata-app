@@ -2142,3 +2142,52 @@ textarea {
   gap: 16px;
   scroll-margin-top: 92px;
 }
+.price-editor {
+  align-content: start;
+}
+
+.price-editor__nested {
+  margin-top: 10px;
+}
+
+.price-options {
+  display: grid;
+  gap: 10px;
+}
+
+.price-options__header,
+.price-options__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(110px, .8fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.price-options__header {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.price-options__add {
+  width: fit-content;
+}
+
+.price-breakdown {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .price-options__header {
+    display: none;
+  }
+
+  .price-options__row {
+    grid-template-columns: 1fr;
+  }
+}

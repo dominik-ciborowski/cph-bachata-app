@@ -6,7 +6,7 @@ import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
 import { downloadEventIcs } from '../lib/calendarExport'
-import { EventLinkIcon, formatPriceDisplay, getCategoryMeta } from '../lib/eventPresentation'
+import { EventLinkIcon, formatPriceDisplay, getCategoryMeta, getPriceDetails, getPriceNote } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
@@ -240,9 +240,15 @@ async function deleteEvent() {
           </p>
         </div>
 
-        <div class="detail-fact">
+        <div class="detail-fact detail-fact--price">
           <span>Price</span>
           <strong>{{ formatPriceDisplay(event.price_text) }}</strong>
+          <ul v-if="getPriceDetails(event.price_text).length" class="price-breakdown">
+            <li v-for="option in getPriceDetails(event.price_text)" :key="`${option.label}-${option.amount}`">
+              {{ option.label }} — {{ option.amount }} DKK
+            </li>
+          </ul>
+          <p v-else-if="getPriceNote(event.price_text)">{{ getPriceNote(event.price_text) }}</p>
         </div>
       </div>
     </section>
