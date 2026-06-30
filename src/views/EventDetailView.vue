@@ -246,30 +246,31 @@ async function deleteEvent() {
         <div class="detail-fact detail-fact--price">
           <span>Price</span>
           <strong>{{ formatPriceDisplay(event.price_text) }}</strong>
-          <ul v-if="getPriceDetails(event.price_text).length" class="price-breakdown">
-            <li v-for="option in getPriceDetails(event.price_text)" :key="`${option.label}-${option.amount}`">
-              {{ option.label }} — {{ option.amount }} DKK
-            </li>
-          </ul>
+          <div v-if="getPriceDetails(event.price_text).length" class="price-breakdown">
+            <div v-for="option in getPriceDetails(event.price_text)" :key="`${option.label}-${option.amount}`" class="price-breakdown__row">
+              <span>{{ option.label }}</span>
+              <strong>{{ option.amount }} DKK</strong>
+            </div>
+          </div>
           <p v-else-if="getPriceNote(event.price_text)">{{ getPriceNote(event.price_text) }}</p>
         </div>
       </div>
     </section>
 
-    <section v-if="event.description" class="card detail-section">
-      <h2>About this event</h2>
-      <p class="event-description">{{ event.description }}</p>
-    </section>
-
     <section v-if="event.event_link" class="card detail-cta">
       <div>
-        <h2>More information</h2>
-        <p>Open the event link for the latest updates, attendance info, and details.</p>
+        <h2>Registration & Details</h2>
+        <p>Open the event page for the latest updates, attendance info, and details.</p>
       </div>
       <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer">
         <EventLinkIcon class="icon icon--sm" />
-        Open event link
+        Open event page
       </a>
+    </section>
+
+    <section v-if="event.description" class="card detail-section">
+      <h2>About this event</h2>
+      <p class="event-description">{{ event.description }}</p>
     </section>
 
     <section v-if="canManageCurrentEvent" class="card detail-actions">

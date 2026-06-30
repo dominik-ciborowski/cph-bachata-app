@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { CalendarDays, Heart, MapPin, User } from 'lucide-vue-next'
+import { CalendarDays, Heart, MapPin } from 'lucide-vue-next'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
 defineProps({
@@ -79,7 +79,7 @@ function formatTimeRange(startValue, endValue) {
 
         <div class="event-card__meta">
           <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
-          <span v-if="event.organizer_display" class="icon-text"><User class="icon icon--sm" />{{ event.organizer_display }}</span>
+          <span v-if="event.organizer_display" class="event-card__organizer">Hosted by <strong>{{ event.organizer_display }}</strong></span>
         </div>
       </div>
     </article>

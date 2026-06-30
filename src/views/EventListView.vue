@@ -367,6 +367,39 @@ function exportMyEvents() {
     <p v-else-if="isFavoritesView && calendarExportError" class="empty-state">{{ calendarExportError }}</p>
 
     <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
+      <div class="event-controls-row">
+        <label v-if="viewMode === 'list' || isFavoritesView" class="category-filter">
+          <span>Category</span>
+          <select v-model="category">
+            <option v-for="item in categories" :key="item" :value="item">
+              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+            </option>
+          </select>
+        </label>
+        <div v-else class="event-controls-row__spacer" aria-hidden="true"></div>
+
+        <div v-if="!isFavoritesView" class="view-toggle" aria-label="Event view">
+          <button
+            type="button"
+            class="view-toggle__button"
+            :class="{ active: viewMode === 'list' }"
+            :aria-pressed="viewMode === 'list' ? 'true' : 'false'"
+            @click="setViewMode('list')"
+          >
+            List
+          </button>
+          <button
+            type="button"
+            class="view-toggle__button"
+            :class="{ active: viewMode === 'calendar' }"
+            :aria-pressed="viewMode === 'calendar' ? 'true' : 'false'"
+            @click="setViewMode('calendar')"
+          >
+            Calendar
+          </button>
+        </div>
+      </div>
+
       <template v-if="viewMode === 'list' || isFavoritesView">
         <div class="search-section">
           <input
@@ -414,38 +447,6 @@ function exportMyEvents() {
           <button class="button secondary button--compact" type="button" @click="clearFilters">Clear Filters</button>
         </div>
       </section>
-
-      <div class="event-controls-row">
-        <label v-if="viewMode === 'list' || isFavoritesView" class="category-filter">
-          <span>Category</span>
-          <select v-model="category">
-            <option v-for="item in categories" :key="item" :value="item">
-              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-            </option>
-          </select>
-        </label>
-
-        <div v-if="!isFavoritesView" class="view-toggle" aria-label="Event view">
-          <button
-            type="button"
-            class="view-toggle__button"
-            :class="{ active: viewMode === 'list' }"
-            :aria-pressed="viewMode === 'list' ? 'true' : 'false'"
-            @click="setViewMode('list')"
-          >
-            List
-          </button>
-          <button
-            type="button"
-            class="view-toggle__button"
-            :class="{ active: viewMode === 'calendar' }"
-            :aria-pressed="viewMode === 'calendar' ? 'true' : 'false'"
-            @click="setViewMode('calendar')"
-          >
-            Calendar
-          </button>
-        </div>
-      </div>
     </section>
 
     <p v-if="loading" class="empty-state">Loading events...</p>
