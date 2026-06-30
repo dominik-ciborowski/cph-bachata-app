@@ -183,10 +183,13 @@ async function deleteEvent() {
     <RouterLink :to="getBackTarget()" class="detail-back">← {{ getBackLabel() }}</RouterLink>
 
     <section class="hero detail-hero">
-      <p class="eyebrow detail-category" :class="getCategoryMeta(event.category).className">
-        <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
-        {{ getCategoryMeta(event.category).label }}
-      </p>
+      <div class="detail-badges">
+        <p class="eyebrow detail-category" :class="getCategoryMeta(event.category).className">
+          <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
+          {{ getCategoryMeta(event.category).label }}
+        </p>
+        <span v-if="event.is_recurring" class="pill recurring-badge">↻ Weekly</span>
+      </div>
       <h1>{{ event.title }}</h1>
       <p v-if="event.organizer_display" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer_display }}</span></p>
       <div class="detail-event-actions">

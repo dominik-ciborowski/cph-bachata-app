@@ -30,6 +30,7 @@ const form = ref({
   location: '',
   description: '',
   price: createDefaultPrice(),
+  is_recurring: false,
   event_link: '',
   date: '',
   start_time: '18:30',
@@ -62,6 +63,7 @@ function applyEventToForm(data) {
     location: event.location || '',
     description: event.description || '',
     price: normalizePrice(event.price_text),
+    is_recurring: Boolean(event.is_recurring),
     event_link: event.event_link || '',
     date: startDate.toISOString().slice(0, 10),
     start_time: startDate.toTimeString().slice(0, 5),
@@ -287,6 +289,14 @@ async function deleteEvent() {
           <label for="event-link">Event Link</label>
           <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
         </div>
+      </div>
+
+      <div class="field checkbox-field">
+        <label class="checkbox-field__label">
+          <input v-model="form.is_recurring" type="checkbox" />
+          Weekly event
+        </label>
+        <p class="field-help">Show this when the event repeats weekly.</p>
       </div>
 
       <div class="field">

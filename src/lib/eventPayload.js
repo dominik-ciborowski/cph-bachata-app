@@ -12,6 +12,7 @@ export function buildEventPayload(form) {
     location: form.location || null,
     description: form.description || null,
     price_text: serializePrice(form.price),
+    is_recurring: Boolean(form.is_recurring),
     event_link: form.event_link || null,
     start_time: toDateTime(form.date, form.start_time),
     end_time: form.end_time ? toDateTime(form.date, form.end_time) : null,

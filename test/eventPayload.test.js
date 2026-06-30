@@ -12,6 +12,7 @@ const form = {
   location: 'Copenhagen',
   description: '',
   price: { type: 'free', amount: '', options: [{ label: '', amount: '' }], note: '' },
+  is_recurring: false,
   event_link: 'https://example.com/event',
   date: '2026-06-12',
   start_time: '18:30',
@@ -30,6 +31,7 @@ describe('event payload ownership', () => {
     assert.equal(payload.title, form.title)
     assert.equal(payload.event_link, form.event_link)
     assert.equal(payload.price_text, JSON.stringify({ type: 'free' }))
+    assert.equal(payload.is_recurring, false)
     assert.equal(payload.organizer_id, form.organizer_id)
     assert.equal(payload.status, 'approved')
   })
@@ -40,6 +42,7 @@ describe('event payload ownership', () => {
     assert.equal(rows.length, 2)
     assert.deepEqual(rows.map((row) => row.created_by), ['user-456', 'user-456'])
     assert.deepEqual(rows.map((row) => row.status), ['approved', 'approved'])
+    assert.deepEqual(rows.map((row) => row.is_recurring), [false, false])
   })
 
   it('marks community submissions as pending with submitter metadata', () => {
@@ -53,6 +56,14 @@ describe('event payload ownership', () => {
 
   it('preserves the existing created_by ownership field when normalizing events', () => {
     assert.equal(normalizeEvent({ created_by: 'user-789' }).created_by, 'user-789')
+  })
+
+  it('serializes and normalizes weekly recurring indicators', () => {
+    const recurringPayload = buildEventPayload({ ...form, is_recurring: true })
+
+    assert.equal(recurringPayload.is_recurring, true)
+    assert.equal(normalizeEvent({ is_recurring: true }).is_recurring, true)
+    assert.equal(normalizeEvent({}).is_recurring, false)
   })
 
   it('formats organizer names from organizer records and marks unverified organizers', () => {

@@ -20,6 +20,7 @@ const form = ref({
   location: '',
   description: '',
   price: createDefaultPrice(),
+  is_recurring: false,
   event_link: '',
   date: '',
   start_time: '18:30',
@@ -36,6 +37,7 @@ function resetForm() {
     location: '',
     description: '',
     price: createDefaultPrice(),
+    is_recurring: false,
     event_link: '',
     date: '',
     start_time: '18:30',
@@ -119,6 +121,14 @@ async function submitEvent() {
           <label for="submit-link">Event Link</label>
           <input id="submit-link" v-model="form.event_link" type="url" placeholder="https://..." />
         </div>
+      </div>
+
+      <div class="field checkbox-field">
+        <label class="checkbox-field__label">
+          <input v-model="form.is_recurring" type="checkbox" />
+          Weekly event
+        </label>
+        <p class="field-help">Show this when the event repeats weekly.</p>
       </div>
 
       <div class="field">

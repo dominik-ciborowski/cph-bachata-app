@@ -2191,3 +2191,35 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+.event-card__badges,
+.detail-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.detail-badges {
+  margin-bottom: 10px;
+}
+
+.recurring-badge {
+  background: #F4F1EE;
+  color: var(--color-text-muted);
+  border: 1px solid rgba(2, 0, 0, 0.05);
+}
+
+.checkbox-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+}
+
+.checkbox-field__label input {
+  width: auto;
+}
+
+.detail-badges .eyebrow {
+  margin-bottom: 0;
+}
