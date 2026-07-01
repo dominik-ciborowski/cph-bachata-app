@@ -160,13 +160,11 @@ async function saveBulk() {
         <textarea id="bulk-description" v-model="form.description" placeholder="Short note visible on the public page" />
       </div>
 
-      <div class="grid-two">
-        <PriceFields v-model="form.price" />
+      <PriceFields v-model="form.price" />
 
-        <div class="field">
-          <label for="bulk-link">Event Link</label>
-          <input id="bulk-link" v-model="form.event_link" type="url" placeholder="https://..." />
-        </div>
+      <div class="field">
+        <label for="bulk-link">Event Link</label>
+        <input id="bulk-link" v-model="form.event_link" type="url" placeholder="https://..." />
       </div>
 
       <div class="field checkbox-field">

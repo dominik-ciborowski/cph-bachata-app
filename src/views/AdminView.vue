@@ -282,13 +282,11 @@ async function deleteEvent() {
         <textarea id="event-description" v-model="form.description" placeholder="Short note visible on the public page" />
       </div>
 
-      <div class="grid-two">
-        <PriceFields v-model="form.price" />
+      <PriceFields v-model="form.price" />
 
-        <div class="field">
-          <label for="event-link">Event Link</label>
-          <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
-        </div>
+      <div class="field">
+        <label for="event-link">Event Link</label>
+        <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
       </div>
 
       <div class="field checkbox-field">

@@ -114,13 +114,11 @@ async function submitEvent() {
         <textarea id="submit-description" v-model="form.description" placeholder="Short note about the event" />
       </div>
 
-      <div class="grid-two">
-        <PriceFields v-model="form.price" />
+      <PriceFields v-model="form.price" />
 
-        <div class="field">
-          <label for="submit-link">Event Link</label>
-          <input id="submit-link" v-model="form.event_link" type="url" placeholder="https://..." />
-        </div>
+      <div class="field">
+        <label for="submit-link">Event Link</label>
+        <input id="submit-link" v-model="form.event_link" type="url" placeholder="https://..." />
       </div>
 
       <div class="field checkbox-field">
