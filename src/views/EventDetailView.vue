@@ -215,8 +215,8 @@ async function deleteEvent() {
       <p v-if="calendarExportError" class="detail-action-error">{{ calendarExportError }}</p>
     </section>
 
-    <section class="card detail-summary">
-      <div class="detail-summary__place">
+    <section class="detail-summary">
+      <div class="card detail-summary__place">
         <span>Where</span>
         <strong v-if="event.location">
           <a
@@ -259,8 +259,8 @@ async function deleteEvent() {
 
     <section v-if="event.event_link" class="card detail-cta">
       <div>
-        <h2>Registration & Details</h2>
-        <p>Open the event page for the latest updates, attendance info, and details.</p>
+        <h2>Event Page</h2>
+        <p>Open the organizer's event page for registration, updates and additional details.</p>
       </div>
       <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer">
         <EventLinkIcon class="icon icon--sm" />
