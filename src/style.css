@@ -1817,14 +1817,10 @@ textarea {
   }
 }
 
-.event-controls-row {
-  display: grid;
-  gap: 12px;
+.view-toggle-row {
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 18px;
-}
-
-.event-controls-row .category-filter {
-  margin-bottom: 0;
 }
 
 .view-toggle {
@@ -2009,11 +2005,6 @@ textarea {
 }
 
 @media (min-width: 720px) {
-  .event-controls-row {
-    grid-template-columns: minmax(240px, 1fr) auto;
-    align-items: end;
-  }
-
   .view-toggle {
     min-width: 260px;
   }
@@ -2280,12 +2271,13 @@ textarea {
   font-weight: 800;
   white-space: nowrap;
 }
-.event-controls-row__spacer {
-  display: none;
-}
 
-@media (min-width: 720px) {
-  .event-controls-row__spacer {
-    display: block;
+@media (max-width: 720px) {
+  .view-toggle-row {
+    justify-content: stretch;
+  }
+
+  .view-toggle-row .view-toggle {
+    width: 100%;
   }
 }

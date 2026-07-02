@@ -245,7 +245,7 @@ async function deleteEvent() {
 
         <div class="detail-fact detail-fact--price">
           <span>Price</span>
-          <strong>{{ formatPriceDisplay(event.price_text) }}</strong>
+          <strong v-if="!getPriceDetails(event.price_text).length">{{ formatPriceDisplay(event.price_text) }}</strong>
           <div v-if="getPriceDetails(event.price_text).length" class="price-breakdown">
             <div v-for="option in getPriceDetails(event.price_text)" :key="`${option.label}-${option.amount}`" class="price-breakdown__row">
               <span>{{ option.label }}</span>
