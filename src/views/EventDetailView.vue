@@ -6,7 +6,7 @@ import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
 import { downloadEventIcs } from '../lib/calendarExport'
-import { EventLinkIcon, formatPriceDisplay, getCategoryMeta } from '../lib/eventPresentation'
+import { EventLinkIcon, formatPriceDisplay, getCategoryMeta, getPriceDetails, getPriceNote } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
 
 const route = useRoute()
@@ -183,10 +183,13 @@ async function deleteEvent() {
     <RouterLink :to="getBackTarget()" class="detail-back">← {{ getBackLabel() }}</RouterLink>
 
     <section class="hero detail-hero">
-      <p class="eyebrow detail-category" :class="getCategoryMeta(event.category).className">
-        <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
-        {{ getCategoryMeta(event.category).label }}
-      </p>
+      <div class="detail-badges">
+        <p class="eyebrow detail-category" :class="getCategoryMeta(event.category).className">
+          <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
+          {{ getCategoryMeta(event.category).label }}
+        </p>
+        <span v-if="event.is_recurring" class="pill recurring-badge">↻ Weekly</span>
+      </div>
       <h1>{{ event.title }}</h1>
       <p v-if="event.organizer_display" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer_display }}</span></p>
       <div class="detail-event-actions">
@@ -212,8 +215,8 @@ async function deleteEvent() {
       <p v-if="calendarExportError" class="detail-action-error">{{ calendarExportError }}</p>
     </section>
 
-    <section class="card detail-summary">
-      <div class="detail-summary__place">
+    <section class="detail-summary">
+      <div class="card detail-summary__place">
         <span>Where</span>
         <strong v-if="event.location">
           <a
@@ -240,27 +243,34 @@ async function deleteEvent() {
           </p>
         </div>
 
-        <div class="detail-fact">
+        <div class="detail-fact detail-fact--price">
           <span>Price</span>
-          <strong>{{ formatPriceDisplay(event.price_text) }}</strong>
+          <strong v-if="!getPriceDetails(event.price_text).length">{{ formatPriceDisplay(event.price_text) }}</strong>
+          <div v-if="getPriceDetails(event.price_text).length" class="price-breakdown">
+            <div v-for="option in getPriceDetails(event.price_text)" :key="`${option.label}-${option.amount}`" class="price-breakdown__row">
+              <span>{{ option.label }}</span>
+              <strong>{{ option.amount }} DKK</strong>
+            </div>
+          </div>
+          <p v-else-if="getPriceNote(event.price_text)">{{ getPriceNote(event.price_text) }}</p>
         </div>
       </div>
+    </section>
+
+    <section v-if="event.event_link" class="card detail-cta">
+      <div>
+        <h2>Event Page</h2>
+        <p>Open the organizer's event page for registration, updates and additional details.</p>
+      </div>
+      <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer">
+        <EventLinkIcon class="icon icon--sm" />
+        Open event page
+      </a>
     </section>
 
     <section v-if="event.description" class="card detail-section">
       <h2>About this event</h2>
       <p class="event-description">{{ event.description }}</p>
-    </section>
-
-    <section v-if="event.event_link" class="card detail-cta">
-      <div>
-        <h2>More information</h2>
-        <p>Open the event link for the latest updates, attendance info, and details.</p>
-      </div>
-      <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer">
-        <EventLinkIcon class="icon icon--sm" />
-        Open event link
-      </a>
     </section>
 
     <section v-if="canManageCurrentEvent" class="card detail-actions">

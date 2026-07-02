@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { CalendarDays, Heart, MapPin, User } from 'lucide-vue-next'
+import { CalendarDays, Heart, MapPin } from 'lucide-vue-next'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
 defineProps({
@@ -52,10 +52,13 @@ function formatTimeRange(startValue, endValue) {
 
       <div class="event-card__body">
         <div class="event-card__topline">
-          <span class="pill" :class="getCategoryMeta(event.category).className">
-            <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
-            {{ getCategoryMeta(event.category).label }}
-          </span>
+          <div class="event-card__badges">
+            <span class="pill" :class="getCategoryMeta(event.category).className">
+              <component :is="getCategoryMeta(event.category).icon" class="icon icon--sm" />
+              {{ getCategoryMeta(event.category).label }}
+            </span>
+            <span v-if="event.is_recurring" class="pill recurring-badge">↻ Weekly</span>
+          </div>
           <div class="event-card__actions">
             <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
             <button
@@ -76,7 +79,7 @@ function formatTimeRange(startValue, endValue) {
 
         <div class="event-card__meta">
           <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
-          <span v-if="event.organizer_display" class="icon-text"><User class="icon icon--sm" />{{ event.organizer_display }}</span>
+          <span v-if="event.organizer_display" class="event-card__organizer">Hosted by <strong>{{ event.organizer_display }}</strong></span>
         </div>
       </div>
     </article>

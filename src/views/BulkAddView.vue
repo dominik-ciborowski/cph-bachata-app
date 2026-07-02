@@ -3,8 +3,10 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { CalendarPlus } from 'lucide-vue-next'
 import OrganizerSelector from '../components/OrganizerSelector.vue'
+import PriceFields from '../components/PriceFields.vue'
 import { buildBulkEventPayloads } from '../lib/eventPayload'
 import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
+import { createDefaultPrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
@@ -23,7 +25,8 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: '',
+  price: createDefaultPrice(),
+  is_recurring: false,
   event_link: '',
   start_time: '18:30',
   end_time: '21:30'
@@ -157,17 +160,19 @@ async function saveBulk() {
         <textarea id="bulk-description" v-model="form.description" placeholder="Short note visible on the public page" />
       </div>
 
-      <div class="grid-two">
-        <div class="field">
-          <label for="bulk-price">Price (DKK)</label>
-          <input id="bulk-price" v-model="form.price_text" placeholder="0, 80, 120" />
-          <p class="field-help">If the event is free, enter 0.</p>
-        </div>
+      <PriceFields v-model="form.price" />
 
-        <div class="field">
-          <label for="bulk-link">Event Link</label>
-          <input id="bulk-link" v-model="form.event_link" type="url" placeholder="https://..." />
-        </div>
+      <div class="field">
+        <label for="bulk-link">Event Link</label>
+        <input id="bulk-link" v-model="form.event_link" type="url" placeholder="https://..." />
+      </div>
+
+      <div class="field checkbox-field">
+        <label class="checkbox-field__label">
+          <input v-model="form.is_recurring" type="checkbox" />
+          Weekly event
+        </label>
+        <p class="field-help">Show this when the event repeats weekly.</p>
       </div>
 
       <div class="grid-two">

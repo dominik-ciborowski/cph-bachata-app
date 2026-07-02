@@ -368,6 +368,14 @@ function exportMyEvents() {
 
     <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
       <template v-if="viewMode === 'list' || isFavoritesView">
+        <label class="category-filter">
+          <span>Category</span>
+          <select v-model="category">
+            <option v-for="item in categories" :key="item" :value="item">
+              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+            </option>
+          </select>
+        </label>
         <div class="search-section">
           <input
             v-model="searchQuery"
@@ -415,17 +423,8 @@ function exportMyEvents() {
         </div>
       </section>
 
-      <div class="event-controls-row">
-        <label v-if="viewMode === 'list' || isFavoritesView" class="category-filter">
-          <span>Category</span>
-          <select v-model="category">
-            <option v-for="item in categories" :key="item" :value="item">
-              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-            </option>
-          </select>
-        </label>
-
-        <div v-if="!isFavoritesView" class="view-toggle" aria-label="Event view">
+      <div v-if="!isFavoritesView" class="view-toggle-row">
+        <div class="view-toggle" aria-label="Event view">
           <button
             type="button"
             class="view-toggle__button"

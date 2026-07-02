@@ -12,6 +12,7 @@
  * @property {string | null} location
  * @property {string | null} description
  * @property {string | null} price_text
+ * @property {boolean} is_recurring
  * @property {string} status
  */
 
@@ -28,6 +29,7 @@ export function normalizeEvent(row) {
     organizer: row.organizer || organizerRecord?.name || null,
     organizer_name: getOrganizerDisplayName(row),
     organizer_display: formatOrganizerDisplay(row),
+    is_recurring: Boolean(row.is_recurring),
     event_link: row.event_link || row.facebook_url || null
   }
 }
