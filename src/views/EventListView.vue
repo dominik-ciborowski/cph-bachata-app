@@ -17,6 +17,7 @@ const { user, isAuthenticated, loading: authLoading } = useAuth()
 
 const filter = ref('all')
 const category = ref('all')
+const organizer = ref('all')
 const searchQuery = ref('')
 const events = ref([])
 const loading = ref(true)
@@ -224,6 +225,14 @@ function isFree(event) {
   return isFreePrice(event.price_text)
 }
 
+function getOrganizerFilterName(event) {
+  return event.organizer_name || event.organizer || event.organizer_display || ''
+}
+
+function matchesOrganizer(event) {
+  return organizer.value === 'all' || getOrganizerFilterName(event) === organizer.value
+}
+
 function matchesSearch(event) {
   if (!searchQuery.value) return true
   const query = searchQuery.value.toLowerCase()
@@ -260,6 +269,7 @@ function isCalendarFilterActive(currentFilter) {
 function clearFilters() {
   filter.value = 'all'
   category.value = 'all'
+  organizer.value = 'all'
 }
 
 function scrollToDiscoveryControls() {
@@ -270,10 +280,16 @@ const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
 
+const organizers = computed(() => {
+  return [...new Set(events.value.map(getOrganizerFilterName).filter(Boolean))]
+    .sort((first, second) => first.localeCompare(second))
+})
+
 const activeFilterCount = computed(() => {
   let count = 0
   if (filter.value === 'free') count += 1
   if (category.value !== 'all') count += 1
+  if (organizer.value !== 'all') count += 1
   return count
 })
 
@@ -296,6 +312,7 @@ const visibleEvents = computed(() => {
     .filter(event => !isFavoritesView.value || event.is_favorited)
     .filter(event => filter.value !== 'free' || isFree(event))
     .filter(event => category.value === 'all' || event.category === category.value)
+    .filter(matchesOrganizer)
     .filter(event => !shouldApplyListFilters || matchesSearch(event))
     .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
 })
@@ -376,6 +393,17 @@ function exportMyEvents() {
             </option>
           </select>
         </label>
+
+        <label class="category-filter">
+          <span>Organizer</span>
+          <select v-model="organizer">
+            <option value="all">All organizers</option>
+            <option v-for="item in organizers" :key="item" :value="item">
+              {{ item }}
+            </option>
+          </select>
+        </label>
+
         <div class="search-section">
           <input
             v-model="searchQuery"
@@ -415,6 +443,16 @@ function exportMyEvents() {
             <select v-model="category">
               <option v-for="item in categories" :key="item" :value="item">
                 {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="category-filter">
+            <span>Organizer</span>
+            <select v-model="organizer">
+              <option value="all">All organizers</option>
+              <option v-for="item in organizers" :key="item" :value="item">
+                {{ item }}
               </option>
             </select>
           </label>
