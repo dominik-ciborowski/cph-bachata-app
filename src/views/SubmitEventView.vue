@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from 'vue'
 import { CalendarPlus } from 'lucide-vue-next'
+import PriceFields from '../components/PriceFields.vue'
 import { buildSubmittedEventPayload } from '../lib/eventPayload'
+import { createDefaultPrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
@@ -17,7 +19,8 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: '',
+  price: createDefaultPrice(),
+  is_recurring: false,
   event_link: '',
   date: '',
   start_time: '18:30',
@@ -33,7 +36,8 @@ function resetForm() {
     category: 'social',
     location: '',
     description: '',
-    price_text: '',
+    price: createDefaultPrice(),
+    is_recurring: false,
     event_link: '',
     date: '',
     start_time: '18:30',
@@ -110,17 +114,19 @@ async function submitEvent() {
         <textarea id="submit-description" v-model="form.description" placeholder="Short note about the event" />
       </div>
 
-      <div class="grid-two">
-        <div class="field">
-          <label for="submit-price">Price (DKK)</label>
-          <input id="submit-price" v-model="form.price_text" placeholder="0, 80, 120" />
-          <p class="field-help">If the event is free, enter 0.</p>
-        </div>
+      <PriceFields v-model="form.price" />
 
-        <div class="field">
-          <label for="submit-link">Event Link</label>
-          <input id="submit-link" v-model="form.event_link" type="url" placeholder="https://..." />
-        </div>
+      <div class="field">
+        <label for="submit-link">Event Link</label>
+        <input id="submit-link" v-model="form.event_link" type="url" placeholder="https://..." />
+      </div>
+
+      <div class="field checkbox-field">
+        <label class="checkbox-field__label">
+          <input v-model="form.is_recurring" type="checkbox" />
+          Weekly event
+        </label>
+        <p class="field-help">Show this when the event repeats weekly.</p>
       </div>
 
       <div class="field">

@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { buildBulkEventPayloads, buildEventPayload, buildNewEventPayload, buildSubmittedEventPayload } from '../src/lib/eventPayload.js'
 import { normalizeEvent } from '../src/lib/events.js'
-import { isFreePrice } from '../src/lib/eventPresentation.js'
+import { formatPriceDisplay, getPriceDetails, getPriceNote, isFreePrice } from '../src/lib/eventPresentation.js'
 
 const form = {
   title: 'Friday Social',
@@ -11,7 +11,8 @@ const form = {
   category: 'social',
   location: 'Copenhagen',
   description: '',
-  price_text: '0',
+  price: { type: 'free', amount: '', options: [{ label: '', amount: '' }], note: '' },
+  is_recurring: false,
   event_link: 'https://example.com/event',
   date: '2026-06-12',
   start_time: '18:30',
@@ -29,6 +30,8 @@ describe('event payload ownership', () => {
     assert.equal(payload.created_by, 'user-123')
     assert.equal(payload.title, form.title)
     assert.equal(payload.event_link, form.event_link)
+    assert.equal(payload.price_text, JSON.stringify({ type: 'free' }))
+    assert.equal(payload.is_recurring, false)
     assert.equal(payload.organizer_id, form.organizer_id)
     assert.equal(payload.status, 'approved')
   })
@@ -39,6 +42,7 @@ describe('event payload ownership', () => {
     assert.equal(rows.length, 2)
     assert.deepEqual(rows.map((row) => row.created_by), ['user-456', 'user-456'])
     assert.deepEqual(rows.map((row) => row.status), ['approved', 'approved'])
+    assert.deepEqual(rows.map((row) => row.is_recurring), [false, false])
   })
 
   it('marks community submissions as pending with submitter metadata', () => {
@@ -52,6 +56,14 @@ describe('event payload ownership', () => {
 
   it('preserves the existing created_by ownership field when normalizing events', () => {
     assert.equal(normalizeEvent({ created_by: 'user-789' }).created_by, 'user-789')
+  })
+
+  it('serializes and normalizes weekly recurring indicators', () => {
+    const recurringPayload = buildEventPayload({ ...form, is_recurring: true })
+
+    assert.equal(recurringPayload.is_recurring, true)
+    assert.equal(normalizeEvent({ is_recurring: true }).is_recurring, true)
+    assert.equal(normalizeEvent({}).is_recurring, false)
   })
 
   it('formats organizer names from organizer records and marks unverified organizers', () => {
@@ -95,5 +107,45 @@ describe('free price detection', () => {
     for (const priceText of ['50', '50 DKK', '100 kr', '0-50 DKK', 'donation']) {
       assert.equal(isFreePrice(priceText), false)
     }
+  })
+})
+
+
+describe('structured price presentation', () => {
+  it('formats multiple prices as a compact range', () => {
+    const priceText = JSON.stringify({
+      type: 'multiple',
+      options: [
+        { label: '1 workshop', amount: '150' },
+        { label: '2 workshops', amount: '250' },
+        { label: '3 workshops', amount: '400' }
+      ]
+    })
+
+    assert.equal(formatPriceDisplay(priceText), '150–400 DKK')
+    assert.deepEqual(getPriceDetails(priceText), [
+      { label: '1 workshop', amount: '150' },
+      { label: '2 workshops', amount: '250' },
+      { label: '3 workshops', amount: '400' }
+    ])
+  })
+
+  it('collapses identical multiple prices to one price', () => {
+    const priceText = JSON.stringify({
+      type: 'multiple',
+      options: [
+        { label: 'Member', amount: '140' },
+        { label: 'Guest', amount: '140' }
+      ]
+    })
+
+    assert.equal(formatPriceDisplay(priceText), '140 DKK')
+  })
+
+  it('formats fixed, free, and see-link structured prices', () => {
+    assert.equal(formatPriceDisplay(JSON.stringify({ type: 'fixed', amount: '140' })), '140 DKK')
+    assert.equal(formatPriceDisplay(JSON.stringify({ type: 'free' })), 'FREE')
+    assert.equal(formatPriceDisplay(JSON.stringify({ type: 'link', note: 'Ticket options available on the event page.' })), 'SEE LINK')
+    assert.equal(getPriceNote(JSON.stringify({ type: 'link', note: 'Ticket options available on the event page.' })), 'Ticket options available on the event page.')
   })
 })
