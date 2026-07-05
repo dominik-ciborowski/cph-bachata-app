@@ -85,14 +85,14 @@ onBeforeUnmount(() => {
 
 <template>
   <header class="topbar">
-    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata Calendar home" @click="closeNavigation">
+    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata App home" @click="closeNavigation">
       <img
         class="brand__logo"
         :src="logo"
-        alt="Copenhagen Bachata Calendar logo"
+        alt="Copenhagen Bachata App logo"
       />
       <span class="brand__text">
-        <span class="brand__name">Copenhagen Bachata Calendar</span>
+        <span class="brand__name">Copenhagen Bachata App</span>
         <span class="brand__attribution">by Dancemaniacs</span>
       </span>
     </RouterLink>

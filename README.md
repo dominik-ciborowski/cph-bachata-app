@@ -1,8 +1,8 @@
-# Copenhagen Bachata Calendar
+# Copenhagen Bachata App
 
 A community-driven calendar for discovering bachata events in and around Copenhagen.
 
-Copenhagen Bachata Calendar helps dancers, organizers, and newcomers find what is happening in the local bachata scene without having to search across many different channels.
+Copenhagen Bachata App helps dancers, organizers, and newcomers find what is happening in the local bachata scene without having to search across many different channels.
 
 The goal of the project is to make it easier for dancers to:
 
@@ -22,7 +22,7 @@ Event information is often scattered across:
 - Individual organizer pages
 - Social media posts
 
-Copenhagen Bachata Calendar aims to provide a single place where the community can discover and track upcoming events.
+Copenhagen Bachata App aims to provide a single place where the community can discover and track upcoming events.
 
 ## Features
 
@@ -62,11 +62,11 @@ The goal is to make event discovery easier for everyone in the Copenhagen bachat
 
 ## Created By
 
-Copenhagen Bachata Calendar is created and maintained by Dancemaniacs Kasia & Dominik.
+Copenhagen Bachata App is created and maintained by Dancemaniacs Kasia & Dominik.
 
 International bachata teachers, performers, DJs, and community organizers based in Copenhagen, they have taught, performed, judged competitions, and contributed to dance events across Denmark and abroad. They are also the creators of the Bachata Freedom concept, which focuses on musicality, creativity, connection, and freedom of expression in partner dancing.
 
-They created Copenhagen Bachata Calendar to make event discovery easier for dancers, organizers, and newcomers by bringing scattered event information into one community-driven platform.
+They created Copenhagen Bachata App to make event discovery easier for dancers, organizers, and newcomers by bringing scattered event information into one community-driven platform.
 
 Social media:
 

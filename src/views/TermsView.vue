@@ -2,7 +2,7 @@
   <div class="help-page">
     <section class="hero">
       <h1>Terms of Use</h1>
-      <p>Copenhagen Bachata Calendar is a community-driven project designed to help dancers discover and share dance events.</p>
+      <p>Copenhagen Bachata App is a community-driven project designed to help dancers discover and share dance events.</p>
     </section>
 
     <section class="card help-section">

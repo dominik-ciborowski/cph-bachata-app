@@ -26,7 +26,6 @@ const flashMessage = ref('')
 const favoriteIds = ref(new Set())
 const favoriteBusyId = ref(null)
 const calendarExportError = ref('')
-const viewMode = ref('list')
 const calendarFiltersOpen = ref(false)
 const discoveryControls = ref(null)
 const showListBackToTop = ref(false)
@@ -34,8 +33,11 @@ const showLoginBenefitsBanner = ref(false)
 
 const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
 const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
+const appPreferencesStorageKey = 'copenhagen-bachata-app-preferences'
+const validMainViewModes = new Set(['list', 'calendar'])
 
 const isFavoritesView = computed(() => route.path === '/favorites')
+const viewMode = ref(getStoredPreferredView())
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
@@ -248,9 +250,31 @@ function setQuickFilter(nextFilter) {
 }
 
 function setViewMode(nextViewMode) {
+  if (!validMainViewModes.has(nextViewMode)) {
+    nextViewMode = 'list'
+  }
+
   viewMode.value = nextViewMode
+  savePreferredView(nextViewMode)
   calendarFiltersOpen.value = false
   handleScroll()
+}
+
+function getStoredPreferredView() {
+  try {
+    const storedPreferences = JSON.parse(localStorage.getItem(appPreferencesStorageKey) || '{}')
+    return validMainViewModes.has(storedPreferences.preferredView) ? storedPreferences.preferredView : 'list'
+  } catch {
+    return 'list'
+  }
+}
+
+function savePreferredView(preferredView) {
+  try {
+    localStorage.setItem(appPreferencesStorageKey, JSON.stringify({ preferredView }))
+  } catch {
+    // Ignore storage failures; the selected view still changes for this session.
+  }
 }
 
 function toggleCalendarFilters() {
@@ -339,7 +363,7 @@ function exportMyEvents() {
 <template>
   <div class="public-page">
     <section class="hero app-hero">
-      <p v-if="isFavoritesView" class="eyebrow">Copenhagen Bachata Calendar</p>
+      <p v-if="isFavoritesView" class="eyebrow">Copenhagen Bachata App</p>
       <h1>{{ isFavoritesView ? 'My Events' : 'Find your next dance event.' }}</h1>
       <p>
         {{ isFavoritesView
