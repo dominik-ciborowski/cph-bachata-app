@@ -31,7 +31,7 @@ function sendFeedback() {
     `Submitted: ${new Date().toISOString()}`
   ]
 
-  const subject = `Copenhagen Bachata Calendar Feedback - ${feedbackType.value}`
+  const subject = `Copenhagen Bachata App Feedback - ${feedbackType.value}`
   const mailtoUrl = `mailto:${feedbackEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`
 
   window.location.href = mailtoUrl
@@ -42,11 +42,11 @@ function sendFeedback() {
   <div class="help-page">
     <section class="hero">
       <h1>Help &amp; About</h1>
-      <p>Learn how Copenhagen Bachata Calendar works, who created it, and how you can help keep it useful for the community.</p>
+      <p>Learn how Copenhagen Bachata App works, who created it, and how you can help keep it useful for the community.</p>
     </section>
 
     <section class="card help-section">
-      <h2>What is Copenhagen Bachata Calendar?</h2>
+      <h2>What is Copenhagen Bachata App?</h2>
       <p>Community-driven calendar for discovering bachata events in and around Copenhagen.</p>
       <p>The goal is to make it easier for dancers to discover socials, workshops, festivals, and parties while keeping event information in one place.</p>
       <ul class="help-list">
@@ -59,7 +59,7 @@ function sendFeedback() {
 
     <section class="card help-section">
       <h2>Created By</h2>
-      <p>Copenhagen Bachata Calendar is created and maintained by Dancemaniacs Kasia &amp; Dominik.</p>
+      <p>Copenhagen Bachata App is created and maintained by Dancemaniacs Kasia &amp; Dominik.</p>
       <p>International bachata teachers, performers, DJs, and community organizers based in Copenhagen. They have taught, performed, judged competitions, and contributed to dance events across Denmark and internationally.</p>
       <p>They are also the creators of Bachata Freedom, a concept focused on musicality, creativity, connection, and freedom of expression in partner dancing.</p>
       <div class="help-social-links" aria-label="Dancemaniacs social links">
@@ -93,7 +93,7 @@ function sendFeedback() {
     <section class="card help-section">
       <h2>Get Involved</h2>
       <p>Found a problem, missing information, or have an idea for improvement?</p>
-      <p>Help us make Copenhagen Bachata Calendar better.</p>
+      <p>Help us make Copenhagen Bachata App better.</p>
 
       <form class="feedback-form" @submit.prevent="sendFeedback">
         <div class="field">

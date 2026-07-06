@@ -3,9 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Copenhagen Bachata Calendar</title>
-    <script type="module" crossorigin src="/assets/index-I8UKAw8D.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-hWLrmgNU.css">
+    <title>Copenhagen Bachata App</title>
+    <meta name="description" content="Discover bachata socials, classes and workshops across Copenhagen with Copenhagen Bachata App by Dancemaniacs." />
+    <meta property="og:title" content="Copenhagen Bachata App" />
+    <meta property="og:description" content="Discover bachata socials, classes and workshops across Copenhagen with Copenhagen Bachata App by Dancemaniacs." />
+    <script>
+      (function () {
+        var storageKey = 'copenhagen-bachata-app-theme'
+        var allowedThemes = ['light', 'dark', 'system']
+        var selectedTheme = 'system'
+
+        try {
+          var storedTheme = window.localStorage.getItem(storageKey)
+          if (allowedThemes.indexOf(storedTheme) !== -1) selectedTheme = storedTheme
+        } catch (error) {}
+
+        var prefersDark = false
+        try {
+          prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        } catch (error) {}
+
+        document.documentElement.dataset.theme = selectedTheme === 'system' ? (prefersDark ? 'dark' : 'light') : selectedTheme
+        document.documentElement.dataset.themePreference = selectedTheme
+      })()
+    </script>
+    <script type="module" crossorigin src="/assets/index-CrJrlzHA.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BPqx8Pd7.css">
   </head>
   <body>
     <div id="app"></div>

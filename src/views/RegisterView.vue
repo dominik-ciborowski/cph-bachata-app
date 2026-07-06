@@ -60,7 +60,7 @@ async function register() {
   <div class="management-page">
     <section class="hero">
       <h1>Register</h1>
-      <p>Create a user account for the Copenhagen Bachata Calendar.</p>
+      <p>Create a user account for the Copenhagen Bachata App.</p>
     </section>
 
     <form class="card form" @submit.prevent="register">

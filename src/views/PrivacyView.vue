@@ -2,12 +2,12 @@
   <div class="help-page">
     <section class="hero">
       <h1>Privacy</h1>
-      <p>Simple information about what Copenhagen Bachata Calendar stores and why.</p>
+      <p>Simple information about what Copenhagen Bachata App stores and why.</p>
     </section>
 
     <section class="card help-section">
       <h2>Your Privacy Matters</h2>
-      <p>Copenhagen Bachata Calendar is a community-driven project created to help dancers discover events and stay connected with the local dance community.</p>
+      <p>Copenhagen Bachata App is a community-driven project created to help dancers discover events and stay connected with the local dance community.</p>
       <p>We only collect and store information needed to provide the functionality of the platform.</p>
     </section>
 
