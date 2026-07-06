@@ -2429,3 +2429,41 @@ textarea {
     width: 100%;
   }
 }
+
+.management-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.management-controls .search-input {
+  flex: 1 1 260px;
+}
+
+.segmented-control {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.cancelled-badge {
+  background: var(--color-danger-soft-bg);
+  color: var(--color-danger);
+}
+
+.event-card--cancelled,
+.management-card--cancelled {
+  opacity: 0.72;
+}
+
+@media (max-width: 720px) {
+  .management-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .segmented-control .button {
+    flex: 1 1 0;
+  }
+}

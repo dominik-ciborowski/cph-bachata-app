@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import { Pencil, Plus } from 'lucide-vue-next'
 import OrganizerSelector from '../components/OrganizerSelector.vue'
 import PriceFields from '../components/PriceFields.vue'
 import { normalizeEvent } from '../lib/events'
@@ -13,13 +13,14 @@ import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { user, isAdmin } = useAuth()
+const { user, isAdmin, canManageEventRecord } = useAuth()
 const status = ref('')
 const organizers = ref([])
 const isEditing = ref(false)
 const eventId = ref(null)
 const reviewMode = ref(false)
 const reviewStatus = ref('')
+const eventStatus = ref('approved')
 
 const form = ref({
   title: '',
@@ -83,17 +84,27 @@ async function loadEvent(id, options = {}) {
     return
   }
 
-  applyEventToForm(data)
+  const event = normalizeEvent(data)
+
+  if (!canManageEventRecord(event)) {
+    status.value = 'You do not have access to manage this event.'
+    return
+  }
+
+  applyEventToForm(event)
 
   if (options.duplicate) {
+    form.value.date = ''
     isEditing.value = false
     eventId.value = null
-    status.value = 'Duplicating event. Update the date or details before saving.'
+    eventStatus.value = 'approved'
+    status.value = 'Duplicating event. Choose a new date/time before saving.'
     return
   }
 
   eventId.value = data.id
   isEditing.value = true
+  eventStatus.value = data.status || 'approved'
   reviewStatus.value = data.status || ''
   reviewMode.value = route.query.review === 'submission' && ['pending', 'rejected'].includes(data.status)
 }
@@ -128,7 +139,7 @@ async function saveEvent() {
     ...form.value,
     organizer_id: organizer?.id || null,
     organizer: organizer?.name || form.value.organizer || null,
-    status: reviewMode.value ? reviewStatus.value : 'approved'
+    status: reviewMode.value ? reviewStatus.value : eventStatus.value
   }
   const payload = isEditing.value
     ? buildEventPayload(eventForm)
@@ -214,14 +225,15 @@ async function reviewSubmission(nextStatus) {
   router.push('/admin/submissions')
 }
 
-async function deleteEvent() {
-  if (!confirm('Delete this event? This cannot be undone.')) return
+async function cancelEvent() {
+  const reason = window.prompt('Cancellation reason (optional):', '')
+  if (reason === null) return
 
-  status.value = 'Deleting...'
+  status.value = 'Cancelling...'
 
   const { error } = await supabase
     .from('events')
-    .delete()
+    .update({ status: 'cancelled', cancellation_reason: reason.trim() || null })
     .eq('id', eventId.value)
 
   if (error) {
@@ -229,7 +241,26 @@ async function deleteEvent() {
     return
   }
 
-  sessionStorage.setItem('flash_message', 'Event deleted.')
+  sessionStorage.setItem('flash_message', 'Event cancelled.')
+  router.push('/management')
+}
+
+async function restoreEvent() {
+  if (!confirm('Restore this event?')) return
+
+  status.value = 'Restoring...'
+
+  const { error } = await supabase
+    .from('events')
+    .update({ status: 'approved', cancellation_reason: null })
+    .eq('id', eventId.value)
+
+  if (error) {
+    status.value = error.message
+    return
+  }
+
+  sessionStorage.setItem('flash_message', 'Event restored.')
   router.push('/management')
 }
 </script>
@@ -323,7 +354,8 @@ async function deleteEvent() {
         <button v-if="reviewMode && isAdmin" class="button" type="button" @click="reviewSubmission('approved')">Approve submission</button>
         <button v-if="reviewMode && isAdmin && reviewStatus === 'pending'" class="button danger" type="button" @click="reviewSubmission('rejected')">Reject submission</button>
         <button v-if="reviewMode && isAdmin && reviewStatus === 'rejected'" class="button secondary" type="button" @click="restoreSubmission">Restore to Pending</button>
-        <button v-if="isEditing && !reviewMode" class="button danger icon-text" type="button" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
+        <button v-if="isEditing && !reviewMode && eventStatus === 'cancelled'" class="button secondary" type="button" @click="restoreEvent">Restore event</button>
+        <button v-if="isEditing && !reviewMode && eventStatus !== 'cancelled'" class="button danger" type="button" @click="cancelEvent">Cancel event</button>
       </div>
 
       <p v-if="status" class="status">{{ status }}</p>

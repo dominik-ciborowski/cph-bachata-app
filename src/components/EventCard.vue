@@ -39,6 +39,7 @@ function formatTimeRange(startValue, endValue) {
   <RouterLink v-slot="{ navigate }" custom :to="`/events/${event.id}`">
     <article
       class="event-card"
+      :class="{ 'event-card--cancelled': event.status === 'cancelled' }"
       role="link"
       tabindex="0"
       @click="navigate"
@@ -58,6 +59,7 @@ function formatTimeRange(startValue, endValue) {
               {{ getCategoryMeta(event.category).label }}
             </span>
             <span v-if="event.is_recurring" class="pill recurring-badge">↻ Weekly</span>
+            <span v-if="event.status === 'cancelled'" class="pill cancelled-badge">Cancelled</span>
           </div>
           <div class="event-card__actions">
             <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>

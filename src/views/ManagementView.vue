@@ -9,6 +9,9 @@ import { useAuth } from '../composables/useAuth'
 const router = useRouter()
 const { user, isAdmin, isOrganizer, canManageEvents } = useAuth()
 const events = ref([])
+const creatorProfiles = ref({})
+const searchQuery = ref('')
+const activeView = ref('upcoming')
 const loading = ref(true)
 const error = ref('')
 const flashMessage = ref('')
@@ -36,6 +39,27 @@ const upcomingEvents = computed(() =>
   events.value.filter((event) => new Date(event.start_time) >= today)
 )
 
+const pastEvents = computed(() =>
+  events.value.filter((event) => new Date(event.start_time) < today)
+)
+
+const viewEvents = computed(() => (activeView.value === 'past' ? pastEvents.value : upcomingEvents.value))
+
+const filteredEvents = computed(() => {
+  const term = searchQuery.value.trim().toLowerCase()
+  if (!term) return viewEvents.value
+
+  return viewEvents.value.filter((event) => [
+    event.title,
+    event.organizer_display,
+    event.organizer_name,
+    event.organizer,
+    event.location
+  ].some((value) => String(value || '').toLowerCase().includes(term)))
+})
+
+const viewLabel = computed(() => (activeView.value === 'past' ? 'past' : 'upcoming'))
+
 async function loadEvents() {
   loading.value = true
   error.value = ''
@@ -50,6 +74,7 @@ async function loadEvents() {
   let query = supabase
     .from('events')
     .select('*, organizer_record:organizers(id,name,verified)')
+    .in('status', ['approved', 'cancelled'])
 
   if (isOrganizer.value && !isAdmin.value) {
     query = query.eq('created_by', user.value.id)
@@ -65,7 +90,38 @@ async function loadEvents() {
   }
 
   events.value = (data || []).map(normalizeEvent)
+
+  if (isAdmin.value) {
+    await loadCreatorProfiles(events.value)
+  } else {
+    creatorProfiles.value = {}
+  }
+
   loading.value = false
+}
+
+async function loadCreatorProfiles(eventRows) {
+  const creatorIds = [...new Set(eventRows.map((event) => event.created_by).filter(Boolean))]
+  if (creatorIds.length === 0) {
+    creatorProfiles.value = {}
+    return
+  }
+
+  const { data, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,email')
+    .in('id', creatorIds)
+
+  if (profileError) {
+    creatorProfiles.value = {}
+    return
+  }
+
+  creatorProfiles.value = Object.fromEntries((data || []).map((profile) => [profile.id, profile]))
+}
+
+function getCreatorLabel(event) {
+  return creatorProfiles.value[event.created_by]?.email || event.created_by || 'Unknown'
 }
 
 function formatStart(value) {
@@ -78,17 +134,38 @@ function formatStart(value) {
   }).format(new Date(value))
 }
 
-async function removeEvent(id) {
-  if (!confirm('Delete this event? This cannot be undone.')) return
+async function cancelEvent(event) {
+  const reason = window.prompt('Cancellation reason (optional):', event.cancellation_reason || '')
+  if (reason === null) return
 
-  const { error: deleteError } = await supabase.from('events').delete().eq('id', id)
+  const { error: updateError } = await supabase
+    .from('events')
+    .update({ status: 'cancelled', cancellation_reason: reason.trim() || null })
+    .eq('id', event.id)
 
-  if (deleteError) {
-    error.value = deleteError.message
+  if (updateError) {
+    error.value = updateError.message
     return
   }
 
-  flashMessage.value = 'Event deleted.'
+  flashMessage.value = 'Event cancelled.'
+  await loadEvents()
+}
+
+async function restoreEvent(event) {
+  if (!confirm('Restore this event?')) return
+
+  const { error: updateError } = await supabase
+    .from('events')
+    .update({ status: 'approved', cancellation_reason: null })
+    .eq('id', event.id)
+
+  if (updateError) {
+    error.value = updateError.message
+    return
+  }
+
+  flashMessage.value = 'Event restored.'
   await loadEvents()
 }
 
@@ -114,9 +191,17 @@ function gotoBulkAdd() {
     <section class="management-toolbar">
       <div class="management-toolbar__heading">
         <h1>Event Management</h1>
-        <p>{{ isAdmin ? 'All upcoming events' : 'Your upcoming events' }} ({{ upcomingEvents.length }})</p>
+        <p>{{ isAdmin ? `All ${viewLabel} events` : `Your ${viewLabel} events` }} ({{ filteredEvents.length }})</p>
       </div>
     </section>
+
+    <div class="management-controls">
+      <input v-model="searchQuery" class="search-input" type="search" placeholder="Search events..." aria-label="Search managed events" />
+      <div class="segmented-control" role="tablist" aria-label="Event timeframe">
+        <button class="button button--compact" :class="{ secondary: activeView !== 'upcoming' }" type="button" role="tab" :aria-selected="activeView === 'upcoming'" @click="activeView = 'upcoming'">Upcoming</button>
+        <button class="button button--compact" :class="{ secondary: activeView !== 'past' }" type="button" role="tab" :aria-selected="activeView === 'past'" @click="activeView = 'past'">Past</button>
+      </div>
+    </div>
 
     <div class="management-toolbar__actions" aria-label="Management actions">
       <button class="button button--compact icon-text" type="button" @click="gotoAddEvent"><Plus class="icon icon--sm" />Add Event</button>
@@ -126,23 +211,25 @@ function gotoBulkAdd() {
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
     <p v-if="loading" class="empty-state">Loading events...</p>
     <p v-else-if="error" class="empty-state">Could not load events: {{ error }}</p>
-    <p v-else-if="upcomingEvents.length === 0" class="empty-state">No upcoming events yet.</p>
+    <p v-else-if="filteredEvents.length === 0" class="empty-state">No {{ viewLabel }} events match these filters.</p>
 
     <section v-else class="management-list">
-      <div v-for="event in upcomingEvents" :key="event.id" class="card management-card">
+      <div v-for="event in filteredEvents" :key="event.id" class="card management-card" :class="{ 'management-card--cancelled': event.status === 'cancelled' }">
         <RouterLink :to="{ path: `/events/${event.id}`, query: { from: 'management' } }" class="management-card__content management-card__link">
-          <h2 class="management-card__title">{{ event.title }}</h2>
+          <h2 class="management-card__title">{{ event.title }} <span v-if="event.status === 'cancelled'" class="pill cancelled-badge">Cancelled</span></h2>
           <p class="management-card__meta">
             {{ formatStart(event.start_time) }}
             <span v-if="event.location">• {{ event.location }}</span>
             <span v-if="event.organizer_display">• {{ event.organizer_display }}</span>
           </p>
+          <p v-if="isAdmin" class="management-card__meta">Created by: {{ getCreatorLabel(event) }}</p>
         </RouterLink>
 
         <div class="management-card__actions">
           <button class="button button--compact" type="button" @click="editEvent(event.id)">Edit</button>
           <button class="button secondary button--compact" type="button" @click="duplicateEvent(event.id)">Duplicate</button>
-          <button class="button danger button--compact" type="button" @click="removeEvent(event.id)">Delete</button>
+          <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="restoreEvent(event)">Restore</button>
+          <button v-else class="button danger button--compact" type="button" @click="cancelEvent(event)">Cancel</button>
         </div>
       </div>
     </section>
