@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
 import logo from '@/assets/logo.png'
 import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
 
@@ -150,6 +151,7 @@ onBeforeUnmount(() => {
   </div>
 
   <main class="container">
+    <SiteAnnouncementBanner />
     <RouterView />
   </main>
 </template>

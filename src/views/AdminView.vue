@@ -3,10 +3,11 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import OrganizerSelector from '../components/OrganizerSelector.vue'
+import PriceFields from '../components/PriceFields.vue'
 import { normalizeEvent } from '../lib/events'
 import { buildEventPayload, buildNewEventPayload } from '../lib/eventPayload'
 import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
-import { isFreePrice } from '../lib/eventPresentation'
+import { createDefaultPrice, normalizePrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
 
@@ -28,7 +29,8 @@ const form = ref({
   category: 'social',
   location: '',
   description: '',
-  price_text: '',
+  price: createDefaultPrice(),
+  is_recurring: false,
   event_link: '',
   date: '',
   start_time: '18:30',
@@ -60,7 +62,8 @@ function applyEventToForm(data) {
     category: event.category || 'social',
     location: event.location || '',
     description: event.description || '',
-    price_text: isFreePrice(event.price_text) ? '0' : (event.price_text || ''),
+    price: normalizePrice(event.price_text),
+    is_recurring: Boolean(event.is_recurring),
     event_link: event.event_link || '',
     date: startDate.toISOString().slice(0, 10),
     start_time: startDate.toTimeString().slice(0, 5),
@@ -279,17 +282,19 @@ async function deleteEvent() {
         <textarea id="event-description" v-model="form.description" placeholder="Short note visible on the public page" />
       </div>
 
-      <div class="grid-two">
-        <div class="field">
-          <label for="event-price">Price (DKK)</label>
-          <input id="event-price" v-model="form.price_text" placeholder="0, 80, 120" />
-          <p class="field-help">If the event is free, enter 0.</p>
-        </div>
+      <PriceFields v-model="form.price" />
 
-        <div class="field">
-          <label for="event-link">Event Link</label>
-          <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
-        </div>
+      <div class="field">
+        <label for="event-link">Event Link</label>
+        <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
+      </div>
+
+      <div class="field checkbox-field">
+        <label class="checkbox-field__label">
+          <input v-model="form.is_recurring" type="checkbox" />
+          Weekly event
+        </label>
+        <p class="field-help">Show this when the event repeats weekly.</p>
       </div>
 
       <div class="field">
