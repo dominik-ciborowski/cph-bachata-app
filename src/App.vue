@@ -238,6 +238,7 @@ onBeforeUnmount(() => {
 
             <div v-if="adminMenuOpen" id="admin-navigation-links" class="mobile-menu-section__links">
               <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
+              <RouterLink to="/management/site-messages" class="mobile-menu-item" @click="closeNavigation">Site Messages</RouterLink>
               <RouterLink to="/admin/submissions" class="mobile-menu-item" @click="closeNavigation">Pending Submissions</RouterLink>
               <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
             </div>

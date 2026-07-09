@@ -2694,3 +2694,133 @@ body {
     gap: 4px;
   }
 }
+
+.site-message-form {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.site-message-form h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 22px;
+}
+
+.site-message-active-field {
+  align-self: end;
+  min-height: 48px;
+  justify-content: center;
+}
+
+.site-message-list {
+  display: grid;
+  gap: 10px;
+}
+
+.site-message-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.site-message-row__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.site-message-row__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.site-message-row__header h2 {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.site-message-row__message {
+  margin: 0 0 10px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.site-message-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.site-message-meta dt {
+  margin: 0 0 2px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.site-message-meta dd {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.site-message-row__actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.site-message-type-badge--info {
+  background: var(--color-badge-neutral-bg);
+  color: var(--color-text-muted);
+}
+
+.site-message-type-badge--warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.site-message-type-badge--maintenance {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-primary);
+}
+
+.site-message-type-badge--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+@media (max-width: 720px) {
+  .site-message-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .site-message-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .site-message-row__actions {
+    justify-content: stretch;
+  }
+
+  .site-message-row__actions .button {
+    flex: 1 1 100%;
+  }
+}
