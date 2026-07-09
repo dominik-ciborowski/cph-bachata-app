@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
 import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
+import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
 
 const themeStorageKey = 'copenhagen-bachata-app-theme'
 const themeOptions = ['light', 'dark', 'system']
@@ -233,6 +234,7 @@ onBeforeUnmount(() => {
   </div>
 
   <main class="container">
+    <SiteAnnouncementBanner />
     <RouterView />
   </main>
 </template>

@@ -2467,3 +2467,98 @@ textarea {
     flex: 1 1 0;
   }
 }
+
+.site-announcement {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px var(--color-shadow-soft);
+}
+
+.site-announcement--info {
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-elevated);
+}
+
+.site-announcement--warning {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-bg);
+}
+
+.site-announcement--maintenance {
+  border-color: var(--color-accent-soft-border);
+  background: var(--color-accent-soft-bg);
+}
+
+.site-announcement--success {
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
+}
+
+.site-announcement__content {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.site-announcement__title,
+.site-announcement__message {
+  margin: 0;
+}
+
+.site-announcement__title {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.site-announcement__message {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.site-announcement--warning .site-announcement__title,
+.site-announcement--warning .site-announcement__message {
+  color: var(--color-warning-text);
+}
+
+.site-announcement--success .site-announcement__title,
+.site-announcement--success .site-announcement__message {
+  color: var(--color-success);
+}
+
+.site-announcement__dismiss {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.site-announcement__dismiss:hover,
+.site-announcement__dismiss:focus-visible {
+  border-color: var(--color-border);
+  color: var(--color-text);
+  background: var(--color-badge-neutral-bg);
+}
+
+@media (max-width: 720px) {
+  .site-announcement {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+  }
+}
