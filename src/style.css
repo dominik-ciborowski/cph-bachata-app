@@ -2562,3 +2562,91 @@ textarea {
     padding: 12px 14px;
   }
 }
+
+/* Event details mobile overflow hardening */
+body {
+  min-width: 0;
+}
+
+.detail,
+.detail-hero,
+.detail-summary,
+.detail-summary__place,
+.detail-summary__facts,
+.detail-fact,
+.detail-cta,
+.detail-section,
+.detail-actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.detail-hero h1,
+.detail-organizer-line,
+.detail-organizer-name,
+.detail-action-error,
+.detail-section,
+.event-description,
+.detail-cta,
+.detail-cta p,
+.detail-fact strong,
+.detail-fact p,
+.price-breakdown,
+.price-breakdown__row {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.detail-summary__place strong {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.detail-location-link {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+
+.detail-location-text,
+.detail-action-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.detail-event-actions,
+.detail-actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.detail-favorite-button,
+.detail-calendar-button,
+.detail-actions .button,
+.detail-cta__button {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .detail-hero h1 {
+    overflow-wrap: anywhere;
+  }
+
+  .detail-event-actions {
+    align-items: stretch;
+  }
+
+  .detail-favorite-button,
+  .detail-calendar-button {
+    flex: 1 1 160px;
+  }
+
+  .detail-cta__button,
+  .detail-actions .button {
+    width: 100%;
+  }
+}

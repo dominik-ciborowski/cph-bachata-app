@@ -184,7 +184,7 @@ function addToCalendar() {
           @click="toggleFavorite"
         >
           <Heart class="icon icon--sm" :fill="event.is_favorited ? 'currentColor' : 'none'" />
-          {{ event.is_favorited ? 'Saved to My Events' : 'Save to My Events' }}
+          <span class="detail-action-label">{{ event.is_favorited ? 'Saved to My Events' : 'Save to My Events' }}</span>
         </button>
         <button
           class="detail-calendar-button"
@@ -192,7 +192,7 @@ function addToCalendar() {
           @click="addToCalendar"
         >
           <CalendarPlus class="icon icon--sm" />
-          Add to Calendar
+          <span class="detail-action-label">Add to Calendar</span>
         </button>
       </div>
       <p v-if="calendarExportError" class="detail-action-error">{{ calendarExportError }}</p>
@@ -209,7 +209,7 @@ function addToCalendar() {
             rel="noopener noreferrer"
           >
             <MapPin class="icon icon--sm" />
-            {{ event.location }}
+            <span class="detail-location-text">{{ event.location }}</span>
             <EventLinkIcon class="icon icon--sm" />
           </a>
         </strong>
@@ -257,7 +257,7 @@ function addToCalendar() {
     </section>
 
     <section v-if="canManageCurrentEvent" class="card detail-actions">
-      <RouterLink :to="`/admin/${event.id}`" class="button icon-text"><Pencil class="icon icon--sm" />Edit event</RouterLink>
+      <RouterLink :to="`/admin/${event.id}`" class="button icon-text"><Pencil class="icon icon--sm" /><span class="detail-action-label">Edit event</span></RouterLink>
     </section>
   </section>
 
