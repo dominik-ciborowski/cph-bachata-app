@@ -12,6 +12,7 @@ const themeOptions = ['light', 'dark', 'system']
 const router = useRouter()
 const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
 const mobileMenuOpen = ref(false)
+const adminMenuOpen = ref(false)
 const navRef = ref(null)
 const authToastVisible = ref(false)
 const authToastMessage = ref('')
@@ -28,10 +29,16 @@ async function handleLogout() {
 
 function toggleMobileMenu() {
   mobileMenuOpen.value = !mobileMenuOpen.value
+  if (!mobileMenuOpen.value) adminMenuOpen.value = false
+}
+
+function toggleAdminMenu() {
+  adminMenuOpen.value = !adminMenuOpen.value
 }
 
 function closeNavigation() {
   mobileMenuOpen.value = false
+  adminMenuOpen.value = false
 }
 
 function handleDocumentClick(event) {
@@ -218,10 +225,22 @@ onBeforeUnmount(() => {
           </section>
 
           <section v-if="isAdmin" class="mobile-menu-section">
-            <h2>Administration</h2>
-            <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
-            <RouterLink to="/admin/submissions" class="mobile-menu-item" @click="closeNavigation">Pending Submissions</RouterLink>
-            <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
+            <button
+              class="mobile-menu-section__toggle"
+              type="button"
+              :aria-expanded="adminMenuOpen ? 'true' : 'false'"
+              aria-controls="admin-navigation-links"
+              @click="toggleAdminMenu"
+            >
+              <span>Administration</span>
+              <span class="menu-caret" aria-hidden="true">{{ adminMenuOpen ? '▴' : '▾' }}</span>
+            </button>
+
+            <div v-if="adminMenuOpen" id="admin-navigation-links" class="mobile-menu-section__links">
+              <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
+              <RouterLink to="/admin/submissions" class="mobile-menu-item" @click="closeNavigation">Pending Submissions</RouterLink>
+              <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
+            </div>
           </section>
         </template>
       </div>
