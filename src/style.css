@@ -2824,3 +2824,130 @@ body {
     flex: 1 1 100%;
   }
 }
+
+.bulk-selection-bar,
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bulk-selection-checkbox,
+.management-card__select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.bulk-selection-checkbox input,
+.management-card__select input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.bulk-selection-count {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.bulk-action-bar__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bulk-edit-panel,
+.bulk-confirm-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.bulk-edit-panel h2,
+.bulk-confirm-panel h2,
+.bulk-confirm-panel h3 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.bulk-edit-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bulk-edit-field--disabled {
+  opacity: 0.72;
+}
+
+.bulk-confirm-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 16px;
+}
+
+.bulk-confirm-grid ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.bulk-confirm-events {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.bulk-confirm-events li {
+  display: grid;
+  gap: 2px;
+}
+
+.bulk-confirm-events strong,
+.bulk-confirm-events span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.management-card__select {
+  align-self: center;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding-right: 2px;
+}
+
+@media (max-width: 720px) {
+  .bulk-selection-bar,
+  .bulk-action-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bulk-action-bar__buttons,
+  .bulk-selection-bar .button {
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .bulk-action-bar__buttons .button {
+    flex: 1 1 100%;
+  }
+
+  .bulk-confirm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .management-card__select {
+    align-self: flex-start;
+  }
+}
