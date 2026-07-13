@@ -2981,3 +2981,39 @@ body.mobile-menu-open {
   align-items: center;
   padding: 2px 0;
 }
+
+.management-controls .search-input {
+  display: block;
+  width: 100%;
+  flex: 1 1 auto;
+  height: 48px;
+  min-height: 48px;
+  max-height: 56px;
+  padding: 0 13px;
+  line-height: 1.2;
+}
+
+@media (max-width: 720px) {
+  .management-controls .search-input {
+    flex: 0 0 auto;
+    align-self: stretch;
+  }
+
+  .management-toolbar__actions {
+    position: static;
+    top: auto;
+    z-index: auto;
+    justify-content: flex-start;
+    margin: 0 0 14px;
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .management-toolbar__actions .button {
+    flex: 0 1 auto;
+    min-height: 38px;
+  }
+}
