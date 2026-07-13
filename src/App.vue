@@ -41,6 +41,10 @@ function closeNavigation() {
   adminMenuOpen.value = false
 }
 
+function syncMenuScrollLock() {
+  document.body.classList.toggle('mobile-menu-open', mobileMenuOpen.value)
+}
+
 function handleDocumentClick(event) {
   if (!mobileMenuOpen.value) return
   if (navRef.value?.contains(event.target)) return
@@ -127,7 +131,12 @@ watch(isAuthenticated, () => {
   consumeLoginSuccessToast()
 })
 
+watch(mobileMenuOpen, () => {
+  syncMenuScrollLock()
+})
+
 onBeforeUnmount(() => {
+  document.body.classList.remove('mobile-menu-open')
   document.removeEventListener('click', handleDocumentClick)
   window.removeEventListener('app-toast', handleAppToast)
   colorSchemeQuery?.removeEventListener?.('change', handleSystemThemeChange)

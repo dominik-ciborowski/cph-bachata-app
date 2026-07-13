@@ -1,5 +1,4 @@
 import { canManageEvent } from './permissions.js'
-import { serializePrice } from './pricing.js'
 
 function toDatePart(value) {
   const date = new Date(value)
@@ -37,13 +36,8 @@ export function buildBulkEventUpdatePayload(event, changes) {
   if (changes.changeStartTime) payload.start_time = toDateTimeForEventDate(event, changes.start_time)
   if (changes.changeEndTime) payload.end_time = changes.end_time ? toDateTimeForEventDate(event, changes.end_time) : null
   if (changes.changeLocation) payload.location = changes.location || null
-  if (changes.changeOrganizer) {
-    payload.organizer_id = changes.organizer_id || null
-    payload.organizer = changes.organizer || null
-  }
   if (changes.changeCategory) payload.category = changes.category
-  if (changes.changeRecurring) payload.is_recurring = changes.is_recurring === 'weekly'
-  if (changes.changePricing) payload.price_text = serializePrice(changes.price)
+  if (changes.changeRecurring) payload.is_recurring = Boolean(changes.is_recurring)
 
   return payload
 }
@@ -53,10 +47,8 @@ export function getBulkChangeSummary(changes) {
   if (changes.changeStartTime) summary.push(`Start time → ${changes.start_time}`)
   if (changes.changeEndTime) summary.push(`End time → ${changes.end_time || 'No end time'}`)
   if (changes.changeLocation) summary.push(`Location → ${changes.location || 'Not listed'}`)
-  if (changes.changeOrganizer) summary.push(`Organizer → ${changes.organizer || 'No organizer selected'}`)
   if (changes.changeCategory) summary.push(`Category → ${changes.category}`)
-  if (changes.changeRecurring) summary.push(`Weekly status → ${changes.is_recurring === 'weekly' ? 'Weekly' : 'Not weekly'}`)
-  if (changes.changePricing) summary.push('Pricing → Replace full pricing configuration')
+  if (changes.changeRecurring) summary.push(`Weekly status → ${changes.is_recurring ? 'Weekly' : 'Not weekly'}`)
   return summary
 }
 

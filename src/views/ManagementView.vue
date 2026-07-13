@@ -2,8 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { CalendarPlus, Plus } from 'lucide-vue-next'
-import OrganizerSelector from '../components/OrganizerSelector.vue'
-import PriceFields from '../components/PriceFields.vue'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
 import {
@@ -14,8 +12,6 @@ import {
   selectAllVisibleEventIds,
   toggleSelectedEventId
 } from '../lib/bulkEventActions'
-import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
-import { createDefaultPrice } from '../lib/pricing'
 import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
@@ -27,7 +23,6 @@ const activeView = ref('upcoming')
 const loading = ref(true)
 const error = ref('')
 const flashMessage = ref('')
-const organizers = ref([])
 const selectedEventIds = ref(new Set())
 const bulkEditOpen = ref(false)
 const bulkConfirmOpen = ref(false)
@@ -53,7 +48,6 @@ onMounted(async () => {
     return
   }
 
-  await loadOrganizers()
   await loadEvents()
 })
 
@@ -105,26 +99,13 @@ function createDefaultBulkForm() {
     end_time: '',
     changeLocation: false,
     location: '',
-    changeOrganizer: false,
-    organizer_id: '',
-    organizer: '',
-    newOrganizerName: '',
     changeCategory: false,
     category: 'social',
     changeRecurring: false,
-    is_recurring: 'weekly',
-    changePricing: false,
-    price: createDefaultPrice()
+    is_recurring: false
   }
 }
 
-async function loadOrganizers() {
-  try {
-    organizers.value = await fetchOrganizers()
-  } catch {
-    organizers.value = []
-  }
-}
 
 async function loadEvents() {
   loading.value = true
@@ -244,7 +225,6 @@ async function cancelEvent(event) {
   }
 
   flashMessage.value = 'Event cancelled.'
-  await loadOrganizers()
   await loadEvents()
 }
 
@@ -296,7 +276,6 @@ async function restoreEvent(event) {
   }
 
   flashMessage.value = 'Event restored.'
-  await loadOrganizers()
   await loadEvents()
 }
 
@@ -304,19 +283,6 @@ async function prepareBulkEditConfirmation() {
   error.value = ''
   let changes = { ...bulkForm.value }
 
-  if (changes.changeOrganizer) {
-    try {
-      const organizer = await resolveOrganizerForEvent(changes, user.value.id, organizers.value)
-      changes = {
-        ...changes,
-        organizer_id: organizer?.id || null,
-        organizer: organizer?.name || changes.organizer || null
-      }
-    } catch (organizerError) {
-      error.value = organizerError.message
-      return
-    }
-  }
 
   const summary = getBulkChangeSummary(changes)
   if (summary.length === 0) {
@@ -426,18 +392,6 @@ function gotoBulkAdd() {
         <input v-model="bulkForm.location" :disabled="!bulkForm.changeLocation" placeholder="Location name" />
       </div>
 
-      <div class="bulk-edit-field" :class="{ 'bulk-edit-field--disabled': !bulkForm.changeOrganizer }">
-        <label class="checkbox-field__label"><input v-model="bulkForm.changeOrganizer" type="checkbox" />Change organizer</label>
-        <OrganizerSelector
-          v-if="bulkForm.changeOrganizer"
-          v-model:organizer-id="bulkForm.organizer_id"
-          v-model:organizer-name="bulkForm.organizer"
-          v-model:new-organizer-name="bulkForm.newOrganizerName"
-          :organizers="organizers"
-          select-id="bulk-event-organizer"
-          new-input-id="bulk-event-new-organizer"
-        />
-      </div>
 
       <div class="grid-two">
         <div class="field bulk-edit-field">
@@ -452,16 +406,8 @@ function gotoBulkAdd() {
 
         <div class="field bulk-edit-field">
           <label class="checkbox-field__label"><input v-model="bulkForm.changeRecurring" type="checkbox" />Change weekly status</label>
-          <select v-model="bulkForm.is_recurring" :disabled="!bulkForm.changeRecurring">
-            <option value="weekly">Weekly</option>
-            <option value="not_weekly">Not weekly</option>
-          </select>
+          <label v-if="bulkForm.changeRecurring" class="checkbox-field__label bulk-weekly-checkbox"><input v-model="bulkForm.is_recurring" type="checkbox" />Weekly event</label>
         </div>
-      </div>
-
-      <div class="bulk-edit-field" :class="{ 'bulk-edit-field--disabled': !bulkForm.changePricing }">
-        <label class="checkbox-field__label"><input v-model="bulkForm.changePricing" type="checkbox" />Change pricing</label>
-        <PriceFields v-if="bulkForm.changePricing" v-model="bulkForm.price" />
       </div>
 
       <div class="form-actions">

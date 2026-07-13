@@ -48,18 +48,9 @@ test('only enabled bulk fields are included in update payload', () => {
 })
 
 test('supports weekly true and false updates', () => {
-  assert.equal(buildBulkEventUpdatePayload(event, { changeRecurring: true, is_recurring: 'weekly' }).is_recurring, true)
-  assert.equal(buildBulkEventUpdatePayload(event, { changeRecurring: true, is_recurring: 'not_weekly' }).is_recurring, false)
-  assert.equal('is_recurring' in buildBulkEventUpdatePayload(event, { changeRecurring: false, is_recurring: 'not_weekly' }), false)
-})
-
-test('replaces structured price when enabled', () => {
-  const payload = buildBulkEventUpdatePayload(event, {
-    changePricing: true,
-    price: { type: 'fixed', amount: '120', options: [{ label: '', amount: '' }], note: '' }
-  })
-
-  assert.equal(payload.price_text, JSON.stringify({ type: 'fixed', amount: '120' }))
+  assert.equal(buildBulkEventUpdatePayload(event, { changeRecurring: true, is_recurring: true }).is_recurring, true)
+  assert.equal(buildBulkEventUpdatePayload(event, { changeRecurring: true, is_recurring: false }).is_recurring, false)
+  assert.equal('is_recurring' in buildBulkEventUpdatePayload(event, { changeRecurring: false, is_recurring: false }), false)
 })
 
 test('filters manageable events by organizer and admin permissions', () => {

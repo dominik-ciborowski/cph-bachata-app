@@ -2951,3 +2951,33 @@ body {
     align-self: flex-start;
   }
 }
+
+body.mobile-menu-open {
+  overflow: hidden;
+}
+
+.mobile-menu-panel {
+  max-height: calc(100vh - 86px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@supports (height: 100dvh) {
+  .mobile-menu-panel {
+    max-height: calc(100dvh - 86px);
+  }
+}
+
+.management-controls .search-input {
+  min-height: 0;
+  height: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  line-height: 1.2;
+}
+
+.bulk-weekly-checkbox {
+  min-height: 44px;
+  align-items: center;
+  padding: 2px 0;
+}
