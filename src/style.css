@@ -3017,3 +3017,31 @@ body.mobile-menu-open {
     min-height: 38px;
   }
 }
+
+.user-management-controls {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.user-management-controls .search-input {
+  display: block;
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  max-height: 56px;
+  padding: 0 13px;
+  line-height: 1.2;
+}
+
+.user-role-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (max-width: 720px) {
+  .user-role-filters .button {
+    flex: 1 1 auto;
+  }
+}
