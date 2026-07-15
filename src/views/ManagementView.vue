@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
+import CancellationModal from '../components/CancellationModal.vue'
 import { CalendarPlus, Plus } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
@@ -29,6 +30,9 @@ const bulkConfirmOpen = ref(false)
 const bulkSaving = ref(false)
 const bulkChangeSummary = ref([])
 const bulkPayloadPreview = ref(null)
+const cancellationModalOpen = ref(false)
+const cancellationTargets = ref([])
+const cancellationInitialReason = ref('')
 
 const bulkForm = ref(createDefaultBulkForm())
 
@@ -210,14 +214,40 @@ function formatStart(value) {
   }).format(new Date(value))
 }
 
-async function cancelEvent(event) {
-  const reason = window.prompt('Cancellation reason (optional):', event.cancellation_reason || '')
-  if (reason === null) return
+function openCancellationModal(targetEvents, initialReason = '') {
+  cancellationTargets.value = Array.isArray(targetEvents) ? targetEvents : [targetEvents]
+  cancellationInitialReason.value = initialReason || ''
+  cancellationModalOpen.value = true
+}
 
+function closeCancellationModal() {
+  if (bulkSaving.value) return
+  cancellationModalOpen.value = false
+  cancellationTargets.value = []
+  cancellationInitialReason.value = ''
+}
+
+async function confirmCancellation(reason) {
+  const cancellationReason = reason?.trim() || null
+  const targetEvents = cancellationTargets.value.filter((event) => event.status !== 'cancelled')
+  if (targetEvents.length === 0) {
+    closeCancellationModal()
+    return
+  }
+
+  if (targetEvents.length > 1) {
+    await applyBulkOperation(targetEvents, { status: 'cancelled', cancellation_reason: cancellationReason }, 'cancelled')
+    closeCancellationModal()
+    return
+  }
+
+  const [event] = targetEvents
+  bulkSaving.value = true
   const { error: updateError } = await supabase
     .from('events')
-    .update({ status: 'cancelled', cancellation_reason: reason.trim() || null })
+    .update({ status: 'cancelled', cancellation_reason: cancellationReason })
     .eq('id', event.id)
+  bulkSaving.value = false
 
   if (updateError) {
     error.value = updateError.message
@@ -225,6 +255,7 @@ async function cancelEvent(event) {
   }
 
   flashMessage.value = 'Event cancelled.'
+  closeCancellationModal()
   await loadEvents()
 }
 
@@ -243,15 +274,10 @@ async function applyBulkOperation(targetEvents, payload, successActionLabel) {
   clearSelection()
 }
 
-async function bulkCancelSelected() {
+function bulkCancelSelected() {
   const targetEvents = selectedEvents.value.filter((event) => event.status !== 'cancelled')
   if (targetEvents.length === 0) return
-  if (!confirm(`Cancel ${targetEvents.length} selected events?`)) return
-
-  const reason = window.prompt('Cancellation reason (optional):', '')
-  if (reason === null) return
-
-  await applyBulkOperation(targetEvents, { status: 'cancelled', cancellation_reason: reason.trim() || null }, 'cancelled')
+  openCancellationModal(targetEvents)
 }
 
 async function bulkRestoreSelected() {
@@ -469,9 +495,18 @@ function gotoBulkAdd() {
           <button class="button button--compact" type="button" @click="editEvent(event.id)">Edit</button>
           <button class="button secondary button--compact" type="button" @click="duplicateEvent(event.id)">Duplicate</button>
           <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="restoreEvent(event)">Restore</button>
-          <button v-else class="button danger button--compact" type="button" @click="cancelEvent(event)">Cancel</button>
+          <button v-else class="button danger button--compact" type="button" @click="openCancellationModal(event, event.cancellation_reason || '')">Cancel</button>
         </div>
       </div>
     </section>
+
+    <CancellationModal
+      v-if="cancellationModalOpen"
+      :event-count="cancellationTargets.length || 1"
+      :initial-reason="cancellationInitialReason"
+      :busy="bulkSaving"
+      @close="closeCancellationModal"
+      @confirm="confirmCancellation"
+    />
   </div>
 </template>

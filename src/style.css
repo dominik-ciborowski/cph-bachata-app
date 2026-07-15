@@ -1350,6 +1350,11 @@ textarea {
   line-height: 1.25;
 }
 
+.cancellation-modal textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
 .user-management-section {
   display: grid;
   gap: 14px;
@@ -2387,6 +2392,14 @@ textarea {
 
 .event-card__organizer strong {
   font-weight: 800;
+}
+
+.event-card__cancellation-reason {
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .price-breakdown {

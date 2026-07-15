@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus } from 'lucide-vue-next'
+import CancellationModal from '../components/CancellationModal.vue'
 import OrganizerSelector from '../components/OrganizerSelector.vue'
 import PriceFields from '../components/PriceFields.vue'
 import { normalizeEvent } from '../lib/events'
@@ -21,6 +22,8 @@ const eventId = ref(null)
 const reviewMode = ref(false)
 const reviewStatus = ref('')
 const eventStatus = ref('approved')
+const cancellationModalOpen = ref(false)
+const cancellationReason = ref('')
 
 const form = ref({
   title: '',
@@ -225,15 +228,23 @@ async function reviewSubmission(nextStatus) {
   router.push('/admin/submissions')
 }
 
-async function cancelEvent() {
-  const reason = window.prompt('Cancellation reason (optional):', '')
-  if (reason === null) return
+function openCancellationModal() {
+  cancellationReason.value = ''
+  cancellationModalOpen.value = true
+}
 
+function closeCancellationModal() {
+  cancellationModalOpen.value = false
+  cancellationReason.value = ''
+}
+
+async function cancelEvent(reason) {
   status.value = 'Cancelling...'
+  const cancellationReason = reason?.trim() || null
 
   const { error } = await supabase
     .from('events')
-    .update({ status: 'cancelled', cancellation_reason: reason.trim() || null })
+    .update({ status: 'cancelled', cancellation_reason: cancellationReason })
     .eq('id', eventId.value)
 
   if (error) {
@@ -241,6 +252,7 @@ async function cancelEvent() {
     return
   }
 
+  closeCancellationModal()
   sessionStorage.setItem('flash_message', 'Event cancelled.')
   router.push('/management')
 }
@@ -355,10 +367,17 @@ async function restoreEvent() {
         <button v-if="reviewMode && isAdmin && reviewStatus === 'pending'" class="button danger" type="button" @click="reviewSubmission('rejected')">Reject submission</button>
         <button v-if="reviewMode && isAdmin && reviewStatus === 'rejected'" class="button secondary" type="button" @click="restoreSubmission">Restore to Pending</button>
         <button v-if="isEditing && !reviewMode && eventStatus === 'cancelled'" class="button secondary" type="button" @click="restoreEvent">Restore event</button>
-        <button v-if="isEditing && !reviewMode && eventStatus !== 'cancelled'" class="button danger" type="button" @click="cancelEvent">Cancel event</button>
+        <button v-if="isEditing && !reviewMode && eventStatus !== 'cancelled'" class="button danger" type="button" @click="openCancellationModal">Cancel event</button>
       </div>
 
       <p v-if="status" class="status">{{ status }}</p>
     </form>
+
+    <CancellationModal
+      v-if="cancellationModalOpen"
+      :busy="status === 'Cancelling...'"
+      @close="closeCancellationModal"
+      @confirm="cancelEvent"
+    />
   </div>
 </template>

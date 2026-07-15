@@ -82,6 +82,7 @@ function formatTimeRange(startValue, endValue) {
         <div class="event-card__meta">
           <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
           <span v-if="event.organizer_display" class="event-card__organizer">Hosted by <strong>{{ event.organizer_display }}</strong></span>
+          <span v-if="event.status === 'cancelled' && event.cancellation_reason" class="event-card__cancellation-reason">⚠ Cancelled: {{ event.cancellation_reason }}</span>
         </div>
       </div>
     </article>
