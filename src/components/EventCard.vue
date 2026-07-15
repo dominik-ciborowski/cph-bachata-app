@@ -1,9 +1,10 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CalendarDays, Heart, MapPin } from 'lucide-vue-next'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
-defineProps({
+const props = defineProps({
   event: {
     type: Object,
     required: true
@@ -15,6 +16,8 @@ defineProps({
 })
 
 defineEmits(['toggle-favorite'])
+
+const cancellationReason = computed(() => String(props.event.cancellation_reason || '').trim())
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('en-DK', {
@@ -82,7 +85,7 @@ function formatTimeRange(startValue, endValue) {
         <div class="event-card__meta">
           <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
           <span v-if="event.organizer_display" class="event-card__organizer">Hosted by <strong>{{ event.organizer_display }}</strong></span>
-          <span v-if="event.status === 'cancelled' && event.cancellation_reason" class="event-card__cancellation-reason">⚠ Cancelled: {{ event.cancellation_reason }}</span>
+          <span v-if="event.status === 'cancelled' && cancellationReason" class="event-card__cancellation-reason">⚠ Cancelled: {{ cancellationReason }}</span>
         </div>
       </div>
     </article>

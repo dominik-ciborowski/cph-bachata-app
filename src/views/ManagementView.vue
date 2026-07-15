@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import CancellationModal from '../components/CancellationModal.vue'
+import ConfirmationModal from '../components/ConfirmationModal.vue'
 import { CalendarPlus, Plus } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
@@ -33,6 +34,8 @@ const bulkPayloadPreview = ref(null)
 const cancellationModalOpen = ref(false)
 const cancellationTargets = ref([])
 const cancellationInitialReason = ref('')
+const restoreModalOpen = ref(false)
+const restoreTargets = ref([])
 
 const bulkForm = ref(createDefaultBulkForm())
 
@@ -227,6 +230,17 @@ function closeCancellationModal() {
   cancellationInitialReason.value = ''
 }
 
+function openRestoreModal(targetEvents) {
+  restoreTargets.value = Array.isArray(targetEvents) ? targetEvents : [targetEvents]
+  restoreModalOpen.value = true
+}
+
+function closeRestoreModal() {
+  if (bulkSaving.value) return
+  restoreModalOpen.value = false
+  restoreTargets.value = []
+}
+
 async function confirmCancellation(reason) {
   const cancellationReason = reason?.trim() || null
   const targetEvents = cancellationTargets.value.filter((event) => event.status !== 'cancelled')
@@ -280,21 +294,32 @@ function bulkCancelSelected() {
   openCancellationModal(targetEvents)
 }
 
-async function bulkRestoreSelected() {
+function bulkRestoreSelected() {
   const targetEvents = selectedEvents.value.filter((event) => event.status === 'cancelled')
   if (targetEvents.length === 0) return
-  if (!confirm(`Restore ${targetEvents.length} selected events?`)) return
-
-  await applyBulkOperation(targetEvents, { status: 'approved', cancellation_reason: null }, 'restored')
+  openRestoreModal(targetEvents)
 }
 
-async function restoreEvent(event) {
-  if (!confirm('Restore this event?')) return
+async function confirmRestore() {
+  const targetEvents = restoreTargets.value.filter((event) => event.status === 'cancelled')
+  if (targetEvents.length === 0) {
+    closeRestoreModal()
+    return
+  }
 
+  if (targetEvents.length > 1) {
+    await applyBulkOperation(targetEvents, { status: 'approved', cancellation_reason: null }, 'restored')
+    closeRestoreModal()
+    return
+  }
+
+  const [event] = targetEvents
+  bulkSaving.value = true
   const { error: updateError } = await supabase
     .from('events')
     .update({ status: 'approved', cancellation_reason: null })
     .eq('id', event.id)
+  bulkSaving.value = false
 
   if (updateError) {
     error.value = updateError.message
@@ -302,6 +327,7 @@ async function restoreEvent(event) {
   }
 
   flashMessage.value = 'Event restored.'
+  closeRestoreModal()
   await loadEvents()
 }
 
@@ -494,7 +520,7 @@ function gotoBulkAdd() {
         <div class="management-card__actions">
           <button class="button button--compact" type="button" @click="editEvent(event.id)">Edit</button>
           <button class="button secondary button--compact" type="button" @click="duplicateEvent(event.id)">Duplicate</button>
-          <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="restoreEvent(event)">Restore</button>
+          <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="openRestoreModal(event)">Restore</button>
           <button v-else class="button danger button--compact" type="button" @click="openCancellationModal(event, event.cancellation_reason || '')">Cancel</button>
         </div>
       </div>
@@ -507,6 +533,16 @@ function gotoBulkAdd() {
       :busy="bulkSaving"
       @close="closeCancellationModal"
       @confirm="confirmCancellation"
+    />
+
+    <ConfirmationModal
+      v-if="restoreModalOpen"
+      :title="restoreTargets.length === 1 ? 'Restore Event' : `Restore ${restoreTargets.length} Events`"
+      :description="restoreTargets.length === 1 ? 'This event will be marked as active again and the cancellation reason will be removed.' : 'These events will be marked as active again and their cancellation reasons will be removed.'"
+      :confirm-label="restoreTargets.length === 1 ? 'Restore Event' : 'Restore Events'"
+      :busy="bulkSaving"
+      @close="closeRestoreModal"
+      @confirm="confirmRestore"
     />
   </div>
 </template>
