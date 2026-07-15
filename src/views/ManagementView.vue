@@ -36,6 +36,8 @@ const cancellationTargets = ref([])
 const cancellationInitialReason = ref('')
 const restoreModalOpen = ref(false)
 const restoreTargets = ref([])
+const deleteModalOpen = ref(false)
+const deleteTarget = ref(null)
 
 const bulkForm = ref(createDefaultBulkForm())
 
@@ -241,6 +243,17 @@ function closeRestoreModal() {
   restoreTargets.value = []
 }
 
+function openDeleteModal(event) {
+  deleteTarget.value = event
+  deleteModalOpen.value = true
+}
+
+function closeDeleteModal() {
+  if (bulkSaving.value) return
+  deleteModalOpen.value = false
+  deleteTarget.value = null
+}
+
 async function confirmCancellation(reason) {
   const cancellationReason = reason?.trim() || null
   const targetEvents = cancellationTargets.value.filter((event) => event.status !== 'cancelled')
@@ -328,6 +341,27 @@ async function confirmRestore() {
 
   flashMessage.value = 'Event restored.'
   closeRestoreModal()
+  await loadEvents()
+}
+
+async function confirmDelete() {
+  if (!deleteTarget.value) return
+
+  bulkSaving.value = true
+  const { error: deleteError } = await supabase
+    .from('events')
+    .delete()
+    .eq('id', deleteTarget.value.id)
+  bulkSaving.value = false
+
+  if (deleteError) {
+    error.value = deleteError.message
+    return
+  }
+
+  flashMessage.value = 'Event deleted.'
+  selectedEventIds.value.delete(String(deleteTarget.value.id))
+  closeDeleteModal()
   await loadEvents()
 }
 
@@ -522,6 +556,7 @@ function gotoBulkAdd() {
           <button class="button secondary button--compact" type="button" @click="duplicateEvent(event.id)">Duplicate</button>
           <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="openRestoreModal(event)">Restore</button>
           <button v-else class="button danger button--compact" type="button" @click="openCancellationModal(event, event.cancellation_reason || '')">Cancel</button>
+          <button class="button danger button--compact" type="button" @click="openDeleteModal(event)">Delete</button>
         </div>
       </div>
     </section>
@@ -543,6 +578,17 @@ function gotoBulkAdd() {
       :busy="bulkSaving"
       @close="closeRestoreModal"
       @confirm="confirmRestore"
+    />
+
+    <ConfirmationModal
+      v-if="deleteModalOpen"
+      title="Delete Event Permanently?"
+      description="This event will be permanently removed. This action cannot be undone."
+      confirm-label="Delete Event"
+      danger
+      :busy="bulkSaving"
+      @close="closeDeleteModal"
+      @confirm="confirmDelete"
     />
   </div>
 </template>
