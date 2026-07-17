@@ -705,6 +705,23 @@ button, input, textarea, select { font: inherit; }
   border-color: var(--color-danger-hover);
 }
 
+.button.management-card__delete {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-danger);
+}
+
+.button.management-card__delete:hover,
+.button.management-card__delete:focus-visible {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-button-text);
+}
+
 .detail {
   display: grid;
   gap: 18px;

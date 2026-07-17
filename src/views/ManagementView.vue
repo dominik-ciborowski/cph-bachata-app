@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import CancellationModal from '../components/CancellationModal.vue'
 import ConfirmationModal from '../components/ConfirmationModal.vue'
-import { CalendarPlus, Plus } from 'lucide-vue-next'
+import { CalendarPlus, Plus, Trash2 } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
 import {
@@ -556,7 +556,15 @@ function gotoBulkAdd() {
           <button class="button secondary button--compact" type="button" @click="duplicateEvent(event.id)">Duplicate</button>
           <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="openRestoreModal(event)">Restore</button>
           <button v-else class="button danger button--compact" type="button" @click="openCancellationModal(event, event.cancellation_reason || '')">Cancel</button>
-          <button class="button danger button--compact" type="button" @click="openDeleteModal(event)">Delete</button>
+          <button
+            class="button button--compact management-card__delete"
+            type="button"
+            aria-label="Delete event"
+            title="Delete event"
+            @click="openDeleteModal(event)"
+          >
+            <Trash2 class="icon icon--sm" aria-hidden="true" />
+          </button>
         </div>
       </div>
     </section>
