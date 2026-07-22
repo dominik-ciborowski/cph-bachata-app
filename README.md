@@ -102,7 +102,9 @@ cp .env.example .env
 npm run dev
 ```
 
-Fill `.env` with your Supabase project URL and anon key.
+Fill `.env` with your Supabase project URL and anon key. Analytics is disabled by
+default; enable it with `VITE_ANALYTICS_ENABLED=true` and configure the Umami host
+and website ID values for the target environment.
 
 ### Build
 
