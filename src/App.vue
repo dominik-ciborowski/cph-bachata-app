@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
 import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
+import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
 
 const themeStorageKey = 'copenhagen-bachata-app-theme'
 const themeOptions = ['light', 'dark', 'system']
@@ -11,6 +12,7 @@ const themeOptions = ['light', 'dark', 'system']
 const router = useRouter()
 const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
 const mobileMenuOpen = ref(false)
+const adminMenuOpen = ref(false)
 const navRef = ref(null)
 const authToastVisible = ref(false)
 const authToastMessage = ref('')
@@ -27,10 +29,20 @@ async function handleLogout() {
 
 function toggleMobileMenu() {
   mobileMenuOpen.value = !mobileMenuOpen.value
+  if (!mobileMenuOpen.value) adminMenuOpen.value = false
+}
+
+function toggleAdminMenu() {
+  adminMenuOpen.value = !adminMenuOpen.value
 }
 
 function closeNavigation() {
   mobileMenuOpen.value = false
+  adminMenuOpen.value = false
+}
+
+function syncMenuScrollLock() {
+  document.body.classList.toggle('mobile-menu-open', mobileMenuOpen.value)
 }
 
 function handleDocumentClick(event) {
@@ -119,7 +131,12 @@ watch(isAuthenticated, () => {
   consumeLoginSuccessToast()
 })
 
+watch(mobileMenuOpen, () => {
+  syncMenuScrollLock()
+})
+
 onBeforeUnmount(() => {
+  document.body.classList.remove('mobile-menu-open')
   document.removeEventListener('click', handleDocumentClick)
   window.removeEventListener('app-toast', handleAppToast)
   colorSchemeQuery?.removeEventListener?.('change', handleSystemThemeChange)
@@ -217,10 +234,23 @@ onBeforeUnmount(() => {
           </section>
 
           <section v-if="isAdmin" class="mobile-menu-section">
-            <h2>Administration</h2>
-            <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
-            <RouterLink to="/admin/submissions" class="mobile-menu-item" @click="closeNavigation">Pending Submissions</RouterLink>
-            <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
+            <button
+              class="mobile-menu-section__toggle"
+              type="button"
+              :aria-expanded="adminMenuOpen ? 'true' : 'false'"
+              aria-controls="admin-navigation-links"
+              @click="toggleAdminMenu"
+            >
+              <span>Administration</span>
+              <span class="menu-caret" aria-hidden="true">{{ adminMenuOpen ? '▴' : '▾' }}</span>
+            </button>
+
+            <div v-if="adminMenuOpen" id="admin-navigation-links" class="mobile-menu-section__links">
+              <RouterLink to="/management/organizers" class="mobile-menu-item" @click="closeNavigation">Organizer Management</RouterLink>
+              <RouterLink to="/management/site-messages" class="mobile-menu-item" @click="closeNavigation">Site Messages</RouterLink>
+              <RouterLink to="/admin/submissions" class="mobile-menu-item" @click="closeNavigation">Pending Submissions</RouterLink>
+              <RouterLink to="/management/users" class="mobile-menu-item" @click="closeNavigation">User Management</RouterLink>
+            </div>
           </section>
         </template>
       </div>
@@ -233,6 +263,7 @@ onBeforeUnmount(() => {
   </div>
 
   <main class="container">
+    <SiteAnnouncementBanner />
     <RouterView />
   </main>
 </template>

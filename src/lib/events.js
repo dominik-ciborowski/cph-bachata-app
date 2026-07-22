@@ -14,6 +14,7 @@
  * @property {string | null} price_text
  * @property {boolean} is_recurring
  * @property {string} status
+ * @property {string | null} cancellation_reason
  */
 
 import { formatOrganizerDisplay, getOrganizerDisplayName, getOrganizerRecord } from './organizerDisplay.js'

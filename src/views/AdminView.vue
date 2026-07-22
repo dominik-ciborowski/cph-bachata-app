@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import CancellationModal from '../components/CancellationModal.vue'
+import ConfirmationModal from '../components/ConfirmationModal.vue'
 import OrganizerSelector from '../components/OrganizerSelector.vue'
 import PriceFields from '../components/PriceFields.vue'
 import { normalizeEvent } from '../lib/events'
@@ -13,13 +15,17 @@ import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { user, isAdmin } = useAuth()
+const { user, isAdmin, canManageEventRecord } = useAuth()
 const status = ref('')
 const organizers = ref([])
 const isEditing = ref(false)
 const eventId = ref(null)
 const reviewMode = ref(false)
 const reviewStatus = ref('')
+const eventStatus = ref('approved')
+const cancellationModalOpen = ref(false)
+const cancellationReason = ref('')
+const confirmationModal = ref(null)
 
 const form = ref({
   title: '',
@@ -83,17 +89,27 @@ async function loadEvent(id, options = {}) {
     return
   }
 
-  applyEventToForm(data)
+  const event = normalizeEvent(data)
+
+  if (!canManageEventRecord(event)) {
+    status.value = 'You do not have access to manage this event.'
+    return
+  }
+
+  applyEventToForm(event)
 
   if (options.duplicate) {
+    form.value.date = ''
     isEditing.value = false
     eventId.value = null
-    status.value = 'Duplicating event. Update the date or details before saving.'
+    eventStatus.value = 'approved'
+    status.value = 'Duplicating event. Choose a new date/time before saving.'
     return
   }
 
   eventId.value = data.id
   isEditing.value = true
+  eventStatus.value = data.status || 'approved'
   reviewStatus.value = data.status || ''
   reviewMode.value = route.query.review === 'submission' && ['pending', 'rejected'].includes(data.status)
 }
@@ -128,7 +144,7 @@ async function saveEvent() {
     ...form.value,
     organizer_id: organizer?.id || null,
     organizer: organizer?.name || form.value.organizer || null,
-    status: reviewMode.value ? reviewStatus.value : 'approved'
+    status: reviewMode.value ? reviewStatus.value : eventStatus.value
   }
   const payload = isEditing.value
     ? buildEventPayload(eventForm)
@@ -214,9 +230,68 @@ async function reviewSubmission(nextStatus) {
   router.push('/admin/submissions')
 }
 
-async function deleteEvent() {
-  if (!confirm('Delete this event? This cannot be undone.')) return
+function openCancellationModal() {
+  cancellationReason.value = ''
+  cancellationModalOpen.value = true
+}
 
+function closeCancellationModal() {
+  if (status.value === 'Cancelling...') return
+  cancellationModalOpen.value = false
+  cancellationReason.value = ''
+}
+
+async function cancelEvent(reason) {
+  status.value = 'Cancelling...'
+  const cancellationReason = reason?.trim() || null
+
+  const { error } = await supabase
+    .from('events')
+    .update({ status: 'cancelled', cancellation_reason: cancellationReason })
+    .eq('id', eventId.value)
+
+  if (error) {
+    status.value = error.message
+    return
+  }
+
+  cancellationModalOpen.value = false
+  sessionStorage.setItem('flash_message', 'Event cancelled.')
+  router.push('/management')
+}
+
+function openRestoreModal() {
+  confirmationModal.value = 'restore'
+}
+
+function openDeleteModal() {
+  confirmationModal.value = 'delete'
+}
+
+function closeConfirmationModal() {
+  if (status.value === 'Restoring...' || status.value === 'Deleting...') return
+  confirmationModal.value = null
+}
+
+async function restoreEvent() {
+  status.value = 'Restoring...'
+
+  const { error } = await supabase
+    .from('events')
+    .update({ status: 'approved', cancellation_reason: null })
+    .eq('id', eventId.value)
+
+  if (error) {
+    status.value = error.message
+    return
+  }
+
+  confirmationModal.value = null
+  sessionStorage.setItem('flash_message', 'Event restored.')
+  router.push('/management')
+}
+
+async function deleteEvent() {
   status.value = 'Deleting...'
 
   const { error } = await supabase
@@ -229,6 +304,7 @@ async function deleteEvent() {
     return
   }
 
+  confirmationModal.value = null
   sessionStorage.setItem('flash_message', 'Event deleted.')
   router.push('/management')
 }
@@ -323,10 +399,40 @@ async function deleteEvent() {
         <button v-if="reviewMode && isAdmin" class="button" type="button" @click="reviewSubmission('approved')">Approve submission</button>
         <button v-if="reviewMode && isAdmin && reviewStatus === 'pending'" class="button danger" type="button" @click="reviewSubmission('rejected')">Reject submission</button>
         <button v-if="reviewMode && isAdmin && reviewStatus === 'rejected'" class="button secondary" type="button" @click="restoreSubmission">Restore to Pending</button>
-        <button v-if="isEditing && !reviewMode" class="button danger icon-text" type="button" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
+        <button v-if="isEditing && !reviewMode && eventStatus === 'cancelled'" class="button secondary" type="button" @click="openRestoreModal">Restore event</button>
+        <button v-if="isEditing && !reviewMode && eventStatus !== 'cancelled'" class="button danger" type="button" @click="openCancellationModal">Cancel event</button>
+        <button v-if="isEditing && !reviewMode" class="button danger icon-text" type="button" @click="openDeleteModal"><Trash2 class="icon icon--sm" />Delete event</button>
       </div>
 
       <p v-if="status" class="status">{{ status }}</p>
     </form>
+
+    <CancellationModal
+      v-if="cancellationModalOpen"
+      :busy="status === 'Cancelling...'"
+      @close="closeCancellationModal"
+      @confirm="cancelEvent"
+    />
+
+    <ConfirmationModal
+      v-if="confirmationModal === 'restore'"
+      title="Restore Event"
+      description="This event will be marked as active again and the cancellation reason will be removed."
+      confirm-label="Restore Event"
+      :busy="status === 'Restoring...'"
+      @close="closeConfirmationModal"
+      @confirm="restoreEvent"
+    />
+
+    <ConfirmationModal
+      v-if="confirmationModal === 'delete'"
+      title="Delete Event Permanently?"
+      description="This event will be permanently removed. This action cannot be undone."
+      confirm-label="Delete Event"
+      danger
+      :busy="status === 'Deleting...'"
+      @close="closeConfirmationModal"
+      @confirm="deleteEvent"
+    />
   </div>
 </template>

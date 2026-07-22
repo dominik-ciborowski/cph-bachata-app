@@ -1,9 +1,10 @@
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CalendarDays, Heart, MapPin } from 'lucide-vue-next'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
-defineProps({
+const props = defineProps({
   event: {
     type: Object,
     required: true
@@ -15,6 +16,8 @@ defineProps({
 })
 
 defineEmits(['toggle-favorite'])
+
+const cancellationReason = computed(() => String(props.event.cancellation_reason || '').trim())
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('en-DK', {
@@ -39,6 +42,7 @@ function formatTimeRange(startValue, endValue) {
   <RouterLink v-slot="{ navigate }" custom :to="`/events/${event.id}`">
     <article
       class="event-card"
+      :class="{ 'event-card--cancelled': event.status === 'cancelled' }"
       role="link"
       tabindex="0"
       @click="navigate"
@@ -58,6 +62,7 @@ function formatTimeRange(startValue, endValue) {
               {{ getCategoryMeta(event.category).label }}
             </span>
             <span v-if="event.is_recurring" class="pill recurring-badge">↻ Weekly</span>
+            <span v-if="event.status === 'cancelled'" class="pill cancelled-badge">Cancelled</span>
           </div>
           <div class="event-card__actions">
             <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
@@ -80,6 +85,7 @@ function formatTimeRange(startValue, endValue) {
         <div class="event-card__meta">
           <span v-if="event.location" class="icon-text"><MapPin class="icon icon--sm" />{{ event.location }}</span>
           <span v-if="event.organizer_display" class="event-card__organizer">Hosted by <strong>{{ event.organizer_display }}</strong></span>
+          <span v-if="event.status === 'cancelled' && cancellationReason" class="event-card__cancellation-reason">⚠ Cancelled: {{ cancellationReason }}</span>
         </div>
       </div>
     </article>

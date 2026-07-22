@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../lib/supabase'
+import { filterProfiles, getUserRoleCounts } from '../lib/userManagementFilters'
 import { useAuth } from '../composables/useAuth'
 
 const editableRoles = ['user', 'organizer']
@@ -11,10 +12,24 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 const status = ref('')
+const searchQuery = ref('')
+const activeRoleFilter = ref('all')
 
 onMounted(async () => {
   await loadProfiles()
 })
+
+const roleFilterOptions = computed(() => {
+  const counts = getUserRoleCounts(profiles.value)
+  return [
+    { value: 'all', label: 'All', count: counts.all },
+    { value: 'user', label: 'Users', count: counts.user },
+    { value: 'organizer', label: 'Organizers', count: counts.organizer },
+    { value: 'admin', label: 'Admins', count: counts.admin }
+  ]
+})
+
+const visibleProfiles = computed(() => filterProfiles(profiles.value, searchQuery.value, activeRoleFilter.value))
 
 const pendingChanges = computed(() =>
   profiles.value
@@ -164,10 +179,29 @@ ${summary}`)) return
     <section v-if="!loading" class="card user-management-section">
       <p class="field-help">Admin roles are manually managed in Supabase. This page cannot assign admin or edit admin profiles.</p>
 
+      <div class="user-management-controls">
+        <input v-model="searchQuery" class="search-input" type="search" placeholder="Search users..." aria-label="Search users by email" />
+        <div class="user-role-filters" role="tablist" aria-label="Filter users by role">
+          <button
+            v-for="filterOption in roleFilterOptions"
+            :key="filterOption.value"
+            class="button button--compact"
+            :class="{ secondary: activeRoleFilter !== filterOption.value }"
+            type="button"
+            role="tab"
+            :aria-selected="activeRoleFilter === filterOption.value"
+            @click="activeRoleFilter = filterOption.value"
+          >
+            {{ filterOption.label }} ({{ filterOption.count }})
+          </button>
+        </div>
+      </div>
+
       <div v-if="profiles.length === 0" class="empty-state">No users found.</div>
+      <div v-else-if="visibleProfiles.length === 0" class="empty-state">No users match your search.</div>
 
       <div v-else class="user-management-list">
-        <article v-for="profile in profiles" :key="profile.id" class="user-management-row">
+        <article v-for="profile in visibleProfiles" :key="profile.id" class="user-management-row">
           <div class="user-management-row__details">
             <h2>{{ profile.email || 'No email recorded' }}</h2>
             <p>

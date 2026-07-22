@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { CalendarDays, CalendarPlus, Heart, MapPin, Pencil, Trash2 } from 'lucide-vue-next'
+import { CalendarDays, CalendarPlus, Heart, MapPin, Pencil } from 'lucide-vue-next'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
@@ -45,7 +45,7 @@ async function loadEvent() {
   const { data, error: queryError } = await supabase
     .from('events')
     .select('*, organizer_record:organizers(id,name,verified)')
-    .eq('status', 'approved')
+    .in('status', ['approved', 'cancelled'])
     .eq('id', route.params.id)
     .maybeSingle()
 
@@ -145,25 +145,6 @@ function addToCalendar() {
   }
 }
 
-async function deleteEvent() {
-  if (!confirm('Are you sure you want to delete this event?')) {
-    return
-  }
-
-  const { error } = await supabase
-    .from('events')
-    .delete()
-    .eq('id', event.value.id)
-
-  if (error) {
-    alert('Error deleting event: ' + error.message)
-    return
-  }
-
-  sessionStorage.setItem('flash_message', 'Event deleted.')
-  router.push('/')
-}
-
 </script>
 
 <template>
@@ -190,7 +171,9 @@ async function deleteEvent() {
         </p>
         <span v-if="event.is_recurring" class="pill recurring-badge">↻ Weekly</span>
       </div>
+      <span v-if="event.status === 'cancelled'" class="pill cancelled-badge">Cancelled</span>
       <h1>{{ event.title }}</h1>
+      <p v-if="event.status === 'cancelled'" class="detail-action-error">This event has been cancelled by the organizer.<template v-if="event.cancellation_reason"> Reason: {{ event.cancellation_reason }}</template></p>
       <p v-if="event.organizer_display" class="detail-organizer-line">Hosted by <span class="detail-organizer-name">{{ event.organizer_display }}</span></p>
       <div class="detail-event-actions">
         <button
@@ -201,7 +184,7 @@ async function deleteEvent() {
           @click="toggleFavorite"
         >
           <Heart class="icon icon--sm" :fill="event.is_favorited ? 'currentColor' : 'none'" />
-          {{ event.is_favorited ? 'Saved to My Events' : 'Save to My Events' }}
+          <span class="detail-action-label">{{ event.is_favorited ? 'Saved to My Events' : 'Save to My Events' }}</span>
         </button>
         <button
           class="detail-calendar-button"
@@ -209,7 +192,7 @@ async function deleteEvent() {
           @click="addToCalendar"
         >
           <CalendarPlus class="icon icon--sm" />
-          Add to Calendar
+          <span class="detail-action-label">Add to Calendar</span>
         </button>
       </div>
       <p v-if="calendarExportError" class="detail-action-error">{{ calendarExportError }}</p>
@@ -226,7 +209,7 @@ async function deleteEvent() {
             rel="noopener noreferrer"
           >
             <MapPin class="icon icon--sm" />
-            {{ event.location }}
+            <span class="detail-location-text">{{ event.location }}</span>
             <EventLinkIcon class="icon icon--sm" />
           </a>
         </strong>
@@ -274,8 +257,7 @@ async function deleteEvent() {
     </section>
 
     <section v-if="canManageCurrentEvent" class="card detail-actions">
-      <RouterLink :to="`/admin/${event.id}`" class="button icon-text"><Pencil class="icon icon--sm" />Edit event</RouterLink>
-      <button class="button danger icon-text" @click="deleteEvent"><Trash2 class="icon icon--sm" />Delete event</button>
+      <RouterLink :to="`/admin/${event.id}`" class="button icon-text"><Pencil class="icon icon--sm" /><span class="detail-action-label">Edit event</span></RouterLink>
     </section>
   </section>
 

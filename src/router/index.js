@@ -13,6 +13,7 @@ import OrganizerManagementView from '../views/OrganizerManagementView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
 import SubmitEventView from '../views/SubmitEventView.vue'
 import PendingSubmissionsView from '../views/PendingSubmissionsView.vue'
+import SiteMessagesView from '../views/SiteMessagesView.vue'
 import HelpAboutView from '../views/HelpAboutView.vue'
 import PrivacyView from '../views/PrivacyView.vue'
 import TermsView from '../views/TermsView.vue'
@@ -33,6 +34,7 @@ const routes = [
   { path: '/management/bulk', component: BulkAddView, meta: { requiresManagement: true } },
   { path: '/management/organizers', component: OrganizerManagementView, meta: { requiresAdmin: true } },
   { path: '/management/users', component: UserManagementView, meta: { requiresAdmin: true } },
+  { path: '/management/site-messages', component: SiteMessagesView, meta: { requiresAdmin: true } },
   { path: '/login', component: LoginView },
   { path: '/register', component: RegisterView },
   { path: '/forgot-password', component: ForgotPasswordView },
