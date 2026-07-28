@@ -102,9 +102,16 @@ cp .env.example .env
 npm run dev
 ```
 
-Fill `.env` with your Supabase project URL and anon key. Analytics is disabled by
-default; enable it with `VITE_ANALYTICS_ENABLED=true` and configure the Umami host
-and website ID values for the target environment.
+Before running the application, copy `.env.example` to `.env` and fill in your
+Supabase project URL and anon key. The analytics variables are:
+
+- `VITE_ANALYTICS_ENABLED`: controls whether analytics providers are initialized.
+  Set it to `false` to disable analytics.
+- `VITE_UMAMI_HOST`: sets the Umami server from which the tracking script is
+  loaded. It is configuration-driven so a future self-hosted Umami instance can
+  be used without application code changes.
+- `VITE_UMAMI_WEBSITE_ID`: identifies this website in the configured Umami
+  instance.
 
 ### Build
 
