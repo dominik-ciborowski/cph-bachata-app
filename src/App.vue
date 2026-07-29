@@ -5,6 +5,7 @@ import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
 import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
 import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
+import AnalyticsDebugCard from './components/AnalyticsDebugCard.vue'
 
 const themeStorageKey = 'copenhagen-bachata-app-theme'
 const themeOptions = ['light', 'dark', 'system']
@@ -266,4 +267,7 @@ onBeforeUnmount(() => {
     <SiteAnnouncementBanner />
     <RouterView />
   </main>
+
+  <!-- TEMPORARY: Global analytics verification card. -->
+  <AnalyticsDebugCard />
 </template>

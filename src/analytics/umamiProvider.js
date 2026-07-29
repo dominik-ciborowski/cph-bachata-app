@@ -1,7 +1,8 @@
 export class UmamiProvider {
-  constructor(host, websiteId) {
+  constructor(host, websiteId, onStatusChange = () => {}) {
     this.host = host
     this.websiteId = websiteId
+    this.onStatusChange = onStatusChange
   }
 
   initialize() {
@@ -15,7 +16,11 @@ export class UmamiProvider {
     script.defer = true
     script.src = `${this.host.replace(/\/$/, '')}/script.js`
     script.setAttribute('data-website-id', this.websiteId)
+    script.addEventListener('load', () => {
+      this.onStatusChange('Loaded')
+    })
     script.addEventListener('error', () => {
+      this.onStatusChange('Failed')
       console.warn('[Analytics] Umami script failed to load')
     })
 
