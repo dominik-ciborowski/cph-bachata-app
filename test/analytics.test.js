@@ -13,6 +13,8 @@ import {
   trackLoginClicked,
   trackLoginSucceeded,
   trackLogoutClicked,
+  trackRegisterClicked,
+  trackRegisterSucceeded,
   trackSearchPerformed,
   trackViewSelected
 } from '../src/analytics/interactionTracking.js'
@@ -291,6 +293,8 @@ test('calendar interactions track stable dates and event properties', () => {
 test('authentication interactions contain no personal properties', () => {
   assert.deepEqual(captureApplicationEvent(trackLoginClicked), [['login_clicked']])
   assert.deepEqual(captureApplicationEvent(trackLoginSucceeded), [['login_succeeded']])
+  assert.deepEqual(captureApplicationEvent(trackRegisterClicked), [['register_clicked']])
+  assert.deepEqual(captureApplicationEvent(trackRegisterSucceeded), [['register_succeeded']])
   assert.deepEqual(captureApplicationEvent(trackLogoutClicked), [['logout_clicked']])
 })
 

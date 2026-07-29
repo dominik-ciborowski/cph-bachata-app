@@ -43,6 +43,14 @@ export function trackLoginSucceeded() {
   analytics.track(AnalyticsEvents.LOGIN_SUCCEEDED)
 }
 
+export function trackRegisterClicked() {
+  analytics.track(AnalyticsEvents.REGISTER_CLICKED)
+}
+
+export function trackRegisterSucceeded() {
+  analytics.track(AnalyticsEvents.REGISTER_SUCCEEDED)
+}
+
 export function trackLogoutClicked() {
   analytics.track(AnalyticsEvents.LOGOUT_CLICKED)
 }

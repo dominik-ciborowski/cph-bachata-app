@@ -114,6 +114,12 @@ analytics variables are:
 - `VITE_UMAMI_WEBSITE_ID`: identifies this website in the configured Umami
   instance.
 
+Authentication analytics contain no personal information. Email registration is
+reported as successful when Supabase accepts the sign-up request. The OAuth
+redirect response available to the app does not identify whether Google created
+a new account or signed in an existing one, so OAuth completion is reported as
+`login_succeeded` based on the login flow that initiated it.
+
 ### Build
 
 ```bash

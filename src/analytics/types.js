@@ -27,6 +27,8 @@ export const AnalyticsEvents = {
   CALENDAR_MONTH_CHANGED: 'calendar_month_changed',
   LOGIN_CLICKED: 'login_clicked',
   LOGIN_SUCCEEDED: 'login_succeeded',
+  REGISTER_CLICKED: 'register_clicked',
+  REGISTER_SUCCEEDED: 'register_succeeded',
   LOGOUT_CLICKED: 'logout_clicked',
   SEARCH_PERFORMED: 'search_performed',
   FILTER_CHANGED: 'filter_changed',
