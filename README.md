@@ -103,7 +103,8 @@ npm run dev
 ```
 
 Before running the application, copy `.env.example` to `.env` and fill in your
-Supabase project URL and anon key. The analytics variables are:
+Supabase project URL, anon key, and the required analytics configuration. The
+analytics variables are:
 
 - `VITE_ANALYTICS_ENABLED`: controls whether analytics providers are initialized.
   Set it to `false` to disable analytics.
