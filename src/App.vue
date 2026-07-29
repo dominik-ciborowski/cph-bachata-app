@@ -5,6 +5,7 @@ import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
 import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
 import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
+import { trackLoginSucceeded, trackLogoutClicked } from './analytics/interactionTracking'
 
 const themeStorageKey = 'copenhagen-bachata-app-theme'
 const themeOptions = ['light', 'dark', 'system']
@@ -21,6 +22,7 @@ let authToastTimeoutId = null
 let colorSchemeQuery = null
 
 async function handleLogout() {
+  trackLogoutClicked()
   await logout()
   closeNavigation()
   router.push('/')
@@ -79,6 +81,7 @@ function consumeLoginSuccessToast() {
   if (sessionStorage.getItem(loginSuccessStorageKey) !== 'true') return
 
   sessionStorage.removeItem(loginSuccessStorageKey)
+  trackLoginSucceeded()
   showAuthToast(authMessages.loginSuccess)
 }
 

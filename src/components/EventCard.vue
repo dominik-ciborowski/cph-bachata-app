@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CalendarDays, Heart, MapPin } from 'lucide-vue-next'
 import { trackEventOpened } from '../analytics/eventTracking'
+import { trackCalendarEventClicked } from '../analytics/interactionTracking'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
 const props = defineProps({
@@ -43,6 +44,7 @@ function formatTimeRange(startValue, endValue) {
 }
 
 function openEvent(navigate) {
+  if (props.source === 'calendar') trackCalendarEventClicked(props.event)
   trackEventOpened(props.event, props.source)
   navigate()
 }

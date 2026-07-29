@@ -4,6 +4,18 @@ import assert from 'node:assert/strict'
 import { AnalyticsService } from '../src/analytics/analyticsService.js'
 import { analytics } from '../src/analytics/index.js'
 import { trackEventLinkClicked, trackEventOpened, trackMapsClicked } from '../src/analytics/eventTracking.js'
+import {
+  trackCalendarDateSelected,
+  trackCalendarEventClicked,
+  trackCalendarMonthChanged,
+  trackFilterChanged,
+  trackFiltersCleared,
+  trackLoginClicked,
+  trackLoginSucceeded,
+  trackLogoutClicked,
+  trackSearchPerformed,
+  trackViewSelected
+} from '../src/analytics/interactionTracking.js'
 import { UmamiProvider } from '../src/analytics/umamiProvider.js'
 
 test('disabled analytics does not initialize providers', () => {
@@ -249,4 +261,47 @@ test('event_link_clicked action tracks the event details source', () => {
 
   assert.equal(calls[0][0], 'event_link_clicked')
   assert.equal(calls[0][1].source, 'event_details')
+})
+
+test('discovery view selection uses the selected view event', () => {
+  assert.deepEqual(captureApplicationEvent(() => trackViewSelected('list')), [['list_view_selected']])
+  assert.deepEqual(captureApplicationEvent(() => trackViewSelected('calendar')), [['calendar_view_selected']])
+})
+
+test('calendar interactions track stable dates and event properties', () => {
+  assert.deepEqual(
+    captureApplicationEvent(() => trackCalendarDateSelected('2026-07-29')),
+    [['calendar_date_selected', { selectedDate: '2026-07-29' }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackCalendarMonthChanged('2026-08')),
+    [['calendar_month_changed', { month: '2026-08' }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackCalendarEventClicked(analyticsEvent)),
+    [['calendar_event_clicked', {
+      eventId: 'event-1',
+      organizerId: 'organizer-1',
+      eventType: 'social',
+      isFree: true
+    }]]
+  )
+})
+
+test('authentication interactions contain no personal properties', () => {
+  assert.deepEqual(captureApplicationEvent(trackLoginClicked), [['login_clicked']])
+  assert.deepEqual(captureApplicationEvent(trackLoginSucceeded), [['login_succeeded']])
+  assert.deepEqual(captureApplicationEvent(trackLogoutClicked), [['logout_clicked']])
+})
+
+test('search and filter interactions track only aggregate and selected values', () => {
+  assert.deepEqual(
+    captureApplicationEvent(() => trackSearchPerformed(12, 4)),
+    [['search_performed', { queryLength: 12, resultCount: 4 }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackFilterChanged('category', 'social')),
+    [['filter_changed', { filterType: 'category', selectedValue: 'social' }]]
+  )
+  assert.deepEqual(captureApplicationEvent(trackFiltersCleared), [['filters_cleared']])
 })

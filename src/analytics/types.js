@@ -19,7 +19,26 @@ export const AnalyticsEvents = {
   FILTER_USED: 'filter_used',
   VIEW_LIST: 'view_list',
   VIEW_CALENDAR: 'view_calendar',
-  VIEW_WEEK: 'view_week'
+  VIEW_WEEK: 'view_week',
+  LIST_VIEW_SELECTED: 'list_view_selected',
+  CALENDAR_VIEW_SELECTED: 'calendar_view_selected',
+  CALENDAR_DATE_SELECTED: 'calendar_date_selected',
+  CALENDAR_EVENT_CLICKED: 'calendar_event_clicked',
+  CALENDAR_MONTH_CHANGED: 'calendar_month_changed',
+  LOGIN_CLICKED: 'login_clicked',
+  LOGIN_SUCCEEDED: 'login_succeeded',
+  LOGOUT_CLICKED: 'logout_clicked',
+  SEARCH_PERFORMED: 'search_performed',
+  FILTER_CHANGED: 'filter_changed',
+  FILTERS_CLEARED: 'filters_cleared'
 }
 
 /** @typedef {typeof AnalyticsEvents[keyof typeof AnalyticsEvents]} AnalyticsEvent */
+
+/**
+ * @typedef {{ selectedDate: string }} CalendarDateSelectedProperties
+ * @typedef {{ month: string }} CalendarMonthChangedProperties
+ * @typedef {{ eventId: string | number, organizerId?: string | number, eventType?: string, isFree: boolean }} CalendarEventClickedProperties
+ * @typedef {{ queryLength: number, resultCount: number }} SearchPerformedProperties
+ * @typedef {{ filterType: string, selectedValue: string }} FilterChangedProperties
+ */

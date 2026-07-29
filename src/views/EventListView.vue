@@ -10,6 +10,12 @@ import { applyFavoriteState, favoriteEvent, loadFavoriteEventIds, unfavoriteEven
 import { downloadIcsCalendar } from '../lib/calendarExport'
 import { getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 import { supabase } from '../lib/supabase'
+import {
+  trackFilterChanged,
+  trackFiltersCleared,
+  trackSearchPerformed,
+  trackViewSelected
+} from '../analytics/interactionTracking'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,6 +36,7 @@ const calendarFiltersOpen = ref(false)
 const discoveryControls = ref(null)
 const showListBackToTop = ref(false)
 const showLoginBenefitsBanner = ref(false)
+let searchAnalyticsTimeoutId = null
 
 const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
 const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
@@ -74,6 +81,19 @@ watch(isFavoritesView, async () => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  if (searchAnalyticsTimeoutId) window.clearTimeout(searchAnalyticsTimeoutId)
+})
+
+watch(searchQuery, (nextQuery, previousQuery) => {
+  if (nextQuery === previousQuery) return
+  if (searchAnalyticsTimeoutId) window.clearTimeout(searchAnalyticsTimeoutId)
+
+  const normalizedQuery = nextQuery.trim()
+  if (!normalizedQuery) return
+
+  searchAnalyticsTimeoutId = window.setTimeout(() => {
+    trackSearchPerformed(normalizedQuery.length, visibleEvents.value.length)
+  }, 400)
 })
 
 
@@ -246,7 +266,10 @@ function matchesSearch(event) {
 }
 
 function setQuickFilter(nextFilter) {
-  filter.value = filter.value === nextFilter && nextFilter !== 'all' ? 'all' : nextFilter
+  const selectedFilter = filter.value === nextFilter && nextFilter !== 'all' ? 'all' : nextFilter
+  if (selectedFilter === filter.value) return
+  filter.value = selectedFilter
+  trackFilterChanged('quick_filter', selectedFilter)
 }
 
 function setViewMode(nextViewMode) {
@@ -254,7 +277,10 @@ function setViewMode(nextViewMode) {
     nextViewMode = 'list'
   }
 
+  if (viewMode.value === nextViewMode) return
+
   viewMode.value = nextViewMode
+  trackViewSelected(nextViewMode)
   savePreferredView(nextViewMode)
   calendarFiltersOpen.value = false
   handleScroll()
@@ -282,7 +308,9 @@ function toggleCalendarFilters() {
 }
 
 function setCalendarFilter(nextFilter) {
+  if (filter.value === nextFilter) return
   filter.value = nextFilter
+  trackFilterChanged('quick_filter', nextFilter)
 }
 
 function isCalendarFilterActive(currentFilter) {
@@ -291,9 +319,23 @@ function isCalendarFilterActive(currentFilter) {
 }
 
 function clearFilters() {
+  if (filter.value === 'all' && category.value === 'all' && organizer.value === 'all') return
   filter.value = 'all'
   category.value = 'all'
   organizer.value = 'all'
+  trackFiltersCleared()
+}
+
+function setCategoryFilter(selectedCategory) {
+  if (category.value === selectedCategory) return
+  category.value = selectedCategory
+  trackFilterChanged('category', selectedCategory)
+}
+
+function setOrganizerFilter(selectedOrganizer) {
+  if (organizer.value === selectedOrganizer) return
+  organizer.value = selectedOrganizer
+  trackFilterChanged('organizer', selectedOrganizer)
 }
 
 function scrollToDiscoveryControls() {
@@ -411,7 +453,7 @@ function exportMyEvents() {
       <template v-if="viewMode === 'list' || isFavoritesView">
         <label class="category-filter">
           <span>Category</span>
-          <select v-model="category">
+          <select :value="category" @change="setCategoryFilter($event.target.value)">
             <option v-for="item in categories" :key="item" :value="item">
               {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
             </option>
@@ -420,7 +462,7 @@ function exportMyEvents() {
 
         <label class="category-filter">
           <span>Organizer</span>
-          <select v-model="organizer">
+          <select :value="organizer" @change="setOrganizerFilter($event.target.value)">
             <option value="all">All organizers</option>
             <option v-for="item in organizers" :key="item" :value="item">
               {{ item }}
@@ -464,7 +506,7 @@ function exportMyEvents() {
 
           <label class="category-filter">
             <span>Category</span>
-            <select v-model="category">
+            <select :value="category" @change="setCategoryFilter($event.target.value)">
               <option v-for="item in categories" :key="item" :value="item">
                 {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
               </option>
@@ -473,7 +515,7 @@ function exportMyEvents() {
 
           <label class="category-filter">
             <span>Organizer</span>
-            <select v-model="organizer">
+            <select :value="organizer" @change="setOrganizerFilter($event.target.value)">
               <option value="all">All organizers</option>
               <option v-for="item in organizers" :key="item" :value="item">
                 {{ item }}
