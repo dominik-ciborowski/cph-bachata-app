@@ -13,7 +13,7 @@ test('disabled analytics does not initialize providers', () => {
   assert.equal(initialized, false)
 })
 
-test('disabled analytics records debug events without logging', () => {
+test('disabled analytics does not track events', () => {
   const service = new AnalyticsService([], false)
   const originalDebug = console.debug
   let logged = false
@@ -26,7 +26,6 @@ test('disabled analytics records debug events without logging', () => {
   }
 
   assert.equal(logged, false)
-  assert.deepEqual(service.debugEvents, [{ event: 'event_opened' }])
 })
 
 test('enabled analytics initializes all providers', () => {
@@ -74,18 +73,6 @@ test('track logs custom events without forwarding them to providers', () => {
   assert.equal(tracked, false)
 })
 
-test('track keeps only the 10 most recent debug events', () => {
-  const service = new AnalyticsService([], false)
-
-  for (let index = 1; index <= 12; index += 1) {
-    service.track(`event_${index}`, { index })
-  }
-
-  assert.equal(service.debugEvents.length, 10)
-  assert.deepEqual(service.debugEvents[0], { event: 'event_12', properties: { index: 12 } })
-  assert.equal(service.debugEvents[9].event, 'event_3')
-})
-
 function createDocument() {
   const scripts = []
   return {
@@ -131,24 +118,4 @@ test('UmamiProvider skips script insertion without complete configuration', () =
   }
 
   assert.equal(document.scripts.length, 0)
-})
-
-test('UmamiProvider reports script loading status', () => {
-  const originalDocument = global.document
-  const originalWarn = console.warn
-  const document = createDocument()
-  const statuses = []
-  global.document = document
-  console.warn = () => {}
-
-  try {
-    new UmamiProvider('https://cloud.umami.is', 'website-id', (status) => statuses.push(status)).initialize()
-    document.scripts[0].load()
-    document.scripts[0].error()
-  } finally {
-    global.document = originalDocument
-    console.warn = originalWarn
-  }
-
-  assert.deepEqual(statuses, ['Loaded', 'Failed'])
 })

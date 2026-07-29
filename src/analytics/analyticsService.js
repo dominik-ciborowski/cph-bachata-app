@@ -1,5 +1,3 @@
-import { reactive } from 'vue'
-
 export class AnalyticsService {
   /**
    * @param {import('./types.js').AnalyticsProvider[]} providers
@@ -8,8 +6,6 @@ export class AnalyticsService {
   constructor(providers = [], enabled = false) {
     this.providers = providers
     this.enabled = enabled
-    // TEMPORARY: In-memory history for the analytics debug card.
-    this.debugEvents = reactive([])
   }
 
   initialize() {
@@ -29,9 +25,6 @@ export class AnalyticsService {
    * @param {import('./types.js').AnalyticsProperties} [properties]
    */
   track(event, properties) {
-    this.debugEvents.unshift({ event, ...(properties === undefined ? {} : { properties }) })
-    if (this.debugEvents.length > 10) this.debugEvents.length = 10
-
     if (!this.enabled) return
 
     console.debug('[Analytics]', event, properties ?? {})

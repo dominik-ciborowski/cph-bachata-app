@@ -1,8 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import { analytics, analyticsDebug } from '@/analytics'
+import { analyticsDebugState } from './state'
 
-// TEMPORARY: Remove this component after analytics verification is complete.
 const collapsed = ref(false)
 </script>
 
@@ -22,22 +21,22 @@ const collapsed = ref(false)
       <dl>
         <div>
           <dt>Analytics enabled</dt>
-          <dd>{{ analyticsDebug.enabled ? 'Yes' : 'No' }}</dd>
+          <dd>{{ analyticsDebugState.enabled ? 'Yes' : 'No' }}</dd>
         </div>
         <div>
           <dt>Umami script status</dt>
-          <dd>{{ analyticsDebug.umamiStatus }}</dd>
+          <dd>{{ analyticsDebugState.umamiStatus }}</dd>
         </div>
         <div>
           <dt>Umami host</dt>
-          <dd class="analytics-debug__host">{{ analyticsDebug.umamiHost }}</dd>
+          <dd class="analytics-debug__host">{{ analyticsDebugState.umamiHost }}</dd>
         </div>
       </dl>
 
       <h2>Last events</h2>
-      <p v-if="analytics.debugEvents.length === 0" class="analytics-debug__empty">No events tracked yet.</p>
+      <p v-if="analyticsDebugState.events.length === 0" class="analytics-debug__empty">No events tracked yet.</p>
       <ol v-else class="analytics-debug__events">
-        <li v-for="(entry, index) in analytics.debugEvents" :key="index">
+        <li v-for="(entry, index) in analyticsDebugState.events" :key="index">
           <strong>{{ entry.event }}</strong>
           <code v-if="entry.properties !== undefined">{{ JSON.stringify(entry.properties) }}</code>
         </li>
