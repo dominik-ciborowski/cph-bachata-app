@@ -22,7 +22,10 @@ export class UmamiProvider {
     document.head.appendChild(script)
   }
 
-  track() {
-    // Custom events will be forwarded in a future analytics iteration.
+  track(event, properties) {
+    if (!this.host || !this.websiteId || typeof window === 'undefined') return
+    if (typeof window.umami?.track !== 'function') return
+
+    window.umami.track(event, properties)
   }
 }

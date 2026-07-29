@@ -1,5 +1,5 @@
-import { AnalyticsService } from './analyticsService'
-import { UmamiProvider } from './umamiProvider'
+import { AnalyticsService } from './analyticsService.js'
+import { UmamiProvider } from './umamiProvider.js'
 
 const isAnalyticsEnabled = import.meta.env?.VITE_ANALYTICS_ENABLED === 'true'
 const umamiProvider = new UmamiProvider(
@@ -9,4 +9,4 @@ const umamiProvider = new UmamiProvider(
 
 export const analytics = new AnalyticsService([umamiProvider], isAnalyticsEnabled)
 
-export { AnalyticsEvents } from './types'
+export { AnalyticsEvents } from './types.js'

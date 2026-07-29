@@ -191,6 +191,7 @@ watch(visibleMonth, (month) => {
           v-for="event in selectedDateEvents"
           :key="event.id"
           :event="event"
+          source="calendar"
           :favorite-busy="favoriteBusyId === event.id"
           @toggle-favorite="emit('toggle-favorite', $event)"
         />

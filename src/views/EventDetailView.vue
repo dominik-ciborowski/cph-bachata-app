@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { CalendarDays, CalendarPlus, Heart, MapPin, Pencil } from 'lucide-vue-next'
+import { trackEventLinkClicked, trackMapsClicked } from '../analytics/eventTracking'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
@@ -207,6 +208,7 @@ function addToCalendar() {
             :href="getMapsUrl(event.location)"
             target="_blank"
             rel="noopener noreferrer"
+            @click="trackMapsClicked(event)"
           >
             <MapPin class="icon icon--sm" />
             <span class="detail-location-text">{{ event.location }}</span>
@@ -245,7 +247,7 @@ function addToCalendar() {
         <h2>Event Page</h2>
         <p>Open the organizer's event page for registration, updates and additional details.</p>
       </div>
-      <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer">
+      <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer" @click="trackEventLinkClicked(event)">
         <EventLinkIcon class="icon icon--sm" />
         Open event page
       </a>

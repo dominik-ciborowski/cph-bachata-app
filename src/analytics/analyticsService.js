@@ -28,5 +28,13 @@ export class AnalyticsService {
     if (!this.enabled) return
 
     console.debug('[Analytics]', event, properties ?? {})
+
+    this.providers.forEach((provider) => {
+      try {
+        provider.track(event, properties)
+      } catch (error) {
+        console.warn('[Analytics] Provider tracking failed', error)
+      }
+    })
   }
 }
