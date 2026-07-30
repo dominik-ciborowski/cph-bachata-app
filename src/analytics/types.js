@@ -13,13 +13,6 @@ export const AnalyticsEvents = {
   EVENT_OPENED: 'event_opened',
   MAPS_CLICKED: 'maps_clicked',
   EVENT_LINK_CLICKED: 'event_link_clicked',
-  FAVORITE_ADDED: 'favorite_added',
-  FAVORITE_REMOVED: 'favorite_removed',
-  SEARCH_USED: 'search_used',
-  FILTER_USED: 'filter_used',
-  VIEW_LIST: 'view_list',
-  VIEW_CALENDAR: 'view_calendar',
-  VIEW_WEEK: 'view_week',
   LIST_VIEW_SELECTED: 'list_view_selected',
   CALENDAR_VIEW_SELECTED: 'calendar_view_selected',
   CALENDAR_DATE_SELECTED: 'calendar_date_selected',
@@ -51,6 +44,8 @@ export const AnalyticsEvents = {
 }
 
 /** @typedef {typeof AnalyticsEvents[keyof typeof AnalyticsEvents]} AnalyticsEvent */
+
+export const analyticsVersion = 1
 
 /**
  * @typedef {{ selectedDate: string }} CalendarDateSelectedProperties

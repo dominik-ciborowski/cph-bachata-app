@@ -120,6 +120,10 @@ redirect response available to the app does not identify whether Google created
 a new account or signed in an existing one, so OAuth completion is reported as
 `login_succeeded` based on the login flow that initiated it.
 
+Every custom analytics event includes `analyticsVersion: 1`. Event properties
+are normalized centrally before provider delivery so only finite numbers,
+strings, booleans, `null`, and `undefined` values are forwarded.
+
 ### Build
 
 ```bash

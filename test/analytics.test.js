@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { AnalyticsService } from '../src/analytics/analyticsService.js'
+import { AnalyticsService, normalizeAnalyticsProperties } from '../src/analytics/analyticsService.js'
 import { analytics } from '../src/analytics/index.js'
 import { trackEventLinkClicked, trackEventOpened, trackMapsClicked } from '../src/analytics/eventTracking.js'
 import {
@@ -26,7 +26,7 @@ import {
   trackSavedEvent,
   trackViewSelected
 } from '../src/analytics/interactionTracking.js'
-import { AnalyticsEvents } from '../src/analytics/types.js'
+import { AnalyticsEvents, analyticsVersion } from '../src/analytics/types.js'
 import { EventSubmissionErrorTypes } from '../src/analytics/types.js'
 import { UmamiProvider } from '../src/analytics/umamiProvider.js'
 
@@ -95,11 +95,11 @@ test('track logs custom events and forwards them to providers', () => {
     console.debug = originalDebug
   }
 
-  assert.deepEqual(calls, [['[Analytics]', 'event_opened', { eventId: 'event-1' }]])
+  assert.deepEqual(calls, [['[Analytics]', 'event_opened', { eventId: 'event-1', analyticsVersion: 1 }]])
   assert.equal(tracked, true)
 })
 
-test('enabled analytics forwards unchanged properties to every provider', () => {
+test('enabled analytics forwards normalized properties to every provider', () => {
   const calls = []
   const properties = { eventId: 'event-1', isFree: true }
   const service = new AnalyticsService([
@@ -115,11 +115,74 @@ test('enabled analytics forwards unchanged properties to every provider', () => 
     console.debug = originalDebug
   }
 
+  const expectedProperties = { ...properties, analyticsVersion: 1 }
   assert.deepEqual(calls, [
-    ['event_opened', properties],
-    ['event_opened', properties]
+    ['event_opened', expectedProperties],
+    ['event_opened', expectedProperties]
   ])
-  assert.equal(calls[0][1], properties)
+  assert.equal(calls[0][1], calls[1][1])
+  assert.notEqual(calls[0][1], properties)
+})
+
+test('analyticsVersion is attached automatically to events without properties', () => {
+  const calls = []
+  const service = new AnalyticsService([{ initialize: () => {}, track: (event, properties) => calls.push([event, properties]) }], true)
+  const originalDebug = console.debug
+  console.debug = () => {}
+
+  try {
+    service.track('login_clicked')
+  } finally {
+    console.debug = originalDebug
+  }
+
+  assert.equal(analyticsVersion, 1)
+  assert.deepEqual(calls, [['login_clicked', { analyticsVersion: 1 }]])
+})
+
+test('analytics properties keep only supported primitive values', () => {
+  const normalized = normalizeAnalyticsProperties({
+    eventId: 'event-1',
+    count: 3,
+    enabled: true,
+    empty: null,
+    optional: undefined,
+    nested: { value: 'not allowed' },
+    list: ['not allowed'],
+    invalidNumber: Number.NaN,
+    functionValue: () => {},
+    analyticsVersion: 999
+  })
+
+  assert.deepEqual(normalized, {
+    eventId: 'event-1',
+    count: 3,
+    enabled: true,
+    empty: null,
+    optional: undefined,
+    analyticsVersion: 1
+  })
+})
+
+test('obsolete analytics event constants are removed', () => {
+  const obsoleteEvents = [
+    'FAVORITE_ADDED',
+    'FAVORITE_REMOVED',
+    'SEARCH_USED',
+    'FILTER_USED',
+    'VIEW_LIST',
+    'VIEW_CALENDAR',
+    'VIEW_WEEK'
+  ]
+
+  obsoleteEvents.forEach((eventName) => assert.equal(eventName in AnalyticsEvents, false))
+})
+
+test('analytics event taxonomy uses unique snake_case names', () => {
+  const eventNames = Object.values(AnalyticsEvents)
+
+  eventNames.forEach((eventName) => assert.match(eventName, /^[a-z]+(?:_[a-z]+)*$/))
+  assert.equal(new Set(eventNames).size, eventNames.length)
 })
 
 test('disabled analytics does not forward events', () => {

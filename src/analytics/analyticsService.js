@@ -1,3 +1,25 @@
+import { analyticsVersion } from './types.js'
+
+export function normalizeAnalyticsProperties(properties) {
+  const normalized = {}
+
+  if (properties && typeof properties === 'object' && !Array.isArray(properties)) {
+    try {
+      Object.entries(properties).forEach(([key, value]) => {
+        const isAllowedPrimitive = value == null || ['string', 'boolean'].includes(typeof value) ||
+          (typeof value === 'number' && Number.isFinite(value))
+
+        if (isAllowedPrimitive) normalized[key] = value
+      })
+    } catch (error) {
+      console.warn('[Analytics] Event properties could not be normalized', error)
+    }
+  }
+
+  normalized.analyticsVersion = analyticsVersion
+  return normalized
+}
+
 export class AnalyticsService {
   /**
    * @param {import('./types.js').AnalyticsProvider[]} providers
@@ -27,11 +49,12 @@ export class AnalyticsService {
   track(event, properties) {
     if (!this.enabled) return
 
-    console.debug('[Analytics]', event, properties ?? {})
+    const normalizedProperties = normalizeAnalyticsProperties(properties)
+    console.debug('[Analytics]', event, normalizedProperties)
 
     this.providers.forEach((provider) => {
       try {
-        provider.track(event, properties)
+        provider.track(event, normalizedProperties)
       } catch (error) {
         console.warn('[Analytics] Provider tracking failed', error)
       }
