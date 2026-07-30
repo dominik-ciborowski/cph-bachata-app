@@ -6,6 +6,8 @@ import {
   fetchActiveAnnouncements,
   readDismissedAnnouncementIds
 } from '../lib/siteAnnouncements'
+import { trackAnnouncement } from '../analytics/interactionTracking'
+import { AnalyticsEvents } from '../analytics/types'
 
 const announcements = ref([])
 const dismissedIds = ref(new Set())
@@ -32,7 +34,13 @@ onMounted(async () => {
 function dismissBanner() {
   if (!visibleAnnouncement.value) return
 
+  trackAnnouncement(AnalyticsEvents.ANNOUNCEMENT_DISMISSED, visibleAnnouncement.value.id)
   dismissedIds.value = dismissAnnouncementId(visibleAnnouncement.value.id)
+}
+
+function clickAnnouncement() {
+  if (!visibleAnnouncement.value) return
+  trackAnnouncement(AnalyticsEvents.ANNOUNCEMENT_CLICKED, visibleAnnouncement.value.id)
 }
 </script>
 
@@ -43,13 +51,14 @@ function dismissBanner() {
     :class="`site-announcement--${visibleAnnouncement.type}`"
     role="status"
     aria-live="polite"
+    @click="clickAnnouncement"
   >
     <div class="site-announcement__content">
       <p v-if="visibleAnnouncement.title" class="site-announcement__title">{{ visibleAnnouncement.title }}</p>
       <p class="site-announcement__message">{{ visibleAnnouncement.message }}</p>
     </div>
 
-    <button class="site-announcement__dismiss" type="button" aria-label="Dismiss announcement" @click="dismissBanner">
+    <button class="site-announcement__dismiss" type="button" aria-label="Dismiss announcement" @click.stop="dismissBanner">
       <X class="icon icon--sm" />
     </button>
   </section>

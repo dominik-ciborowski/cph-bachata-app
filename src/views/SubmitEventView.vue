@@ -6,10 +6,13 @@ import { buildSubmittedEventPayload } from '../lib/eventPayload'
 import { createDefaultPrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
+import { trackEventSubmission } from '../analytics/interactionTracking'
+import { AnalyticsEvents, EventSubmissionErrorTypes } from '../analytics/types'
 
 const { user } = useAuth()
 const status = ref('')
 const success = ref(false)
+const submissionStarted = ref(false)
 
 const form = ref({
   title: '',
@@ -45,11 +48,33 @@ function resetForm() {
   }
 }
 
+function getSubmissionAnalyticsProperties() {
+  return {
+    eventType: form.value.category || undefined,
+    isFree: form.value.price?.type === 'free'
+  }
+}
+
+function startSubmission() {
+  if (submissionStarted.value) return
+  submissionStarted.value = true
+  const properties = getSubmissionAnalyticsProperties()
+  trackEventSubmission(AnalyticsEvents.EVENT_SUBMISSION_STARTED, properties.eventType, properties.isFree)
+}
+
 async function submitEvent() {
+  startSubmission()
   status.value = 'Submitting...'
   success.value = false
 
   if (!user.value) {
+    const properties = getSubmissionAnalyticsProperties()
+    trackEventSubmission(
+      AnalyticsEvents.EVENT_SUBMISSION_FAILED,
+      properties.eventType,
+      properties.isFree,
+      EventSubmissionErrorTypes.AUTHENTICATION_REQUIRED
+    )
     status.value = 'Please log in to submit an event.'
     return
   }
@@ -59,11 +84,21 @@ async function submitEvent() {
     .insert(buildSubmittedEventPayload(form.value, user.value.id))
 
   if (error) {
+    const properties = getSubmissionAnalyticsProperties()
+    trackEventSubmission(
+      AnalyticsEvents.EVENT_SUBMISSION_FAILED,
+      properties.eventType,
+      properties.isFree,
+      EventSubmissionErrorTypes.SUBMISSION_REQUEST_FAILED
+    )
     status.value = error.message
     return
   }
 
+  const properties = getSubmissionAnalyticsProperties()
+  trackEventSubmission(AnalyticsEvents.EVENT_SUBMISSION_SUCCEEDED, properties.eventType, properties.isFree)
   resetForm()
+  submissionStarted.value = false
   success.value = true
   status.value = "Thank you! Your event has been submitted. We'll review the information and add it to the calendar if everything looks correct."
 }
@@ -77,7 +112,7 @@ async function submitEvent() {
       <p>Our team will review the information and add the event to the calendar if everything looks correct.</p>
     </section>
 
-    <form class="card form" @submit.prevent="submitEvent">
+    <form class="card form" @focusin="startSubmission" @submit.prevent="submitEvent">
       <p class="required-note">Fields marked with * are required.</p>
 
       <div class="grid-two">

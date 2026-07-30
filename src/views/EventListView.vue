@@ -14,6 +14,7 @@ import {
   trackFilterChanged,
   trackFiltersCleared,
   trackSavedEvent,
+  trackSearchNoResults,
   trackSearchPerformed,
   trackViewSelected
 } from '../analytics/interactionTracking'
@@ -38,6 +39,8 @@ const discoveryControls = ref(null)
 const showListBackToTop = ref(false)
 const showLoginBenefitsBanner = ref(false)
 let searchAnalyticsTimeoutId = null
+let lastNoResultsSearchState = ''
+let lastPerformedSearchQuery = ''
 
 const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
 const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
@@ -85,15 +88,34 @@ onUnmounted(() => {
   if (searchAnalyticsTimeoutId) window.clearTimeout(searchAnalyticsTimeoutId)
 })
 
-watch(searchQuery, (nextQuery, previousQuery) => {
-  if (nextQuery === previousQuery) return
+watch([searchQuery, filter, category, organizer, loading], (nextState, previousState) => {
+  if (nextState.every((value, index) => value === previousState[index])) return
   if (searchAnalyticsTimeoutId) window.clearTimeout(searchAnalyticsTimeoutId)
+  if (loading.value) return
 
-  const normalizedQuery = nextQuery.trim()
-  if (!normalizedQuery) return
+  const normalizedQuery = searchQuery.value.trim()
+  const analyticsFilterCount = getAnalyticsActiveFilterCount()
+  if (!normalizedQuery) lastPerformedSearchQuery = ''
+  if (!normalizedQuery && analyticsFilterCount === 0) {
+    lastNoResultsSearchState = ''
+    return
+  }
 
   searchAnalyticsTimeoutId = window.setTimeout(() => {
-    trackSearchPerformed(normalizedQuery.length, visibleEvents.value.length)
+    if (normalizedQuery && normalizedQuery !== lastPerformedSearchQuery) {
+      lastPerformedSearchQuery = normalizedQuery
+      trackSearchPerformed(normalizedQuery.length, visibleEvents.value.length)
+    }
+
+    if (visibleEvents.value.length > 0) {
+      lastNoResultsSearchState = ''
+      return
+    }
+
+    const searchState = JSON.stringify([normalizedQuery, filter.value, category.value, organizer.value])
+    if (searchState === lastNoResultsSearchState) return
+    lastNoResultsSearchState = searchState
+    trackSearchNoResults(normalizedQuery.length, analyticsFilterCount)
   }, 400)
 })
 
@@ -361,6 +383,14 @@ const activeFilterCount = computed(() => {
   if (organizer.value !== 'all') count += 1
   return count
 })
+
+function getAnalyticsActiveFilterCount() {
+  let count = 0
+  if (filter.value !== 'all') count += 1
+  if (category.value !== 'all') count += 1
+  if (organizer.value !== 'all') count += 1
+  return count
+}
 
 const savedUpcomingEvents = computed(() => {
   const now = new Date()

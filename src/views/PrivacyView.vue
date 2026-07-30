@@ -35,6 +35,18 @@
     </section>
 
     <section class="card help-section">
+      <h2>Usage Analytics</h2>
+      <p>We use Umami Cloud for usage analytics to understand how the application is used and to improve its features and reliability.</p>
+      <p>Analytics may include page visits, feature interactions, event and organizer identifiers, event types, booleans, and numeric values such as result counts. We do not intentionally include names, email addresses, search text, event titles or descriptions, or other free-text personal information in analytics events.</p>
+      <p>Analytics are used for product improvement and are not used for advertising.</p>
+    </section>
+
+    <section class="card help-section">
+      <h2>Authentication Providers</h2>
+      <p>Account authentication is provided through Supabase. External OAuth providers, such as Google, may also process information when you choose to sign in with them.</p>
+    </section>
+
+    <section class="card help-section">
       <h2>What We Do Not Do</h2>
       <ul class="help-list">
         <li>We do not sell user data.</li>

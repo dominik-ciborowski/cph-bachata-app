@@ -117,3 +117,25 @@ export function trackBulkEventsCreated(event, createdCount) {
   }
   analytics.track(AnalyticsEvents.BULK_EVENTS_CREATED, properties)
 }
+
+export function trackEventSubmission(eventName, eventType, isFree, errorType) {
+  /** @type {import('./types.js').EventSubmissionProperties} */
+  const properties = {
+    ...(eventType ? { eventType } : {}),
+    isFree,
+    ...(errorType ? { errorType } : {})
+  }
+  analytics.track(eventName, properties)
+}
+
+export function trackAnnouncement(eventName, announcementId) {
+  /** @type {import('./types.js').AnnouncementProperties} */
+  const properties = { announcementId, source: 'site_banner' }
+  analytics.track(eventName, properties)
+}
+
+export function trackSearchNoResults(queryLength, activeFilterCount) {
+  /** @type {import('./types.js').SearchNoResultsProperties} */
+  const properties = { queryLength, activeFilterCount }
+  analytics.track(AnalyticsEvents.SEARCH_NO_RESULTS, properties)
+}

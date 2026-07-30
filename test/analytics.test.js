@@ -10,6 +10,8 @@ import {
   trackCalendarExportClicked,
   trackCalendarMonthChanged,
   trackBulkEventsCreated,
+  trackAnnouncement,
+  trackEventSubmission,
   trackFilterChanged,
   trackFiltersCleared,
   trackLoginClicked,
@@ -20,10 +22,12 @@ import {
   trackRegisterClicked,
   trackRegisterSucceeded,
   trackSearchPerformed,
+  trackSearchNoResults,
   trackSavedEvent,
   trackViewSelected
 } from '../src/analytics/interactionTracking.js'
 import { AnalyticsEvents } from '../src/analytics/types.js'
+import { EventSubmissionErrorTypes } from '../src/analytics/types.js'
 import { UmamiProvider } from '../src/analytics/umamiProvider.js'
 
 test('disabled analytics does not initialize providers', () => {
@@ -358,5 +362,47 @@ test('successful organizer action helpers contain no free-text event content', (
       source: 'management',
       createdCount: 3
     }]]
+  )
+})
+
+test('community submission analytics use stable properties and error types', () => {
+  assert.deepEqual(
+    captureApplicationEvent(() => trackEventSubmission(AnalyticsEvents.EVENT_SUBMISSION_STARTED, 'social', true)),
+    [['event_submission_started', { eventType: 'social', isFree: true }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackEventSubmission(AnalyticsEvents.EVENT_SUBMISSION_SUCCEEDED, 'workshop', false)),
+    [['event_submission_succeeded', { eventType: 'workshop', isFree: false }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackEventSubmission(
+      AnalyticsEvents.EVENT_SUBMISSION_FAILED,
+      'class',
+      true,
+      EventSubmissionErrorTypes.SUBMISSION_REQUEST_FAILED
+    )),
+    [['event_submission_failed', {
+      eventType: 'class',
+      isFree: true,
+      errorType: 'submission_request_failed'
+    }]]
+  )
+})
+
+test('announcement interactions contain only ID and stable source', () => {
+  assert.deepEqual(
+    captureApplicationEvent(() => trackAnnouncement(AnalyticsEvents.ANNOUNCEMENT_CLICKED, 'announcement-1')),
+    [['announcement_clicked', { announcementId: 'announcement-1', source: 'site_banner' }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackAnnouncement(AnalyticsEvents.ANNOUNCEMENT_DISMISSED, 'announcement-1')),
+    [['announcement_dismissed', { announcementId: 'announcement-1', source: 'site_banner' }]]
+  )
+})
+
+test('empty search analytics contain no search text', () => {
+  assert.deepEqual(
+    captureApplicationEvent(() => trackSearchNoResults(9, 2)),
+    [['search_no_results', { queryLength: 9, activeFilterCount: 2 }]]
   )
 })

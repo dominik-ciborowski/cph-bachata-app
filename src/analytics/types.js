@@ -39,6 +39,12 @@ export const AnalyticsEvents = {
   EVENT_DELETED: 'event_deleted',
   EVENT_DUPLICATED: 'event_duplicated',
   BULK_EVENTS_CREATED: 'bulk_events_created',
+  EVENT_SUBMISSION_STARTED: 'event_submission_started',
+  EVENT_SUBMISSION_SUCCEEDED: 'event_submission_succeeded',
+  EVENT_SUBMISSION_FAILED: 'event_submission_failed',
+  ANNOUNCEMENT_CLICKED: 'announcement_clicked',
+  ANNOUNCEMENT_DISMISSED: 'announcement_dismissed',
+  SEARCH_NO_RESULTS: 'search_no_results',
   SEARCH_PERFORMED: 'search_performed',
   FILTER_CHANGED: 'filter_changed',
   FILTERS_CLEARED: 'filters_cleared'
@@ -55,4 +61,14 @@ export const AnalyticsEvents = {
  * @typedef {{ sourcePage: string }} HomeLogoClickedProperties
  * @typedef {{ eventId?: string | number, organizerId?: string | number, eventType?: string, isFree: boolean, source: string }} EventActionProperties
  * @typedef {{ organizerId?: string | number, eventType?: string, isFree: boolean, source: string, createdCount: number }} BulkEventsCreatedProperties
+ * @typedef {{ eventType?: string, isFree: boolean, errorType?: EventSubmissionErrorType }} EventSubmissionProperties
+ * @typedef {{ announcementId: string | number, source: string }} AnnouncementProperties
+ * @typedef {{ queryLength: number, activeFilterCount: number }} SearchNoResultsProperties
  */
+
+export const EventSubmissionErrorTypes = {
+  AUTHENTICATION_REQUIRED: 'authentication_required',
+  SUBMISSION_REQUEST_FAILED: 'submission_request_failed'
+}
+
+/** @typedef {typeof EventSubmissionErrorTypes[keyof typeof EventSubmissionErrorTypes]} EventSubmissionErrorType */
