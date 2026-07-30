@@ -9,6 +9,7 @@ import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
 import { createDefaultPrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
+import { trackBulkEventsCreated } from '../analytics/interactionTracking'
 
 const router = useRouter()
 const { user } = useAuth()
@@ -106,6 +107,8 @@ async function saveBulk() {
     status.value = error.message
     return
   }
+
+  trackBulkEventsCreated(rows[0], rows.length)
 
   sessionStorage.setItem('flash_message', `Saved ${rows.length} event(s).`)
   router.push('/management')

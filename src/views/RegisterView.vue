@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 import { authMessages, getAuthRedirectUrl, logAuthError } from '../lib/authMessages'
+import { trackRegisterClicked, trackRegisterSucceeded } from '../analytics/interactionTracking'
 
 const router = useRouter()
 const email = ref('')
@@ -19,6 +20,7 @@ function validateForm() {
 }
 
 async function register() {
+  trackRegisterClicked()
   isSuccess.value = false
   const validationError = validateForm()
 
@@ -43,6 +45,7 @@ async function register() {
     return
   }
 
+  trackRegisterSucceeded()
   isSuccess.value = true
 
   if (data.session) {

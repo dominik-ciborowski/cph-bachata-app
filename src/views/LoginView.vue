@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase'
 import { authMessages, getAuthRedirectUrl, loginSuccessStorageKey, logAuthError } from '../lib/authMessages'
+import { trackLoginClicked } from '../analytics/interactionTracking'
 
 const router = useRouter()
 const route = useRoute()
@@ -18,6 +19,7 @@ onMounted(() => {
 })
 
 async function login() {
+  trackLoginClicked()
   status.value = 'Logging in...'
   const { error } = await supabase.auth.signInWithPassword({
     email: email.value,
@@ -35,6 +37,7 @@ async function login() {
 }
 
 async function loginWithGoogle() {
+  trackLoginClicked()
   status.value = 'Redirecting to Google...'
   sessionStorage.setItem(loginSuccessStorageKey, 'true')
 

@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import EventCard from './EventCard.vue'
+import { trackCalendarDateSelected, trackCalendarMonthChanged } from '../analytics/interactionTracking'
 
 const props = defineProps({
   events: {
@@ -39,11 +40,14 @@ function isSameMonth(date, monthDate) {
 }
 
 function changeMonth(offset) {
-  visibleMonth.value = new Date(visibleMonth.value.getFullYear(), visibleMonth.value.getMonth() + offset, 1)
+  const nextMonth = new Date(visibleMonth.value.getFullYear(), visibleMonth.value.getMonth() + offset, 1)
+  trackCalendarMonthChanged(getDateKey(nextMonth).slice(0, 7))
+  visibleMonth.value = nextMonth
 }
 
 async function selectDate(date) {
   selectedDate.value = new Date(date)
+  trackCalendarDateSelected(getDateKey(date))
   await nextTick()
   selectedEventsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   updateBackToCalendarVisibility()
@@ -191,6 +195,7 @@ watch(visibleMonth, (month) => {
           v-for="event in selectedDateEvents"
           :key="event.id"
           :event="event"
+          source="calendar"
           :favorite-busy="favoriteBusyId === event.id"
           @toggle-favorite="emit('toggle-favorite', $event)"
         />

@@ -102,7 +102,27 @@ cp .env.example .env
 npm run dev
 ```
 
-Fill `.env` with your Supabase project URL and anon key.
+Before running the application, copy `.env.example` to `.env` and fill in your
+Supabase project URL, anon key, and the required analytics configuration. The
+analytics variables are:
+
+- `VITE_ANALYTICS_ENABLED`: controls whether analytics providers are initialized.
+  Set it to `false` to disable analytics.
+- `VITE_UMAMI_HOST`: sets the Umami server from which the tracking script is
+  loaded. It is configuration-driven so a future self-hosted Umami instance can
+  be used without application code changes.
+- `VITE_UMAMI_WEBSITE_ID`: identifies this website in the configured Umami
+  instance.
+
+Authentication analytics contain no personal information. Email registration is
+reported as successful when Supabase accepts the sign-up request. The OAuth
+redirect response available to the app does not identify whether Google created
+a new account or signed in an existing one, so OAuth completion is reported as
+`login_succeeded` based on the login flow that initiated it.
+
+Every custom analytics event includes `analyticsVersion: 1`. Event properties
+are normalized centrally before provider delivery so only finite numbers,
+strings, booleans, `null`, and `undefined` values are forwarded.
 
 ### Build
 

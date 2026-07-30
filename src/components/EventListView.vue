@@ -51,6 +51,7 @@ const groupedEvents = computed(() => {
           v-for="event in group.events"
           :key="event.id"
           :event="event"
+          source="list"
           :favorite-busy="favoriteBusyId === event.id"
           @toggle-favorite="emit('toggle-favorite', $event)"
         />

@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CalendarDays, Heart, MapPin } from 'lucide-vue-next'
+import { trackEventOpened } from '../analytics/eventTracking'
+import { trackCalendarEventClicked } from '../analytics/interactionTracking'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
 const props = defineProps({
@@ -12,6 +14,10 @@ const props = defineProps({
   favoriteBusy: {
     type: Boolean,
     default: false
+  },
+  source: {
+    type: String,
+    required: true
   }
 })
 
@@ -36,6 +42,12 @@ function formatTimeRange(startValue, endValue) {
   if (!endValue) return formatter.format(new Date(startValue))
   return `${formatter.format(new Date(startValue))} - ${formatter.format(new Date(endValue))}`
 }
+
+function openEvent(navigate) {
+  if (props.source === 'calendar') trackCalendarEventClicked(props.event)
+  trackEventOpened(props.event, props.source)
+  navigate()
+}
 </script>
 
 <template>
@@ -45,9 +57,9 @@ function formatTimeRange(startValue, endValue) {
       :class="{ 'event-card--cancelled': event.status === 'cancelled' }"
       role="link"
       tabindex="0"
-      @click="navigate"
-      @keydown.enter.prevent="navigate"
-      @keydown.space.prevent="navigate"
+      @click="openEvent(navigate)"
+      @keydown.enter.prevent="openEvent(navigate)"
+      @keydown.space.prevent="openEvent(navigate)"
     >
       <div class="event-card__date">
         <span class="icon-text"><CalendarDays class="icon icon--sm" />{{ formatDate(event.start_time) }}</span>
