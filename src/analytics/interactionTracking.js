@@ -70,3 +70,50 @@ export function trackFilterChanged(filterType, selectedValue) {
 export function trackFiltersCleared() {
   analytics.track(AnalyticsEvents.FILTERS_CLEARED)
 }
+
+export function trackHomeLogoClicked(sourcePage) {
+  /** @type {import('./types.js').HomeLogoClickedProperties} */
+  const properties = { sourcePage }
+  analytics.track(AnalyticsEvents.HOME_LOGO_CLICKED, properties)
+}
+
+function getEventActionProperties(event, source) {
+  const organizerId = event.organizer_id || event.organizer_record?.id
+  /** @type {import('./types.js').EventActionProperties} */
+  const properties = {
+    ...(event.id != null ? { eventId: event.id } : {}),
+    ...(organizerId != null ? { organizerId } : {}),
+    ...(event.category ? { eventType: event.category } : {}),
+    isFree: isFreePrice(event.price_text),
+    source
+  }
+  return properties
+}
+
+export function trackSavedEvent(event, source, wasSaved) {
+  analytics.track(
+    wasSaved ? AnalyticsEvents.EVENT_SAVED : AnalyticsEvents.EVENT_UNSAVED,
+    getEventActionProperties(event, source)
+  )
+}
+
+export function trackCalendarExportClicked(event, source) {
+  analytics.track(AnalyticsEvents.CALENDAR_EXPORT_CLICKED, getEventActionProperties(event, source))
+}
+
+export function trackOrganizerEvent(eventName, event, source = 'management') {
+  analytics.track(eventName, getEventActionProperties(event, source))
+}
+
+export function trackBulkEventsCreated(event, createdCount) {
+  const organizerId = event.organizer_id || event.organizer_record?.id
+  /** @type {import('./types.js').BulkEventsCreatedProperties} */
+  const properties = {
+    ...(organizerId != null ? { organizerId } : {}),
+    ...(event.category ? { eventType: event.category } : {}),
+    isFree: isFreePrice(event.price_text),
+    source: 'management',
+    createdCount
+  }
+  analytics.track(AnalyticsEvents.BULK_EVENTS_CREATED, properties)
+}

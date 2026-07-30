@@ -7,17 +7,23 @@ import { trackEventLinkClicked, trackEventOpened, trackMapsClicked } from '../sr
 import {
   trackCalendarDateSelected,
   trackCalendarEventClicked,
+  trackCalendarExportClicked,
   trackCalendarMonthChanged,
+  trackBulkEventsCreated,
   trackFilterChanged,
   trackFiltersCleared,
   trackLoginClicked,
   trackLoginSucceeded,
   trackLogoutClicked,
+  trackHomeLogoClicked,
+  trackOrganizerEvent,
   trackRegisterClicked,
   trackRegisterSucceeded,
   trackSearchPerformed,
+  trackSavedEvent,
   trackViewSelected
 } from '../src/analytics/interactionTracking.js'
+import { AnalyticsEvents } from '../src/analytics/types.js'
 import { UmamiProvider } from '../src/analytics/umamiProvider.js'
 
 test('disabled analytics does not initialize providers', () => {
@@ -308,4 +314,49 @@ test('search and filter interactions track only aggregate and selected values', 
     [['filter_changed', { filterType: 'category', selectedValue: 'social' }]]
   )
   assert.deepEqual(captureApplicationEvent(trackFiltersCleared), [['filters_cleared']])
+})
+
+test('attendee actions track stable event data and source', () => {
+  assert.deepEqual(
+    captureApplicationEvent(() => trackHomeLogoClicked('/events/event-1')),
+    [['home_logo_clicked', { sourcePage: '/events/event-1' }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackSavedEvent(analyticsEvent, 'list', true)),
+    [['event_saved', {
+      eventId: 'event-1',
+      organizerId: 'organizer-1',
+      eventType: 'social',
+      isFree: true,
+      source: 'list'
+    }]]
+  )
+  assert.equal(captureApplicationEvent(() => trackSavedEvent(analyticsEvent, 'event_details', false))[0][0], 'event_unsaved')
+  assert.equal(captureApplicationEvent(() => trackCalendarExportClicked(analyticsEvent, 'event_details'))[0][0], 'calendar_export_clicked')
+})
+
+test('successful organizer action helpers contain no free-text event content', () => {
+  const event = { ...analyticsEvent, title: 'Not tracked', description: 'Not tracked' }
+  const created = captureApplicationEvent(() => trackOrganizerEvent(AnalyticsEvents.EVENT_CREATED, event))
+
+  assert.deepEqual(created, [['event_created', {
+    eventId: 'event-1',
+    organizerId: 'organizer-1',
+    eventType: 'social',
+    isFree: true,
+    source: 'management'
+  }]])
+  assert.equal(captureApplicationEvent(() => trackOrganizerEvent(AnalyticsEvents.EVENT_UPDATED, event))[0][0], 'event_updated')
+  assert.equal(captureApplicationEvent(() => trackOrganizerEvent(AnalyticsEvents.EVENT_DELETED, event))[0][0], 'event_deleted')
+  assert.equal(captureApplicationEvent(() => trackOrganizerEvent(AnalyticsEvents.EVENT_DUPLICATED, event))[0][0], 'event_duplicated')
+  assert.deepEqual(
+    captureApplicationEvent(() => trackBulkEventsCreated(event, 3)),
+    [['bulk_events_created', {
+      organizerId: 'organizer-1',
+      eventType: 'social',
+      isFree: true,
+      source: 'management',
+      createdCount: 3
+    }]]
+  )
 })

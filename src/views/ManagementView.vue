@@ -6,6 +6,8 @@ import ConfirmationModal from '../components/ConfirmationModal.vue'
 import { CalendarPlus, Plus, Trash2 } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
+import { trackOrganizerEvent } from '../analytics/interactionTracking'
+import { AnalyticsEvents } from '../analytics/types'
 import {
   applyBulkEventUpdates,
   applyBulkStatusUpdates,
@@ -358,6 +360,8 @@ async function confirmDelete() {
     error.value = deleteError.message
     return
   }
+
+  trackOrganizerEvent(AnalyticsEvents.EVENT_DELETED, deleteTarget.value)
 
   flashMessage.value = 'Event deleted.'
   selectedEventIds.value.delete(String(deleteTarget.value.id))

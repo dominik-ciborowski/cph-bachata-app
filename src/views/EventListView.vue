@@ -13,6 +13,7 @@ import { supabase } from '../lib/supabase'
 import {
   trackFilterChanged,
   trackFiltersCleared,
+  trackSavedEvent,
   trackSearchPerformed,
   trackViewSelected
 } from '../analytics/interactionTracking'
@@ -192,10 +193,12 @@ async function toggleFavorite(event) {
     if (event.is_favorited) {
       await unfavoriteEvent(user.value.id, event.id)
       favoriteIds.value.delete(String(event.id))
+      trackSavedEvent(event, isFavoritesView.value ? 'saved_events' : viewMode.value, false)
       showToast('Removed from My Events.')
     } else {
       await favoriteEvent(user.value.id, event.id)
       favoriteIds.value.add(String(event.id))
+      trackSavedEvent(event, isFavoritesView.value ? 'saved_events' : viewMode.value, true)
       showToast('Added to My Events.')
     }
 

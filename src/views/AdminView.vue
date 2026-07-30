@@ -11,6 +11,8 @@ import { buildEventPayload, buildNewEventPayload } from '../lib/eventPayload'
 import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
 import { createDefaultPrice, normalizePrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
+import { trackOrganizerEvent } from '../analytics/interactionTracking'
+import { AnalyticsEvents } from '../analytics/types'
 import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
@@ -21,6 +23,7 @@ const organizers = ref([])
 const isEditing = ref(false)
 const eventId = ref(null)
 const reviewMode = ref(false)
+const isDuplicating = ref(false)
 const reviewStatus = ref('')
 const eventStatus = ref('approved')
 const cancellationModalOpen = ref(false)
@@ -99,6 +102,7 @@ async function loadEvent(id, options = {}) {
   applyEventToForm(event)
 
   if (options.duplicate) {
+    isDuplicating.value = true
     form.value.date = ''
     isEditing.value = false
     eventId.value = null
@@ -159,6 +163,12 @@ async function saveEvent() {
     status.value = error.message
     return
   }
+
+  const analyticsEvent = { ...payload, ...(isEditing.value ? { id: eventId.value } : {}) }
+  const analyticsEventName = isEditing.value
+    ? AnalyticsEvents.EVENT_UPDATED
+    : (isDuplicating.value ? AnalyticsEvents.EVENT_DUPLICATED : AnalyticsEvents.EVENT_CREATED)
+  trackOrganizerEvent(analyticsEventName, analyticsEvent)
 
   sessionStorage.setItem('flash_message', isEditing.value ? 'Event updated successfully.' : 'Event created successfully.')
   router.push(reviewMode.value ? '/admin/submissions' : '/management')
@@ -303,6 +313,11 @@ async function deleteEvent() {
     status.value = error.message
     return
   }
+
+  trackOrganizerEvent(AnalyticsEvents.EVENT_DELETED, {
+    ...buildEventPayload(form.value),
+    id: eventId.value
+  })
 
   confirmationModal.value = null
   sessionStorage.setItem('flash_message', 'Event deleted.')

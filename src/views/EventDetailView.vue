@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { CalendarDays, CalendarPlus, Heart, MapPin, Pencil } from 'lucide-vue-next'
 import { trackEventLinkClicked, trackMapsClicked } from '../analytics/eventTracking'
+import { trackCalendarExportClicked, trackSavedEvent } from '../analytics/interactionTracking'
 import { useAuth } from '../composables/useAuth'
 import { normalizeEvent } from '../lib/events'
 import { favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
@@ -98,10 +99,12 @@ async function toggleFavorite() {
   try {
     if (event.value.is_favorited) {
       await unfavoriteEvent(user.value.id, event.value.id)
+      trackSavedEvent(event.value, 'event_details', false)
       event.value = { ...event.value, is_favorited: false }
       showToast('Removed from My Events.')
     } else {
       await favoriteEvent(user.value.id, event.value.id)
+      trackSavedEvent(event.value, 'event_details', true)
       event.value = { ...event.value, is_favorited: true }
       showToast('Added to My Events.')
     }
@@ -135,6 +138,7 @@ function getMapsUrl(location) {
 function addToCalendar() {
   if (!event.value) return
 
+  trackCalendarExportClicked(event.value, 'event_details')
   calendarExportError.value = ''
 
   try {

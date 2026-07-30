@@ -1,16 +1,17 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import logo from '@/assets/logo.png'
 import { authMessages, loginSuccessStorageKey } from './lib/authMessages'
 import SiteAnnouncementBanner from './components/SiteAnnouncementBanner.vue'
-import { trackLoginSucceeded, trackLogoutClicked } from './analytics/interactionTracking'
+import { trackHomeLogoClicked, trackLoginSucceeded, trackLogoutClicked } from './analytics/interactionTracking'
 
 const themeStorageKey = 'copenhagen-bachata-app-theme'
 const themeOptions = ['light', 'dark', 'system']
 
 const router = useRouter()
+const route = useRoute()
 const { isAuthenticated, isAdmin, canManageEvents, logout } = useAuth()
 const mobileMenuOpen = ref(false)
 const adminMenuOpen = ref(false)
@@ -32,6 +33,12 @@ async function handleLogout() {
 function toggleMobileMenu() {
   mobileMenuOpen.value = !mobileMenuOpen.value
   if (!mobileMenuOpen.value) adminMenuOpen.value = false
+}
+
+function handleHomeLogoClick() {
+  const matchedRoute = route.matched[route.matched.length - 1]
+  trackHomeLogoClicked(matchedRoute?.path || route.path)
+  closeNavigation()
 }
 
 function toggleAdminMenu() {
@@ -149,7 +156,7 @@ onBeforeUnmount(() => {
 
 <template>
   <header class="topbar">
-    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata App home" @click="closeNavigation">
+    <RouterLink to="/" class="brand" aria-label="Copenhagen Bachata App home" @click="handleHomeLogoClick">
       <img
         class="brand__logo"
         :src="logo"

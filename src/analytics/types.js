@@ -30,6 +30,15 @@ export const AnalyticsEvents = {
   REGISTER_CLICKED: 'register_clicked',
   REGISTER_SUCCEEDED: 'register_succeeded',
   LOGOUT_CLICKED: 'logout_clicked',
+  HOME_LOGO_CLICKED: 'home_logo_clicked',
+  EVENT_SAVED: 'event_saved',
+  EVENT_UNSAVED: 'event_unsaved',
+  CALENDAR_EXPORT_CLICKED: 'calendar_export_clicked',
+  EVENT_CREATED: 'event_created',
+  EVENT_UPDATED: 'event_updated',
+  EVENT_DELETED: 'event_deleted',
+  EVENT_DUPLICATED: 'event_duplicated',
+  BULK_EVENTS_CREATED: 'bulk_events_created',
   SEARCH_PERFORMED: 'search_performed',
   FILTER_CHANGED: 'filter_changed',
   FILTERS_CLEARED: 'filters_cleared'
@@ -43,4 +52,7 @@ export const AnalyticsEvents = {
  * @typedef {{ eventId: string | number, organizerId?: string | number, eventType?: string, isFree: boolean }} CalendarEventClickedProperties
  * @typedef {{ queryLength: number, resultCount: number }} SearchPerformedProperties
  * @typedef {{ filterType: string, selectedValue: string }} FilterChangedProperties
+ * @typedef {{ sourcePage: string }} HomeLogoClickedProperties
+ * @typedef {{ eventId?: string | number, organizerId?: string | number, eventType?: string, isFree: boolean, source: string }} EventActionProperties
+ * @typedef {{ organizerId?: string | number, eventType?: string, isFree: boolean, source: string, createdCount: number }} BulkEventsCreatedProperties
  */
