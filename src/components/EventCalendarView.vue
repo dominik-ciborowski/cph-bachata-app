@@ -2,6 +2,8 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import EventCard from './EventCard.vue'
+import EventWeekView from './EventWeekView.vue'
+import { getDateKey } from '../lib/calendar'
 import { trackCalendarDateSelected, trackCalendarMonthChanged } from '../analytics/interactionTracking'
 
 const props = defineProps({
@@ -12,10 +14,11 @@ const props = defineProps({
   favoriteBusyId: {
     type: [String, Number],
     default: null
-  }
+  },
+  calendarView: { type: String, default: 'month' }
 })
 
-const emit = defineEmits(['toggle-favorite'])
+const emit = defineEmits(['toggle-favorite', 'update:calendar-view'])
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
@@ -26,14 +29,6 @@ const calendarSection = ref(null)
 const calendarGridSection = ref(null)
 const selectedEventsSection = ref(null)
 const showBackToCalendar = ref(false)
-
-function getDateKey(value) {
-  const date = new Date(value)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 function isSameMonth(date, monthDate) {
   return date.getFullYear() === monthDate.getFullYear() && date.getMonth() === monthDate.getMonth()
@@ -147,6 +142,12 @@ watch(visibleMonth, (month) => {
 
 <template>
   <section ref="calendarSection" class="calendar-view" aria-label="Calendar event results">
+    <div class="calendar-presentation-toggle" aria-label="Calendar presentation">
+      <button type="button" :class="{ active: calendarView === 'month' }" :aria-pressed="calendarView === 'month'" @click="emit('update:calendar-view', 'month')">Month</button>
+      <button type="button" :class="{ active: calendarView === 'week' }" :aria-pressed="calendarView === 'week'" @click="emit('update:calendar-view', 'week')">Week</button>
+    </div>
+    <EventWeekView v-if="calendarView === 'week'" :events="events" :favorite-busy-id="favoriteBusyId" @toggle-favorite="emit('toggle-favorite', $event)" />
+    <template v-else>
     <div ref="calendarGridSection" class="calendar-view__calendar">
       <div class="calendar-view__header">
         <button class="calendar-nav-button" type="button" aria-label="Previous month" @click="changeMonth(-1)">
@@ -210,5 +211,6 @@ watch(visibleMonth, (month) => {
     >
       ↑ Calendar
     </button>
+    </template>
   </section>
 </template>

@@ -2038,6 +2038,96 @@ textarea {
   margin: 0 auto;
 }
 
+.calendar-presentation-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  width: min(100%, 280px);
+  margin: 0 auto;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-category-class-bg);
+}
+
+.calendar-presentation-toggle button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.calendar-presentation-toggle button.active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 4px 12px var(--color-shadow-medium);
+}
+
+.calendar-week {
+  display: grid;
+  gap: 16px;
+}
+
+.calendar-week__today-button {
+  margin-top: 5px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.calendar-week__day {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+}
+
+.calendar-week__day--today {
+  border: 2px solid var(--color-accent-soft-border);
+}
+
+.calendar-week__day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calendar-week__day-header h3 {
+  margin: 0;
+  font-size: 18px;
+  text-transform: capitalize;
+}
+
+.calendar-week__today-label {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-button-text);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.calendar-week__empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--color-empty-border);
+  border-radius: 14px;
+  background: var(--color-empty-bg);
+  color: var(--color-text-muted);
+  text-align: center;
+  font-weight: 700;
+}
+
 .calendar-view__header {
   display: grid;
   grid-template-columns: 44px 1fr 44px;

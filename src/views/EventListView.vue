@@ -9,6 +9,7 @@ import { normalizeEvent } from '../lib/events'
 import { applyFavoriteState, favoriteEvent, loadFavoriteEventIds, unfavoriteEvent } from '../lib/favorites'
 import { downloadIcsCalendar } from '../lib/calendarExport'
 import { getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
+import { getCalendarView, readAppPreferences, updateAppPreferences } from '../lib/appPreferences'
 import { supabase } from '../lib/supabase'
 import {
   trackFilterChanged,
@@ -44,11 +45,11 @@ let lastPerformedSearchQuery = ''
 
 const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
 const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
-const appPreferencesStorageKey = 'copenhagen-bachata-app-preferences'
 const validMainViewModes = new Set(['list', 'calendar'])
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 const viewMode = ref(getStoredPreferredView())
+const calendarView = ref(getCalendarView())
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
@@ -313,7 +314,7 @@ function setViewMode(nextViewMode) {
 
 function getStoredPreferredView() {
   try {
-    const storedPreferences = JSON.parse(localStorage.getItem(appPreferencesStorageKey) || '{}')
+    const storedPreferences = readAppPreferences()
     return validMainViewModes.has(storedPreferences.preferredView) ? storedPreferences.preferredView : 'list'
   } catch {
     return 'list'
@@ -322,10 +323,15 @@ function getStoredPreferredView() {
 
 function savePreferredView(preferredView) {
   try {
-    localStorage.setItem(appPreferencesStorageKey, JSON.stringify({ preferredView }))
+    updateAppPreferences({ preferredView })
   } catch {
     // Ignore storage failures; the selected view still changes for this session.
   }
+}
+
+function setCalendarView(nextCalendarView) {
+  calendarView.value = nextCalendarView === 'week' ? 'week' : 'month'
+  updateAppPreferences({ calendarView: calendarView.value })
 }
 
 function toggleCalendarFilters() {
@@ -594,6 +600,8 @@ function exportMyEvents() {
       v-else-if="!isFavoritesView && viewMode === 'calendar'"
       :events="visibleEvents"
       :favorite-busy-id="favoriteBusyId"
+      :calendar-view="calendarView"
+      @update:calendar-view="setCalendarView"
       @toggle-favorite="toggleFavorite"
     />
 
