@@ -19,6 +19,16 @@ export function addWeeks(value, amount) {
   return date
 }
 
+export function getWeekRange(value) {
+  const start = startOfWeek(value)
+  const end = addWeeks(start, 1)
+  return { start, end }
+}
+
+export function isEventPast(event, now = new Date()) {
+  return new Date(event.end_time || event.start_time) < now
+}
+
 export function getWeekDays(value, events = [], today = new Date()) {
   const weekStart = startOfWeek(value)
   const groups = events.reduce((result, event) => {
@@ -26,6 +36,10 @@ export function getWeekDays(value, events = [], today = new Date()) {
     ;(result[key] ||= []).push(event)
     return result
   }, {})
+
+  Object.values(groups).forEach(dayEvents => {
+    dayEvents.sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
+  })
 
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart)

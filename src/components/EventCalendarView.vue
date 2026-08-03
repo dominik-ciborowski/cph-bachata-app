@@ -15,10 +15,13 @@ const props = defineProps({
     type: [String, Number],
     default: null
   },
-  calendarView: { type: String, default: 'month' }
+  calendarView: { type: String, default: 'month' },
+  weekEvents: { type: Array, default: () => [] },
+  weekLoading: { type: Boolean, default: false },
+  weekError: { type: String, default: '' }
 })
 
-const emit = defineEmits(['toggle-favorite', 'update:calendar-view'])
+const emit = defineEmits(['toggle-favorite', 'update:calendar-view', 'week-change'])
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
@@ -146,7 +149,7 @@ watch(visibleMonth, (month) => {
       <button type="button" :class="{ active: calendarView === 'month' }" :aria-pressed="calendarView === 'month'" @click="emit('update:calendar-view', 'month')">Month</button>
       <button type="button" :class="{ active: calendarView === 'week' }" :aria-pressed="calendarView === 'week'" @click="emit('update:calendar-view', 'week')">Week</button>
     </div>
-    <EventWeekView v-if="calendarView === 'week'" :events="events" :favorite-busy-id="favoriteBusyId" @toggle-favorite="emit('toggle-favorite', $event)" />
+    <EventWeekView v-if="calendarView === 'week'" :events="weekEvents" :favorite-busy-id="favoriteBusyId" :loading="weekLoading" :error="weekError" @week-change="emit('week-change', $event)" @toggle-favorite="emit('toggle-favorite', $event)" />
     <template v-else>
     <div ref="calendarGridSection" class="calendar-view__calendar">
       <div class="calendar-view__header">

@@ -29,6 +29,9 @@ const category = ref('all')
 const organizer = ref('all')
 const searchQuery = ref('')
 const events = ref([])
+const weekEvents = ref([])
+const weekLoading = ref(false)
+const weekError = ref('')
 const loading = ref(true)
 const error = ref('')
 const flashMessage = ref('')
@@ -42,6 +45,7 @@ const showLoginBenefitsBanner = ref(false)
 let searchAnalyticsTimeoutId = null
 let lastNoResultsSearchState = ''
 let lastPerformedSearchQuery = ''
+let weekRequestId = 0
 
 const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
 const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
@@ -226,11 +230,35 @@ async function toggleFavorite(event) {
     }
 
     events.value = applyFavoriteState(events.value, favoriteIds.value)
+    weekEvents.value = applyFavoriteState(weekEvents.value, favoriteIds.value)
   } catch (favoriteError) {
     error.value = 'Could not update My Events right now. Please try again.'
   } finally {
     favoriteBusyId.value = null
   }
+}
+
+async function loadWeekEvents({ start, end }) {
+  const requestId = ++weekRequestId
+  weekLoading.value = true
+  weekError.value = ''
+
+  const { data, error: queryError } = await supabase
+    .from('events')
+    .select('*, organizer_record:organizers(id,name,verified)')
+    .in('status', ['approved', 'cancelled'])
+    .gte('start_time', start.toISOString())
+    .lt('start_time', end.toISOString())
+    .order('start_time', { ascending: true })
+
+  if (requestId !== weekRequestId) return
+  weekLoading.value = false
+  if (queryError) {
+    weekError.value = queryError.message
+    weekEvents.value = []
+    return
+  }
+  weekEvents.value = applyFavoriteState((data || []).map(normalizeEvent), favoriteIds.value)
 }
 
 function isThisWeekend(event) {
@@ -422,6 +450,12 @@ const visibleEvents = computed(() => {
     .sort((first, second) => new Date(first.start_time) - new Date(second.start_time))
 })
 
+const visibleWeekEvents = computed(() => weekEvents.value
+  .filter(event => filter.value !== 'free' || isFree(event))
+  .filter(event => category.value === 'all' || event.category === category.value)
+  .filter(matchesOrganizer)
+  .sort((first, second) => new Date(first.start_time) - new Date(second.start_time)))
+
 function exportMyEvents() {
   calendarExportError.value = ''
 
@@ -594,14 +628,18 @@ function exportMyEvents() {
 
     <p v-else-if="error" class="empty-state">Could not load events: {{ error }}</p>
 
-    <p v-else-if="visibleEvents.length === 0" class="empty-state">{{ isFavoritesView ? 'No saved upcoming events yet.' : 'No events match these filters yet.' }}</p>
+    <p v-else-if="visibleEvents.length === 0 && (isFavoritesView || viewMode !== 'calendar')" class="empty-state">{{ isFavoritesView ? 'No saved upcoming events yet.' : 'No events match these filters yet.' }}</p>
 
     <EventCalendarView
       v-else-if="!isFavoritesView && viewMode === 'calendar'"
       :events="visibleEvents"
       :favorite-busy-id="favoriteBusyId"
       :calendar-view="calendarView"
+      :week-events="visibleWeekEvents"
+      :week-loading="weekLoading"
+      :week-error="weekError"
       @update:calendar-view="setCalendarView"
+      @week-change="loadWeekEvents"
       @toggle-favorite="toggleFavorite"
     />
 
