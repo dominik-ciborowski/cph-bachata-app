@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import EventCard from './EventCard.vue'
 import EventWeekView from './EventWeekView.vue'
+import CalendarModeMenu from './CalendarModeMenu.vue'
 import { getDateKey } from '../lib/calendar'
 import { trackCalendarDateSelected, trackCalendarMonthChanged } from '../analytics/interactionTracking'
 
@@ -32,13 +33,6 @@ const calendarSection = ref(null)
 const calendarGridSection = ref(null)
 const selectedEventsSection = ref(null)
 const showBackToCalendar = ref(false)
-const calendarModeMenu = ref(null)
-
-function selectCalendarView(mode) {
-  emit('update:calendar-view', mode)
-  calendarModeMenu.value?.removeAttribute('open')
-}
-
 function isSameMonth(date, monthDate) {
   return date.getFullYear() === monthDate.getFullYear() && date.getMonth() === monthDate.getMonth()
 }
@@ -151,16 +145,7 @@ watch(visibleMonth, (month) => {
 
 <template>
   <section ref="calendarSection" class="calendar-view" :class="{ 'calendar-view--week': calendarView === 'week' }" aria-label="Calendar event results">
-    <div class="calendar-mode-row">
-      <details ref="calendarModeMenu" class="calendar-mode-menu">
-        <summary aria-label="Change calendar presentation">{{ calendarView === 'week' ? 'Week' : 'Month' }}</summary>
-        <div class="calendar-mode-menu__options" role="menu">
-          <button type="button" role="menuitemradio" :aria-checked="calendarView === 'month'" @click="selectCalendarView('month')"><span>Month</span><span v-if="calendarView === 'month'" aria-hidden="true">✓</span></button>
-          <button type="button" role="menuitemradio" :aria-checked="calendarView === 'week'" @click="selectCalendarView('week')"><span>Week</span><span v-if="calendarView === 'week'" aria-hidden="true">✓</span></button>
-        </div>
-      </details>
-    </div>
-    <EventWeekView v-if="calendarView === 'week'" :events="weekEvents" :favorite-busy-id="favoriteBusyId" :loading="weekLoading" :error="weekError" @week-change="emit('week-change', $event)" @toggle-favorite="emit('toggle-favorite', $event)" />
+    <EventWeekView v-if="calendarView === 'week'" :events="weekEvents" :loading="weekLoading" :error="weekError" @select-mode="emit('update:calendar-view', $event)" @week-change="emit('week-change', $event)" />
     <template v-else>
     <div ref="calendarGridSection" class="calendar-view__calendar">
       <div class="calendar-view__header">
@@ -174,6 +159,7 @@ watch(visibleMonth, (month) => {
         <button class="calendar-nav-button" type="button" aria-label="Next month" @click="changeMonth(1)">
           <ChevronRight class="icon icon--sm" />
         </button>
+        <CalendarModeMenu mode="month" @select="emit('update:calendar-view', $event)" />
       </div>
 
       <div class="calendar-grid" role="grid" aria-label="Month calendar">

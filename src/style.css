@@ -2038,15 +2038,9 @@ textarea {
   margin: 0 auto;
 }
 
-.calendar-mode-row {
-  position: relative;
-  z-index: 4;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .calendar-mode-menu {
   position: relative;
+  z-index: 4;
 }
 
 .calendar-mode-menu summary {
@@ -2126,16 +2120,20 @@ textarea {
 .calendar-week__viewport {
   width: 100%;
   min-width: 0;
-  max-height: calc(100vh - 190px);
-  overflow: auto;
-  overscroll-behavior: contain;
+  padding: 0 14px 8px 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+  scroll-behavior: smooth;
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 
 .calendar-week__grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, clamp(150px, 42vw, 190px));
   align-items: stretch;
+  width: max-content;
   border: 1px solid var(--color-border);
   border-radius: 20px;
   background: var(--color-border);
@@ -2257,6 +2255,11 @@ textarea {
   font-size: 15px;
   line-height: 1.3;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .week-event-card__details {
@@ -2277,89 +2280,37 @@ textarea {
   font-weight: 900;
 }
 
-.calendar-week-mobile { display: none; }
-
 @media (min-width: 1000px) {
   .calendar-view--week {
-    width: min(1440px, calc(100vw - 36px));
+    --week-view-width: min(1440px, calc(100vw - 36px));
+    width: var(--week-view-width);
     max-width: none;
-    margin-left: 50%;
-    transform: translateX(-50%);
+    margin-inline: calc((100% - var(--week-view-width)) / 2);
   }
 }
 
-@media (max-width: 999px) {
-  .calendar-week__viewport,
-  .calendar-week__desktop-status { display: none; }
+.calendar-week__rotate-hint {
+  display: none;
+  margin: -8px 0 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  text-align: center;
+}
 
-  .calendar-week-mobile {
-    display: grid;
-    gap: 12px;
-    min-width: 0;
-  }
+@media (orientation: portrait) and (max-width: 600px) {
+  .calendar-week__rotate-hint { display: block; }
+}
 
-  .calendar-week-mobile__strip {
-    display: grid;
+@media (min-width: 1120px) {
+  .calendar-week__grid {
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 3px;
-    padding: 4px;
-    border: 1px solid var(--color-border);
-    border-radius: 14px;
-    background: var(--color-surface);
+    width: 100%;
   }
-
-  .calendar-week-mobile__strip button {
-    display: grid;
-    place-items: center;
-    gap: 3px;
-    min-width: 0;
-    min-height: 52px;
-    padding: 5px 1px;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--color-text-muted);
-    cursor: pointer;
-  }
-
-  .calendar-week-mobile__strip button span {
-    max-width: 100%;
-    overflow: hidden;
-    font-size: 10px;
-    font-weight: 800;
-    text-overflow: clip;
-    text-transform: capitalize;
-  }
-
-  .calendar-week-mobile__strip button strong { font-size: 16px; }
-  .calendar-week-mobile__strip button.is-today { border-color: var(--color-accent-soft-border); color: var(--color-primary); }
-  .calendar-week-mobile__strip button.is-selected { background: var(--color-primary); color: var(--color-button-text); }
-
-  .calendar-week-mobile__selected {
-    display: grid;
-    gap: 12px;
-    min-width: 0;
-    padding: 14px;
-    border: 1px solid var(--color-border);
-    border-radius: 18px;
-    background: var(--color-surface);
-  }
-
-  .calendar-week-mobile__selected header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .calendar-week-mobile__selected h3 { margin: 0; font-size: 18px; text-transform: capitalize; }
-  .calendar-week-mobile__selected header span { color: var(--color-primary); font-size: 12px; font-weight: 900; }
-  .calendar-week-mobile .week-event-card { min-height: 0; }
 }
 
 .calendar-view__header {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px auto;
   align-items: center;
   gap: 10px;
   padding: 14px;
