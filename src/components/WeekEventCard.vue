@@ -1,17 +1,14 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Heart } from 'lucide-vue-next'
 import { trackEventOpened } from '../analytics/eventTracking'
 import { trackCalendarEventClicked } from '../analytics/interactionTracking'
 import { formatPriceDisplay, getCategoryMeta, isFreePrice } from '../lib/eventPresentation'
 
 const props = defineProps({
   event: { type: Object, required: true },
-  favoriteBusy: { type: Boolean, default: false },
   past: { type: Boolean, default: false }
 })
-defineEmits(['toggle-favorite'])
 
 const category = computed(() => getCategoryMeta(props.event.category))
 
@@ -40,9 +37,6 @@ function openEvent(navigate) {
         <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
       </div>
       <div v-if="event.status === 'cancelled'" class="cancelled-badge week-event-card__cancelled">Cancelled</div>
-      <button class="favorite-button week-event-card__favorite" :class="{ 'favorite-button--active': event.is_favorited }" type="button" :disabled="favoriteBusy" :aria-label="event.is_favorited ? `Remove ${event.title} from My Events` : `Save ${event.title} to My Events`" :aria-pressed="event.is_favorited ? 'true' : 'false'" @click.stop="$emit('toggle-favorite', event)">
-        <Heart class="icon icon--sm" :fill="event.is_favorited ? 'currentColor' : 'none'" />
-      </button>
     </article>
   </RouterLink>
 </template>

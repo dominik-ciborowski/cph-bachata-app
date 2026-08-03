@@ -32,6 +32,12 @@ const calendarSection = ref(null)
 const calendarGridSection = ref(null)
 const selectedEventsSection = ref(null)
 const showBackToCalendar = ref(false)
+const calendarModeMenu = ref(null)
+
+function selectCalendarView(mode) {
+  emit('update:calendar-view', mode)
+  calendarModeMenu.value?.removeAttribute('open')
+}
 
 function isSameMonth(date, monthDate) {
   return date.getFullYear() === monthDate.getFullYear() && date.getMonth() === monthDate.getMonth()
@@ -144,10 +150,15 @@ watch(visibleMonth, (month) => {
 </script>
 
 <template>
-  <section ref="calendarSection" class="calendar-view" aria-label="Calendar event results">
-    <div class="calendar-presentation-toggle" aria-label="Calendar presentation">
-      <button type="button" :class="{ active: calendarView === 'month' }" :aria-pressed="calendarView === 'month'" @click="emit('update:calendar-view', 'month')">Month</button>
-      <button type="button" :class="{ active: calendarView === 'week' }" :aria-pressed="calendarView === 'week'" @click="emit('update:calendar-view', 'week')">Week</button>
+  <section ref="calendarSection" class="calendar-view" :class="{ 'calendar-view--week': calendarView === 'week' }" aria-label="Calendar event results">
+    <div class="calendar-mode-row">
+      <details ref="calendarModeMenu" class="calendar-mode-menu">
+        <summary aria-label="Change calendar presentation">{{ calendarView === 'week' ? 'Week' : 'Month' }}</summary>
+        <div class="calendar-mode-menu__options" role="menu">
+          <button type="button" role="menuitemradio" :aria-checked="calendarView === 'month'" @click="selectCalendarView('month')"><span>Month</span><span v-if="calendarView === 'month'" aria-hidden="true">✓</span></button>
+          <button type="button" role="menuitemradio" :aria-checked="calendarView === 'week'" @click="selectCalendarView('week')"><span>Week</span><span v-if="calendarView === 'week'" aria-hidden="true">✓</span></button>
+        </div>
+      </details>
     </div>
     <EventWeekView v-if="calendarView === 'week'" :events="weekEvents" :favorite-busy-id="favoriteBusyId" :loading="weekLoading" :error="weekError" @week-change="emit('week-change', $event)" @toggle-favorite="emit('toggle-favorite', $event)" />
     <template v-else>
