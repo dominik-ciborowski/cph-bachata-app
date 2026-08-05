@@ -2164,6 +2164,7 @@ textarea {
 
 .calendar-week__day--empty {
   flex: .65 0 clamp(112px, 30vw, 132px);
+  padding: 7px;
 }
 
 .calendar-week__day--busy {
@@ -2188,6 +2189,12 @@ textarea {
   padding: 9px 10px;
   border-bottom: 1px solid var(--color-border);
   background: inherit;
+}
+
+.calendar-week__day--empty .calendar-week__day-header {
+  min-height: 40px;
+  margin: -7px -7px 6px;
+  padding: 7px;
 }
 
 .calendar-week__weekday {
@@ -2216,9 +2223,9 @@ textarea {
 
 .calendar-week__empty {
   margin: 0;
-  padding: 12px 4px;
+  padding: 2px 0 4px;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -2321,6 +2328,32 @@ textarea {
 
 @media (orientation: portrait) and (max-width: 600px) {
   .calendar-week__rotate-hint { display: block; }
+}
+
+@media (max-width: 640px) {
+  .calendar-week__header {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 8px 10px;
+  }
+
+  .calendar-week__header > .calendar-mode-menu {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+    align-self: center;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .calendar-week__header > .calendar-mode-menu summary {
+    border-color: var(--color-border);
+    background: var(--color-empty-bg);
+  }
+
+  .calendar-week__header .calendar-nav-button,
+  .calendar-week__header > div {
+    grid-row: 2;
+  }
 }
 
 .calendar-view__header {
