@@ -65,7 +65,16 @@ onMounted(notifyWeekChange)
     <p v-else-if="error" class="empty-state calendar-week__desktop-status">Could not load this week: {{ error }}</p>
     <div v-else class="calendar-week__viewport" aria-label="Week calendar">
       <div class="calendar-week__grid">
-        <section v-for="day in days" :key="day.dateKey" class="calendar-week__day" :class="{ 'calendar-week__day--today': day.isToday }">
+        <section
+          v-for="day in days"
+          :key="day.dateKey"
+          class="calendar-week__day"
+          :class="{
+            'calendar-week__day--today': day.isToday,
+            'calendar-week__day--empty': day.events.length === 0,
+            'calendar-week__day--busy': day.events.length >= 3
+          }"
+        >
           <header class="calendar-week__day-header">
             <span class="calendar-week__weekday">{{ new Intl.DateTimeFormat('en-DK', { weekday: 'short' }).format(day.date) }}</span>
             <strong>{{ day.date.getDate() }}</strong>
