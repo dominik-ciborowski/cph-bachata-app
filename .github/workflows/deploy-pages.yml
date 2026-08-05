@@ -41,8 +41,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Build playground with analytics debugger
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.analytics_debug }}
         run: npm run build:playground
+        env:
+          VITE_BASE_PATH: /cph-bachata-app/
+
+      - name: Build without analytics debugger
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.analytics_debug }}
+        run: npm run build
         env:
           VITE_BASE_PATH: /cph-bachata-app/
 
