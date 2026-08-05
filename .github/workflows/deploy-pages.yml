@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - master
+
   workflow_dispatch:
     inputs:
       branch:
         description: Branch to build and deploy to GitHub Pages
         required: true
         type: string
-  analytics_debug:
+      analytics_debug:
         description: Include analytics debugger
         required: false
         type: boolean
@@ -28,6 +29,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,8 +69,10 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
     needs: build
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
