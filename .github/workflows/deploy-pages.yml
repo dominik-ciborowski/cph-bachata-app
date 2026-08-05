@@ -10,6 +10,11 @@ on:
         description: Branch to build and deploy to GitHub Pages
         required: true
         type: string
+  analytics_debug:
+        description: Include analytics debugger
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
