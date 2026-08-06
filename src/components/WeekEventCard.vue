@@ -11,6 +11,7 @@ const props = defineProps({
 })
 
 const category = computed(() => getCategoryMeta(props.event.category))
+const organizerName = computed(() => props.event.organizer_name || props.event.organizer || props.event.organizer_display || '')
 
 function formatTimeRange(startValue, endValue) {
   const formatter = new Intl.DateTimeFormat('en-DK', { hour: '2-digit', minute: '2-digit' })
@@ -29,9 +30,9 @@ function openEvent(navigate) {
     <article class="week-event-card" :class="{ 'week-event-card--past': past, 'week-event-card--cancelled': event.status === 'cancelled' }" role="link" tabindex="0" @click="openEvent(navigate)" @keydown.enter.prevent="openEvent(navigate)" @keydown.space.prevent="openEvent(navigate)">
       <div class="week-event-card__topline">
         <span class="pill week-event-card__category" :class="category.className"><component :is="category.icon" class="icon icon--sm" />{{ category.label }}</span>
-        <span v-if="past" class="week-event-card__past-label">Past</span>
       </div>
       <h4>{{ event.title }}</h4>
+      <p v-if="organizerName" class="week-event-card__organizer">{{ organizerName }}</p>
       <div class="week-event-card__details">
         <strong>{{ formatTimeRange(event.start_time, event.end_time) }}</strong>
         <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>

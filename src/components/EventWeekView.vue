@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import WeekEventCard from './WeekEventCard.vue'
 import CalendarModeMenu from './CalendarModeMenu.vue'
@@ -16,6 +16,8 @@ const today = new Date(now)
 today.setHours(0, 0, 0, 0)
 const currentWeek = startOfWeek(today)
 const visibleWeek = ref(new Date(currentWeek))
+const weekViewport = ref(null)
+let viewportAlignmentPending = true
 
 const days = computed(() => getWeekDays(visibleWeek.value, props.events, today))
 const isCurrentWeek = computed(() => getDateKey(visibleWeek.value) === getDateKey(currentWeek))
@@ -31,43 +33,70 @@ function notifyWeekChange() {
   emit('week-change', getWeekRange(visibleWeek.value))
 }
 
+async function alignWeekViewport() {
+  viewportAlignmentPending = true
+  await nextTick()
+  window.requestAnimationFrame(() => {
+    const viewport = weekViewport.value
+    if (!viewport) return
+
+    const targetDateKey = isCurrentWeek.value ? getDateKey(today) : getDateKey(visibleWeek.value)
+    const targetDay = viewport.querySelector(`[data-date-key="${targetDateKey}"]`)
+    const targetLeft = targetDay
+      ? viewport.scrollLeft + targetDay.getBoundingClientRect().left - viewport.getBoundingClientRect().left
+      : 0
+    viewport.scrollTo({ left: targetLeft, behavior: 'auto' })
+    viewportAlignmentPending = false
+  })
+}
+
 function changeWeek(amount) {
   visibleWeek.value = addWeeks(visibleWeek.value, amount)
   notifyWeekChange()
+  alignWeekViewport()
 }
 
 function showCurrentWeek() {
   visibleWeek.value = new Date(currentWeek)
   notifyWeekChange()
+  alignWeekViewport()
 }
 
 function isPast(event) {
   return isEventPast(event, now)
 }
 
-onMounted(notifyWeekChange)
+watch(() => props.loading, (loading) => {
+  if (!loading && viewportAlignmentPending) alignWeekViewport()
+})
+
+onMounted(() => {
+  notifyWeekChange()
+  alignWeekViewport()
+})
 </script>
 
 <template>
   <div class="calendar-week">
     <div class="calendar-view__header calendar-week__header">
       <button class="calendar-nav-button" type="button" aria-label="Previous week" @click="changeWeek(-1)"><ChevronLeft class="icon icon--sm" /></button>
-      <div>
+      <div class="calendar-week__heading">
         <h2>{{ weekLabel }}</h2>
         <button v-if="!isCurrentWeek" class="calendar-week__today-button" type="button" @click="showCurrentWeek">Back to current week</button>
         <span v-else class="calendar-week__current-label">Current week</span>
+        <CalendarModeMenu mode="week" @select="emit('select-mode', $event)" />
       </div>
       <button class="calendar-nav-button" type="button" aria-label="Next week" @click="changeWeek(1)"><ChevronRight class="icon icon--sm" /></button>
-      <CalendarModeMenu mode="week" @select="emit('select-mode', $event)" />
     </div>
 
     <p v-if="loading" class="empty-state calendar-week__desktop-status">Loading week…</p>
     <p v-else-if="error" class="empty-state calendar-week__desktop-status">Could not load this week: {{ error }}</p>
-    <div v-else class="calendar-week__viewport" aria-label="Week calendar">
+    <div v-else ref="weekViewport" class="calendar-week__viewport" aria-label="Week calendar">
       <div class="calendar-week__grid">
         <section
           v-for="day in days"
           :key="day.dateKey"
+          :data-date-key="day.dateKey"
           class="calendar-week__day"
           :class="{
             'calendar-week__day--today': day.isToday,
