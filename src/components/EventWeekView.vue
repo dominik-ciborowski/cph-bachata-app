@@ -100,8 +100,7 @@ onMounted(() => {
           class="calendar-week__day"
           :class="{
             'calendar-week__day--today': day.isToday,
-            'calendar-week__day--empty': day.events.length === 0,
-            'calendar-week__day--busy': day.events.length >= 3
+            'calendar-week__day--empty': day.events.length === 0
           }"
         >
           <header class="calendar-week__day-header">
