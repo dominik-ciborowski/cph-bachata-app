@@ -14,6 +14,7 @@ import { supabase } from '../lib/supabase'
 import {
   trackFilterChanged,
   trackFiltersCleared,
+  trackCalendarModeChanged,
   trackSavedEvent,
   trackSearchNoResults,
   trackSearchPerformed,
@@ -358,8 +359,13 @@ function savePreferredView(preferredView) {
 }
 
 function setCalendarView(nextCalendarView) {
-  calendarView.value = nextCalendarView === 'week' ? 'week' : 'month'
-  updateAppPreferences({ calendarView: calendarView.value })
+  const mode = nextCalendarView === 'week' ? 'week' : 'month'
+  const previousMode = calendarView.value
+  if (mode === previousMode) return
+
+  calendarView.value = mode
+  trackCalendarModeChanged(mode, previousMode)
+  updateAppPreferences({ calendarView: mode })
 }
 
 function toggleCalendarFilters() {
