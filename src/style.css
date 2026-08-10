@@ -2346,22 +2346,34 @@ textarea {
 }
 
 @media (min-width: 1000px) {
-  .calendar-view--week {
-    --week-view-width: min(1440px, calc(100vw - 36px));
+  .calendar-view.calendar-view--week {
+    --week-view-width: calc(100vw - 36px);
     width: var(--week-view-width);
     max-width: none;
     margin-inline: calc((100% - var(--week-view-width)) / 2);
   }
 }
 
-@media (min-width: 760px) {
+@media (min-width: 600px) and (max-width: 899px) {
+  .calendar-week__day {
+    flex-basis: clamp(144px, 18vw, 168px);
+  }
+
+  .calendar-week__day--empty {
+    flex-basis: clamp(120px, 16vw, 144px);
+  }
+}
+
+@media (min-width: 900px) {
   .calendar-week__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     width: 100%;
   }
 
   .calendar-week__day,
   .calendar-week__day--empty {
-    flex: 1 1 0;
+    width: auto;
   }
 }
 
