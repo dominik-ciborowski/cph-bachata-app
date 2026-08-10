@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import EventCard from './EventCard.vue'
 import EventWeekView from './EventWeekView.vue'
-import CalendarModeMenu from './CalendarModeMenu.vue'
+import CalendarModeToggle from './CalendarModeToggle.vue'
 import { getDateKey } from '../lib/calendar'
 import { trackCalendarDateSelected, trackCalendarMonthChanged } from '../analytics/interactionTracking'
 
@@ -144,8 +144,11 @@ watch(visibleMonth, (month) => {
 </script>
 
 <template>
-  <section ref="calendarSection" class="calendar-view" :class="{ 'calendar-view--week': calendarView === 'week' }" aria-label="Calendar event results">
-    <EventWeekView v-if="calendarView === 'week'" :events="weekEvents" :loading="weekLoading" :error="weekError" @select-mode="emit('update:calendar-view', $event)" @week-change="emit('week-change', $event)" />
+  <section ref="calendarSection" class="calendar-view" aria-label="Calendar event results">
+    <div class="calendar-view__mode-row">
+      <CalendarModeToggle :mode="calendarView" @select="emit('update:calendar-view', $event)" />
+    </div>
+    <EventWeekView v-if="calendarView === 'week'" :events="weekEvents" :loading="weekLoading" :error="weekError" @week-change="emit('week-change', $event)" />
     <template v-else>
     <div ref="calendarGridSection" class="calendar-view__calendar">
       <div class="calendar-view__header">
@@ -159,7 +162,6 @@ watch(visibleMonth, (month) => {
         <button class="calendar-nav-button" type="button" aria-label="Next month" @click="changeMonth(1)">
           <ChevronRight class="icon icon--sm" />
         </button>
-        <CalendarModeMenu mode="month" @select="emit('update:calendar-view', $event)" />
       </div>
 
       <div class="calendar-grid" role="grid" aria-label="Month calendar">

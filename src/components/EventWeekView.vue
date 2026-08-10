@@ -2,7 +2,6 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import WeekEventCard from './WeekEventCard.vue'
-import CalendarModeMenu from './CalendarModeMenu.vue'
 import { addWeeks, getDateKey, getWeekDays, getWeekRange, isEventPast, startOfWeek } from '../lib/calendar'
 
 const props = defineProps({
@@ -10,7 +9,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' }
 })
-const emit = defineEmits(['week-change', 'select-mode'])
+const emit = defineEmits(['week-change'])
 const now = new Date()
 const today = new Date(now)
 today.setHours(0, 0, 0, 0)
@@ -84,7 +83,6 @@ onMounted(() => {
         <h2>{{ weekLabel }}</h2>
         <button v-if="!isCurrentWeek" class="calendar-week__today-button" type="button" @click="showCurrentWeek">Back to current week</button>
         <span v-else class="calendar-week__current-label">Current week</span>
-        <CalendarModeMenu mode="week" @select="emit('select-mode', $event)" />
       </div>
       <button class="calendar-nav-button" type="button" aria-label="Next week" @click="changeWeek(1)"><ChevronRight class="icon icon--sm" /></button>
     </div>
