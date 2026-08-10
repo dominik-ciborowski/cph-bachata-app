@@ -32,12 +32,13 @@ function openEvent(navigate) {
         <span class="pill week-event-card__category" :class="category.className"><component :is="category.icon" class="icon icon--sm" />{{ category.label }}</span>
       </div>
       <h4>{{ event.title }}</h4>
-      <p v-if="organizerName" class="week-event-card__organizer">{{ organizerName }}</p>
-      <div class="week-event-card__details">
+      <p v-if="organizerName" class="week-event-card__secondary week-event-card__organizer">{{ organizerName }}</p>
+      <p v-if="event.location" class="week-event-card__secondary week-event-card__location">{{ event.location }}</p>
+      <div v-if="event.status === 'cancelled'" class="cancelled-badge week-event-card__cancelled">Cancelled</div>
+      <footer class="week-event-card__footer">
         <strong>{{ formatTimeRange(event.start_time, event.end_time) }}</strong>
         <span class="price-badge" :class="{ free: isFreePrice(event.price_text) }">{{ formatPriceDisplay(event.price_text) }}</span>
-      </div>
-      <div v-if="event.status === 'cancelled'" class="cancelled-badge week-event-card__cancelled">Cancelled</div>
+      </footer>
     </article>
   </RouterLink>
 </template>

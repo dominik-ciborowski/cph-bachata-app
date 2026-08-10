@@ -2245,7 +2245,8 @@ textarea {
 
 .week-event-card {
   position: relative;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   min-height: 132px;
   padding: 11px;
@@ -2272,8 +2273,8 @@ textarea {
 }
 
 .week-event-card--past h4,
-.week-event-card--past .week-event-card__organizer,
-.week-event-card--past .week-event-card__details {
+.week-event-card--past .week-event-card__secondary,
+.week-event-card--past .week-event-card__footer {
   color: var(--color-text-muted);
 }
 
@@ -2288,7 +2289,7 @@ textarea {
 }
 
 .week-event-card__topline,
-.week-event-card__details {
+.week-event-card__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2315,29 +2316,34 @@ textarea {
   line-clamp: 4;
 }
 
-.week-event-card__organizer {
+.week-event-card__secondary {
   margin: -2px 0 0;
-  display: -webkit-box;
-  overflow: hidden;
   color: var(--color-text-muted);
   font-size: 11px;
   line-height: 1.3;
   overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
 }
 
-.week-event-card__details {
-  display: grid;
-  align-self: end;
-  justify-items: start;
+.week-event-card__footer {
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 2px;
   font-size: 12px;
 }
 
-.week-event-card__details .price-badge {
+.week-event-card__footer strong {
+  min-width: 0;
+}
+
+.week-event-card__footer .price-badge {
+  flex: 0 1 auto;
+  max-width: 100%;
+  margin-left: auto;
   padding: 4px 6px;
   font-size: 10px;
+  overflow-wrap: anywhere;
+  text-align: right;
+  white-space: normal;
 }
 
 .week-event-card__cancelled {
