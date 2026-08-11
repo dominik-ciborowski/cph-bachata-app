@@ -24,6 +24,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const { user, isAuthenticated, loading: authLoading } = useAuth()
+const homepageIntroductionShownKey = 'homepage_introduction_shown'
 
 const filter = ref('all')
 const category = ref('all')
@@ -43,6 +44,7 @@ const calendarFiltersOpen = ref(false)
 const discoveryControls = ref(null)
 const showListBackToTop = ref(false)
 const showLoginBenefitsBanner = ref(false)
+const hasSeenHomepageIntroduction = ref(readHomepageIntroductionFlag())
 let searchAnalyticsTimeoutId = null
 let lastNoResultsSearchState = ''
 let lastPerformedSearchQuery = ''
@@ -61,6 +63,13 @@ today.setHours(0, 0, 0, 0)
 
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  if (!isFavoritesView.value && !hasSeenHomepageIntroduction.value) {
+    try {
+      localStorage.setItem(homepageIntroductionShownKey, 'true')
+    } catch {
+      // Keep showing the introduction when storage is unavailable.
+    }
+  }
   const storedFlashMessage = sessionStorage.getItem('flash_message')
   if (storedFlashMessage) {
     flashMessage.value = storedFlashMessage
@@ -73,6 +82,14 @@ onMounted(async () => {
   updateLoginBenefitsBannerVisibility()
   await loadEvents()
 })
+
+function readHomepageIntroductionFlag() {
+  try {
+    return localStorage.getItem(homepageIntroductionShownKey) === 'true'
+  } catch {
+    return false
+  }
+}
 
 watch(user, async () => {
   updateLoginBenefitsBannerVisibility()
@@ -483,16 +500,23 @@ function exportMyEvents() {
 
 <template>
   <div class="public-page">
-    <section class="hero app-hero">
-      <p v-if="isFavoritesView" class="eyebrow">Copenhagen Bachata App</p>
-      <h1>{{ isFavoritesView ? 'My Events' : 'Find your next dance event.' }}</h1>
-      <p>
-        {{ isFavoritesView
-          ? 'Your saved upcoming bachata events in Copenhagen.'
-          : 'Discover bachata socials, classes and workshops across Copenhagen.'
-        }}
-      </p>
-      <p v-if="!isFavoritesView" class="app-hero__attribution">Created by Dancemaniacs for the Copenhagen bachata community.</p>
+    <section class="hero app-hero" :class="{ 'app-hero--compact': !isFavoritesView && hasSeenHomepageIntroduction }">
+      <template v-if="!isFavoritesView && hasSeenHomepageIntroduction">
+        <h1>Copenhagen Bachata App</h1>
+        <p class="app-hero__compact-attribution">by Dancemaniacs</p>
+        <p class="app-hero__compact-message">Community calendar for Copenhagen bachata dancers</p>
+      </template>
+      <template v-else>
+        <p v-if="isFavoritesView" class="eyebrow">Copenhagen Bachata App</p>
+        <h1>{{ isFavoritesView ? 'My Events' : 'Find your next dance event.' }}</h1>
+        <p>
+          {{ isFavoritesView
+            ? 'Your saved upcoming bachata events in Copenhagen.'
+            : 'Discover bachata socials, classes and workshops across Copenhagen.'
+          }}
+        </p>
+        <p v-if="!isFavoritesView" class="app-hero__attribution">Created by Dancemaniacs for the Copenhagen bachata community.</p>
+      </template>
     </section>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
