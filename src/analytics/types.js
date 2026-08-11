@@ -18,6 +18,7 @@ export const AnalyticsEvents = {
   CALENDAR_DATE_SELECTED: 'calendar_date_selected',
   CALENDAR_EVENT_CLICKED: 'calendar_event_clicked',
   CALENDAR_MONTH_CHANGED: 'calendar_month_changed',
+  CALENDAR_MODE_CHANGED: 'calendar_mode_changed',
   LOGIN_CLICKED: 'login_clicked',
   LOGIN_SUCCEEDED: 'login_succeeded',
   REGISTER_CLICKED: 'register_clicked',
@@ -50,6 +51,8 @@ export const analyticsVersion = 1
 /**
  * @typedef {{ selectedDate: string }} CalendarDateSelectedProperties
  * @typedef {{ month: string }} CalendarMonthChangedProperties
+ * @typedef {'month' | 'week'} CalendarMode
+ * @typedef {{ mode: CalendarMode, previousMode: CalendarMode }} CalendarModeChangedProperties
  * @typedef {{ eventId: string | number, organizerId?: string | number, eventType?: string, isFree: boolean }} CalendarEventClickedProperties
  * @typedef {{ queryLength: number, resultCount: number }} SearchPerformedProperties
  * @typedef {{ filterType: string, selectedValue: string }} FilterChangedProperties

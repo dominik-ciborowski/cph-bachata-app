@@ -8,6 +8,7 @@ import {
   trackCalendarDateSelected,
   trackCalendarEventClicked,
   trackCalendarExportClicked,
+  trackCalendarModeChanged,
   trackCalendarMonthChanged,
   trackBulkEventsCreated,
   trackAnnouncement,
@@ -28,6 +29,7 @@ import {
 } from '../src/analytics/interactionTracking.js'
 import { AnalyticsEvents, analyticsVersion } from '../src/analytics/types.js'
 import { EventSubmissionErrorTypes } from '../src/analytics/types.js'
+import { getCalendarView } from '../src/lib/appPreferences.js'
 import { UmamiProvider } from '../src/analytics/umamiProvider.js'
 
 test('disabled analytics does not initialize providers', () => {
@@ -361,6 +363,25 @@ test('calendar interactions track stable dates and event properties', () => {
       isFree: true
     }]]
   )
+})
+
+test('calendar mode changes track the new and previous modes exactly once', () => {
+  assert.deepEqual(
+    captureApplicationEvent(() => trackCalendarModeChanged('week', 'month')),
+    [['calendar_mode_changed', { mode: 'week', previousMode: 'month' }]]
+  )
+  assert.deepEqual(
+    captureApplicationEvent(() => trackCalendarModeChanged('month', 'week')),
+    [['calendar_mode_changed', { mode: 'month', previousMode: 'week' }]]
+  )
+})
+
+test('calendar mode tracking ignores the active mode and preference restoration', () => {
+  assert.deepEqual(captureApplicationEvent(() => trackCalendarModeChanged('week', 'week')), [])
+
+  const storage = { getItem: () => JSON.stringify({ calendarView: 'week' }) }
+  assert.deepEqual(captureApplicationEvent(() => getCalendarView(storage)), [])
+  assert.equal(getCalendarView(storage), 'week')
 })
 
 test('authentication interactions contain no personal properties', () => {

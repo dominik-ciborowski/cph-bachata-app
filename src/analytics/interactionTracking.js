@@ -23,6 +23,17 @@ export function trackCalendarMonthChanged(month) {
   analytics.track(AnalyticsEvents.CALENDAR_MONTH_CHANGED, properties)
 }
 
+/**
+ * @param {import('./types.js').CalendarMode} mode
+ * @param {import('./types.js').CalendarMode} previousMode
+ */
+export function trackCalendarModeChanged(mode, previousMode) {
+  if (mode === previousMode) return
+  /** @type {import('./types.js').CalendarModeChangedProperties} */
+  const properties = { mode, previousMode }
+  analytics.track(AnalyticsEvents.CALENDAR_MODE_CHANGED, properties)
+}
+
 export function trackCalendarEventClicked(event) {
   const organizerId = event.organizer_id || event.organizer_record?.id
   /** @type {import('./types.js').CalendarEventClickedProperties} */
