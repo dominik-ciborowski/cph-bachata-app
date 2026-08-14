@@ -479,26 +479,14 @@ button, input, textarea, select { font: inherit; }
 }
 
 .app-hero--compact {
-  margin-bottom: 14px;
-  padding: 4px 0 2px;
-}
-
-.app-hero--compact h1 {
-  margin-bottom: 2px;
-  font-size: 28px;
-}
-
-.app-hero--compact .app-hero__compact-attribution {
-  color: var(--color-dark-gold);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.35;
+  margin-bottom: 18px;
+  padding: 2px 0 0;
 }
 
 .app-hero--compact .app-hero__compact-message {
-  margin-top: 3px;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 .eyebrow {
