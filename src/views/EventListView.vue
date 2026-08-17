@@ -339,10 +339,9 @@ function matchesSearch(event) {
 }
 
 function setQuickFilter(nextFilter) {
-  const selectedFilter = filter.value === nextFilter && nextFilter !== 'all' ? 'all' : nextFilter
-  if (selectedFilter === filter.value) return
-  filter.value = selectedFilter
-  trackFilterChanged('quick_filter', selectedFilter)
+  if (filter.value === nextFilter) return
+  filter.value = nextFilter
+  trackFilterChanged('quick_filter', nextFilter)
 }
 
 function setViewMode(nextViewMode) {
@@ -607,7 +606,7 @@ function exportMyEvents() {
         </div>
 
         <section class="filters" aria-label="Event filters">
-          <button v-if="isFavoritesView" type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
+          <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
