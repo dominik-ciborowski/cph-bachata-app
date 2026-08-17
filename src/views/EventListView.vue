@@ -25,7 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const { user, isAuthenticated, loading: authLoading } = useAuth()
 const homepageIntroductionShownKey = 'homepage_introduction_shown'
-const homepageCategories = ['all', 'social', 'class', 'workshop', 'festival']
+const homepageCategories = ['social', 'class', 'workshop', 'festival']
 
 const filter = ref('all')
 const category = ref('all')
@@ -415,6 +415,10 @@ function setCategoryFilter(selectedCategory) {
   trackFilterChanged('category', selectedCategory)
 }
 
+function toggleCategoryFilter(selectedCategory) {
+  setCategoryFilter(category.value === selectedCategory ? 'all' : selectedCategory)
+}
+
 function setOrganizerFilter(selectedOrganizer) {
   if (organizer.value === selectedOrganizer) return
   organizer.value = selectedOrganizer
@@ -555,7 +559,10 @@ function exportMyEvents() {
     <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
       <template v-if="viewMode === 'list' || isFavoritesView">
         <div v-if="!isFavoritesView" class="category-chip-filter">
-          <span id="homepage-category-label" class="category-chip-filter__label">Category</span>
+          <div class="category-chip-filter__heading">
+            <span id="homepage-category-label" class="category-chip-filter__label">Category</span>
+            <button v-if="category !== 'all'" type="button" class="category-chip-filter__clear" @click="setCategoryFilter('all')">Clear</button>
+          </div>
           <div class="category-chip-filter__options" role="group" aria-labelledby="homepage-category-label">
             <button
               v-for="item in homepageCategories"
@@ -564,9 +571,9 @@ function exportMyEvents() {
               class="category-chip"
               :class="{ active: category === item }"
               :aria-pressed="category === item ? 'true' : 'false'"
-              @click="setCategoryFilter(item)"
+              @click="toggleCategoryFilter(item)"
             >
-              {{ item === 'all' ? 'All' : getCategoryMeta(item).label }}
+              {{ getCategoryMeta(item).label }}
             </button>
           </div>
         </div>
@@ -600,7 +607,7 @@ function exportMyEvents() {
         </div>
 
         <section class="filters" aria-label="Event filters">
-          <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
+          <button v-if="isFavoritesView" type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'weekend' }" :aria-pressed="filter === 'weekend'" @click="setQuickFilter('weekend')">This Weekend</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'free' }" :aria-pressed="filter === 'free'" @click="setQuickFilter('free')">Free</button>
