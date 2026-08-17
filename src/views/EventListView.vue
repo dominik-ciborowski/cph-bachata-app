@@ -502,6 +502,7 @@ function exportMyEvents() {
   <div class="public-page">
     <section class="hero app-hero" :class="{ 'app-hero--compact': !isFavoritesView && hasSeenHomepageIntroduction }">
       <template v-if="!isFavoritesView && hasSeenHomepageIntroduction">
+        <h1>Find your next dance event.</h1>
         <p class="app-hero__compact-message">Created by Dancemaniacs for the Copenhagen bachata community.</p>
       </template>
       <template v-else>

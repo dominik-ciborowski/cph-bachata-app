@@ -483,6 +483,11 @@ button, input, textarea, select { font: inherit; }
   padding: 2px 0 0;
 }
 
+.app-hero--compact h1 {
+  margin-bottom: 4px;
+  font-size: 27px;
+}
+
 .app-hero--compact .app-hero__compact-message {
   font-size: 13px;
   font-weight: 400;
