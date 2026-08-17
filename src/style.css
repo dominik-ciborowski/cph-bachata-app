@@ -485,11 +485,12 @@ button, input, textarea, select { font: inherit; }
 
 .app-hero--compact h1 {
   margin-bottom: 4px;
-  font-size: 27px;
+  font-size: clamp(31px, 4vw, 35px);
+  font-weight: 700;
 }
 
 .app-hero--compact .app-hero__compact-message {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 400;
   line-height: 1.5;
 }
