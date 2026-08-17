@@ -479,7 +479,7 @@ button, input, textarea, select { font: inherit; }
 }
 
 .app-hero--compact {
-  margin-bottom: 18px;
+  margin-bottom: 22px;
   padding: 2px 0 0;
 }
 
@@ -1001,7 +1001,7 @@ textarea {
   display: grid;
   gap: 7px;
   min-width: 0;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 .category-chip-filter__label {
@@ -1046,7 +1046,7 @@ textarea {
   flex: 0 0 auto;
   min-height: 40px;
   padding: 8px 13px;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-accent-soft-border);
   border-radius: 999px;
   background: var(--color-surface);
   color: var(--color-text-muted);
@@ -2080,6 +2080,10 @@ textarea {
   display: flex;
   justify-content: center;
   margin: 22px 0 24px;
+}
+
+.discovery-controls > .filters + .view-toggle-row {
+  margin: 28px 0 30px;
 }
 
 .view-toggle {
