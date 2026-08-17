@@ -25,6 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const { user, isAuthenticated, loading: authLoading } = useAuth()
 const homepageIntroductionShownKey = 'homepage_introduction_shown'
+const homepageCategories = ['all', 'social', 'class', 'workshop', 'festival']
 
 const filter = ref('all')
 const category = ref('all')
@@ -553,7 +554,24 @@ function exportMyEvents() {
 
     <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
       <template v-if="viewMode === 'list' || isFavoritesView">
-        <label class="category-filter">
+        <div v-if="!isFavoritesView" class="category-chip-filter">
+          <span id="homepage-category-label" class="category-chip-filter__label">Category</span>
+          <div class="category-chip-filter__options" role="group" aria-labelledby="homepage-category-label">
+            <button
+              v-for="item in homepageCategories"
+              :key="item"
+              type="button"
+              class="category-chip"
+              :class="{ active: category === item }"
+              :aria-pressed="category === item ? 'true' : 'false'"
+              @click="setCategoryFilter(item)"
+            >
+              {{ item === 'all' ? 'All' : getCategoryMeta(item).label }}
+            </button>
+          </div>
+        </div>
+
+        <label v-else class="category-filter">
           <span>Category</span>
           <select :value="category" @change="setCategoryFilter($event.target.value)">
             <option v-for="item in categories" :key="item" :value="item">
