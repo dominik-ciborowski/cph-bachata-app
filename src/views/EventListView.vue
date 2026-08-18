@@ -59,6 +59,7 @@ const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
 const validMainViewModes = new Set(['list', 'calendar'])
 
 const isFavoritesView = computed(() => route.path === '/favorites')
+const isReturningHomepage = computed(() => !isFavoritesView.value && hasSeenHomepageIntroduction.value)
 const viewMode = ref(getStoredPreferredView())
 const calendarView = ref(getCalendarView())
 
@@ -533,8 +534,8 @@ function exportMyEvents() {
 
 <template>
   <div class="public-page">
-    <section class="hero app-hero" :class="{ 'app-hero--compact': !isFavoritesView && hasSeenHomepageIntroduction }">
-      <template v-if="!isFavoritesView && hasSeenHomepageIntroduction">
+    <section class="hero app-hero" :class="{ 'app-hero--compact': isReturningHomepage }">
+      <template v-if="isReturningHomepage">
         <h1>Find your next dance event.</h1>
         <p class="app-hero__compact-message">Created by Dancemaniacs for the Copenhagen bachata community.</p>
       </template>
@@ -587,12 +588,12 @@ function exportMyEvents() {
     <section
       ref="discoveryControls"
       class="discovery-controls"
-      :class="{ 'discovery-controls--returning': !isFavoritesView && hasSeenHomepageIntroduction }"
+      :class="{ 'discovery-controls--returning': isReturningHomepage }"
       aria-label="Event discovery controls"
     >
       <template v-if="viewMode === 'list' || isFavoritesView">
         <template v-if="!isFavoritesView">
-          <span v-if="hasSeenHomepageIntroduction" class="discovery-section-label">Find events</span>
+          <span v-if="isReturningHomepage" class="discovery-section-label">Find events</span>
           <div class="lookup-row">
             <div class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || organizer !== 'all' }">
               <button
@@ -647,7 +648,7 @@ function exportMyEvents() {
             </div>
           </div>
 
-          <label v-if="hasSeenHomepageIntroduction" class="category-filter homepage-category-select">
+          <label v-if="isReturningHomepage" class="category-filter homepage-category-select">
             <span>Category</span>
             <select :value="category" @change="setCategoryFilter($event.target.value)">
               <option value="all">All categories</option>
@@ -708,7 +709,7 @@ function exportMyEvents() {
           </div>
         </template>
 
-        <span v-if="!isFavoritesView && hasSeenHomepageIntroduction" class="discovery-section-label">Quick filters</span>
+        <span v-if="isReturningHomepage" class="discovery-section-label">Quick filters</span>
         <section class="filters" aria-label="Event filters">
           <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
