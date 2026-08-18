@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CalendarPlus, X } from 'lucide-vue-next'
+import { CalendarPlus, Search, X } from 'lucide-vue-next'
 import EventCalendarView from '../components/EventCalendarView.vue'
 import EventListResultsView from '../components/EventListView.vue'
 import { useAuth } from '../composables/useAuth'
@@ -31,6 +31,8 @@ const filter = ref('all')
 const category = ref('all')
 const organizer = ref('all')
 const searchQuery = ref('')
+const searchExpanded = ref(false)
+const searchInput = ref(null)
 const events = ref([])
 const weekEvents = ref([])
 const weekLoading = ref(false)
@@ -424,6 +426,23 @@ function setOrganizerFilter(selectedOrganizer) {
   trackFilterChanged('organizer', selectedOrganizer)
 }
 
+async function expandSearch() {
+  searchExpanded.value = true
+  await nextTick()
+  searchInput.value?.focus()
+}
+
+async function clearOrCloseSearch() {
+  if (searchQuery.value) {
+    searchQuery.value = ''
+    await nextTick()
+    searchInput.value?.focus()
+    return
+  }
+
+  searchExpanded.value = false
+}
+
 function scrollToDiscoveryControls() {
   discoveryControls.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
@@ -596,13 +615,37 @@ function exportMyEvents() {
           </select>
         </label>
 
-        <div class="search-section">
+        <div v-if="isFavoritesView" class="search-section">
           <input
             v-model="searchQuery"
             type="text"
             class="search-input"
             placeholder="Search by title, organizer, or location..."
           />
+        </div>
+
+        <div v-else class="search-section">
+          <button v-if="!searchExpanded && !searchQuery" type="button" class="search-trigger" @click="expandSearch">
+            <Search class="icon icon--sm" />
+            Search events
+          </button>
+          <div v-else class="search-field">
+            <input
+              ref="searchInput"
+              v-model="searchQuery"
+              type="text"
+              class="search-input"
+              placeholder="Search by title, organizer, or location..."
+            />
+            <button
+              type="button"
+              class="search-field__action"
+              :aria-label="searchQuery ? 'Clear search' : 'Close search'"
+              @click="clearOrCloseSearch"
+            >
+              <X class="icon icon--sm" />
+            </button>
+          </div>
         </div>
 
         <section class="filters" aria-label="Event filters">

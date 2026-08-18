@@ -1102,6 +1102,55 @@ textarea {
   min-height: 48px;
 }
 
+.search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.search-trigger:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+}
+
+.search-field {
+  position: relative;
+}
+
+.search-field .search-input {
+  padding-right: 48px;
+}
+
+.search-field__action {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  place-items: center;
+  transform: translateY(-50%);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.search-field__action:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+}
+
 .event-date-group {
   display: grid;
   gap: 12px;
