@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CalendarPlus, Search, X } from 'lucide-vue-next'
+import { CalendarPlus, Search, Users, X } from 'lucide-vue-next'
 import EventCalendarView from '../components/EventCalendarView.vue'
 import EventListResultsView from '../components/EventListView.vue'
 import { useAuth } from '../composables/useAuth'
@@ -30,6 +30,7 @@ const homepageCategories = ['social', 'class', 'workshop', 'festival']
 const filter = ref('all')
 const category = ref('all')
 const organizer = ref('all')
+const organizerExpanded = ref(false)
 const searchQuery = ref('')
 const searchExpanded = ref(false)
 const searchInput = ref(null)
@@ -426,6 +427,15 @@ function setOrganizerFilter(selectedOrganizer) {
   trackFilterChanged('organizer', selectedOrganizer)
 }
 
+function clearOrCloseOrganizer() {
+  if (organizer.value !== 'all') {
+    setOrganizerFilter('all')
+    return
+  }
+
+  organizerExpanded.value = false
+}
+
 async function expandSearch() {
   searchExpanded.value = true
   await nextTick()
@@ -576,77 +586,111 @@ function exportMyEvents() {
 
     <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
       <template v-if="viewMode === 'list' || isFavoritesView">
-        <div v-if="!isFavoritesView" class="category-chip-filter">
-          <div class="category-chip-filter__heading">
-            <span id="homepage-category-label" class="category-chip-filter__label">Category</span>
-            <button v-if="category !== 'all'" type="button" class="category-chip-filter__clear" @click="setCategoryFilter('all')">Clear</button>
+        <template v-if="!isFavoritesView">
+          <div class="lookup-row">
+            <div class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || organizer !== 'all' }">
+              <button
+                v-if="!organizerExpanded && organizer === 'all'"
+                type="button"
+                class="search-trigger"
+                @click="organizerExpanded = true"
+              >
+                <Users class="icon icon--sm" />
+                Organizer
+              </button>
+              <div v-else class="organizer-field">
+                <select :value="organizer" aria-label="Organizer" @change="setOrganizerFilter($event.target.value)">
+                  <option value="all">All organizers</option>
+                  <option v-for="item in organizers" :key="item" :value="item">
+                    {{ item }}
+                  </option>
+                </select>
+                <button
+                  type="button"
+                  class="organizer-field__action"
+                  :aria-label="organizer === 'all' ? 'Close organizer filter' : 'Clear organizer filter'"
+                  @click="clearOrCloseOrganizer"
+                >
+                  <X class="icon icon--sm" />
+                </button>
+              </div>
+            </div>
+
+            <div class="search-section" :class="{ 'search-section--expanded': searchExpanded || searchQuery }">
+              <button v-if="!searchExpanded && !searchQuery" type="button" class="search-trigger" @click="expandSearch">
+                <Search class="icon icon--sm" />
+                Search events
+              </button>
+              <div v-else class="search-field">
+                <input
+                  ref="searchInput"
+                  v-model="searchQuery"
+                  type="text"
+                  class="search-input"
+                  placeholder="Search by title, organizer, or location..."
+                />
+                <button
+                  type="button"
+                  class="search-field__action"
+                  :aria-label="searchQuery ? 'Clear search' : 'Close search'"
+                  @click="clearOrCloseSearch"
+                >
+                  <X class="icon icon--sm" />
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="category-chip-filter__options" role="group" aria-labelledby="homepage-category-label">
-            <button
-              v-for="item in homepageCategories"
-              :key="item"
-              type="button"
-              class="category-chip"
-              :class="{ active: category === item }"
-              :aria-pressed="category === item ? 'true' : 'false'"
-              @click="toggleCategoryFilter(item)"
-            >
-              {{ getCategoryMeta(item).label }}
-            </button>
+
+          <div class="category-chip-filter">
+            <div class="category-chip-filter__heading">
+              <span id="homepage-category-label" class="category-chip-filter__label">Category</span>
+              <button v-if="category !== 'all'" type="button" class="category-chip-filter__clear" @click="setCategoryFilter('all')">Clear</button>
+            </div>
+            <div class="category-chip-filter__options" role="group" aria-labelledby="homepage-category-label">
+              <button
+                v-for="item in homepageCategories"
+                :key="item"
+                type="button"
+                class="category-chip"
+                :class="{ active: category === item }"
+                :aria-pressed="category === item ? 'true' : 'false'"
+                @click="toggleCategoryFilter(item)"
+              >
+                {{ getCategoryMeta(item).label }}
+              </button>
+            </div>
           </div>
-        </div>
+        </template>
 
-        <label v-else class="category-filter">
-          <span>Category</span>
-          <select :value="category" @change="setCategoryFilter($event.target.value)">
-            <option v-for="item in categories" :key="item" :value="item">
-              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-            </option>
-          </select>
-        </label>
+        <template v-else>
+          <label class="category-filter">
+            <span>Category</span>
+            <select :value="category" @change="setCategoryFilter($event.target.value)">
+              <option v-for="item in categories" :key="item" :value="item">
+                {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
+              </option>
+            </select>
+          </label>
 
-        <label class="category-filter">
-          <span>Organizer</span>
-          <select :value="organizer" @change="setOrganizerFilter($event.target.value)">
-            <option value="all">All organizers</option>
-            <option v-for="item in organizers" :key="item" :value="item">
-              {{ item }}
-            </option>
-          </select>
-        </label>
+          <label class="category-filter">
+            <span>Organizer</span>
+            <select :value="organizer" @change="setOrganizerFilter($event.target.value)">
+              <option value="all">All organizers</option>
+              <option v-for="item in organizers" :key="item" :value="item">
+                {{ item }}
+              </option>
+            </select>
+          </label>
 
-        <div v-if="isFavoritesView" class="search-section">
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="search-input"
-            placeholder="Search by title, organizer, or location..."
-          />
-        </div>
-
-        <div v-else class="search-section">
-          <button v-if="!searchExpanded && !searchQuery" type="button" class="search-trigger" @click="expandSearch">
-            <Search class="icon icon--sm" />
-            Search events
-          </button>
-          <div v-else class="search-field">
+          <div class="search-section">
             <input
-              ref="searchInput"
               v-model="searchQuery"
               type="text"
               class="search-input"
               placeholder="Search by title, organizer, or location..."
             />
-            <button
-              type="button"
-              class="search-field__action"
-              :aria-label="searchQuery ? 'Clear search' : 'Close search'"
-              @click="clearOrCloseSearch"
-            >
-              <X class="icon icon--sm" />
-            </button>
           </div>
-        </div>
+        </template>
 
         <section class="filters" aria-label="Event filters">
           <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>

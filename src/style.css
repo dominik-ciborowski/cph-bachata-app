@@ -1098,6 +1098,30 @@ textarea {
   margin-bottom: 16px;
 }
 
+.lookup-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.lookup-row .search-section {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.lookup-control {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.lookup-control--expanded,
+.lookup-row .search-section--expanded {
+  flex: 1 1 280px;
+}
+
 .search-input {
   min-height: 48px;
 }
@@ -1147,6 +1171,36 @@ textarea {
 }
 
 .search-field__action:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+}
+
+.organizer-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.organizer-field select {
+  min-width: 0;
+  min-height: 48px;
+}
+
+.organizer-field__action {
+  display: inline-grid;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  place-items: center;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.organizer-field__action:hover {
   background: var(--color-bg-elevated);
   color: var(--color-text);
 }
