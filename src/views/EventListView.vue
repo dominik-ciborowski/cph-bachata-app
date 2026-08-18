@@ -647,7 +647,17 @@ function exportMyEvents() {
             </div>
           </div>
 
-          <div class="category-chip-filter">
+          <label v-if="hasSeenHomepageIntroduction" class="category-filter homepage-category-select">
+            <span>Category</span>
+            <select :value="category" @change="setCategoryFilter($event.target.value)">
+              <option value="all">All categories</option>
+              <option v-for="item in homepageCategories" :key="item" :value="item">
+                {{ getCategoryMeta(item).label }}
+              </option>
+            </select>
+          </label>
+
+          <div v-else class="category-chip-filter">
             <div class="category-chip-filter__heading">
               <span id="homepage-category-label" class="category-chip-filter__label">Category</span>
               <button v-if="category !== 'all'" type="button" class="category-chip-filter__clear" @click="setCategoryFilter('all')">Clear</button>
