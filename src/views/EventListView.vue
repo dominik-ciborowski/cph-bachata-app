@@ -584,9 +584,15 @@ function exportMyEvents() {
 
     <p v-else-if="isFavoritesView && calendarExportError" class="empty-state">{{ calendarExportError }}</p>
 
-    <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
+    <section
+      ref="discoveryControls"
+      class="discovery-controls"
+      :class="{ 'discovery-controls--returning': !isFavoritesView && hasSeenHomepageIntroduction }"
+      aria-label="Event discovery controls"
+    >
       <template v-if="viewMode === 'list' || isFavoritesView">
         <template v-if="!isFavoritesView">
+          <span v-if="hasSeenHomepageIntroduction" class="discovery-section-label">Find events</span>
           <div class="lookup-row">
             <div class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || organizer !== 'all' }">
               <button
@@ -692,6 +698,7 @@ function exportMyEvents() {
           </div>
         </template>
 
+        <span v-if="!isFavoritesView && hasSeenHomepageIntroduction" class="discovery-section-label">Quick filters</span>
         <section class="filters" aria-label="Event filters">
           <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>

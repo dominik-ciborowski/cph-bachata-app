@@ -479,7 +479,7 @@ button, input, textarea, select { font: inherit; }
 }
 
 .app-hero--compact {
-  margin-bottom: 22px;
+  margin-bottom: 26px;
   padding: 2px 0 0;
 }
 
@@ -1004,10 +1004,16 @@ textarea {
   margin-bottom: 22px;
 }
 
-.category-chip-filter__label {
+.category-chip-filter__label,
+.discovery-section-label {
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 800;
+}
+
+.discovery-section-label {
+  display: block;
+  margin-bottom: 7px;
 }
 
 .category-chip-filter__heading {
@@ -1104,6 +1110,11 @@ textarea {
   gap: 10px;
   margin-bottom: 18px;
   flex-wrap: wrap;
+}
+
+.discovery-controls--returning .lookup-row,
+.discovery-controls--returning .category-chip-filter {
+  margin-bottom: 24px;
 }
 
 .lookup-row .search-section {
