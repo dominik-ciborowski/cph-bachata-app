@@ -23,6 +23,7 @@ const stubComponent = { template: '<i></i>' }
 async function renderHomepage({
   returningUser,
   category = 'all',
+  filter = 'all',
   organizer = 'all',
   organizerExpanded = false,
   searchQuery = '',
@@ -42,9 +43,15 @@ async function renderHomepage({
     organizers: organizer === 'all' ? [] : [organizer],
     searchExpanded,
     searchQuery,
+    hasActiveDiscoveryFilters: (
+      organizer !== 'all' ||
+      searchQuery !== '' ||
+      category !== 'all' ||
+      filter !== 'all'
+    ),
     homepageCategories: ['social', 'class', 'workshop', 'festival'],
     category,
-    filter: 'all',
+    filter,
     loading: true,
     error: '',
     showListBackToTop: false,
@@ -66,6 +73,7 @@ async function renderHomepage({
     clearOrCloseOrganizer: noop,
     toggleSearch: noop,
     clearOrCloseSearch: noop,
+    clearHomepageDiscovery: noop,
     setQuickFilter: noop,
     handleScroll: noop
   }
@@ -88,6 +96,7 @@ test('returning-user homepage renders the category dropdown without category chi
   assert.match(html, /<option value="workshop">Workshop<\/option>/)
   assert.match(html, /<option value="festival">Festival<\/option>/)
   assert.doesNotMatch(html, /class="category-chip-filter"/)
+  assert.doesNotMatch(html, />\s*Clear\s*<\/button>/)
 })
 
 test('first-time homepage keeps the existing category chips', async () => {
@@ -112,6 +121,7 @@ test('returning-user lookup buttons communicate active collapsed filters', async
 
   assert.match(html, /Dancemaniacs<\/button>/)
   assert.match(html, /Search active<\/button>/)
+  assert.match(html, />\s*Clear\s*<\/button>/)
   assert.doesNotMatch(html, /class="organizer-field"/)
   assert.doesNotMatch(html, /class="search-field"/)
 })
@@ -126,4 +136,16 @@ test('returning-user expanded search keeps its trigger and active query visible'
   assert.match(html, /aria-expanded="true"[^>]*>.*Search active<\/button>/)
   assert.match(html, /class="search-field"/)
   assert.match(html, /value="workshop"/)
+})
+
+test('returning-user expanded organizer keeps its selected organizer trigger visible', async () => {
+  const html = await renderHomepage({
+    returningUser: true,
+    organizer: 'Bachata House',
+    organizerExpanded: true
+  })
+
+  assert.match(html, /aria-expanded="true"[^>]*>.*Bachata House<\/button>/)
+  assert.match(html, /class="organizer-field"/)
+  assert.match(html, /<select value="Bachata House"/)
 })

@@ -1016,6 +1016,10 @@ textarea {
   margin-bottom: 7px;
 }
 
+.discovery-section-heading {
+  margin-bottom: 7px;
+}
+
 .category-chip-filter__heading {
   display: flex;
   align-items: center;

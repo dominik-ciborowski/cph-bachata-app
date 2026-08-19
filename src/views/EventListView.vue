@@ -60,6 +60,12 @@ const validMainViewModes = new Set(['list', 'calendar'])
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 const isReturningHomepage = computed(() => !isFavoritesView.value && hasSeenHomepageIntroduction.value)
+const hasActiveDiscoveryFilters = computed(() => (
+  organizer.value !== 'all' ||
+  searchQuery.value !== '' ||
+  category.value !== 'all' ||
+  filter.value !== 'all'
+))
 const viewMode = ref(getStoredPreferredView())
 const calendarView = ref(getCalendarView())
 
@@ -414,6 +420,17 @@ function clearFilters() {
   trackFiltersCleared()
 }
 
+function clearHomepageDiscovery() {
+  if (!hasActiveDiscoveryFilters.value) return
+  organizer.value = 'all'
+  searchQuery.value = ''
+  category.value = 'all'
+  filter.value = 'all'
+  organizerExpanded.value = false
+  searchExpanded.value = false
+  trackFiltersCleared()
+}
+
 function setCategoryFilter(selectedCategory) {
   closeLookupPanels()
   if (category.value === selectedCategory) return
@@ -623,7 +640,17 @@ function exportMyEvents() {
     >
       <template v-if="viewMode === 'list' || isFavoritesView">
         <template v-if="!isFavoritesView">
-          <span v-if="isReturningHomepage" class="discovery-section-label">Find events</span>
+          <div v-if="isReturningHomepage" class="category-chip-filter__heading discovery-section-heading">
+            <span class="category-chip-filter__label">Find events</span>
+            <button
+              v-if="hasActiveDiscoveryFilters"
+              type="button"
+              class="category-chip-filter__clear"
+              @click="clearHomepageDiscovery"
+            >
+              Clear
+            </button>
+          </div>
           <div class="lookup-row">
             <div class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || (!isReturningHomepage && organizer !== 'all') }">
               <button
