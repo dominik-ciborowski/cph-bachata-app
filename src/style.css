@@ -575,7 +575,11 @@ button, input, textarea, select { font: inherit; }
 }
 
 .event-card h2 {
-  margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0 0 2px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 21px;
   line-height: 1.2;
   color: var(--color-text);
