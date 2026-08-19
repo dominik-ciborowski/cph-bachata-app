@@ -1133,6 +1133,19 @@ textarea {
   flex: 1 1 280px;
 }
 
+.discovery-controls--returning .lookup-control,
+.discovery-controls--returning .lookup-row .search-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.discovery-controls--returning .organizer-field,
+.discovery-controls--returning .search-field {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
 .search-input {
   min-height: 48px;
 }

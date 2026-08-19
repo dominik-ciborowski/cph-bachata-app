@@ -343,12 +343,14 @@ function matchesSearch(event) {
 }
 
 function setQuickFilter(nextFilter) {
+  closeLookupPanels()
   if (filter.value === nextFilter) return
   filter.value = nextFilter
   trackFilterChanged('quick_filter', nextFilter)
 }
 
 function setViewMode(nextViewMode) {
+  closeLookupPanels()
   if (!validMainViewModes.has(nextViewMode)) {
     nextViewMode = 'list'
   }
@@ -413,6 +415,7 @@ function clearFilters() {
 }
 
 function setCategoryFilter(selectedCategory) {
+  closeLookupPanels()
   if (category.value === selectedCategory) return
   category.value = selectedCategory
   trackFilterChanged('category', selectedCategory)
@@ -428,8 +431,29 @@ function setOrganizerFilter(selectedOrganizer) {
   trackFilterChanged('organizer', selectedOrganizer)
 }
 
+function selectHomepageOrganizer(selectedOrganizer) {
+  setOrganizerFilter(selectedOrganizer)
+  organizerExpanded.value = false
+}
+
+function closeLookupPanels() {
+  if (!isReturningHomepage.value) return
+  organizerExpanded.value = false
+  searchExpanded.value = false
+}
+
+function toggleOrganizer() {
+  if (organizerExpanded.value) {
+    organizerExpanded.value = false
+    return
+  }
+
+  searchExpanded.value = false
+  organizerExpanded.value = true
+}
+
 function clearOrCloseOrganizer() {
-  if (organizer.value !== 'all') {
+  if (!isReturningHomepage.value && organizer.value !== 'all') {
     setOrganizerFilter('all')
     return
   }
@@ -437,14 +461,20 @@ function clearOrCloseOrganizer() {
   organizerExpanded.value = false
 }
 
-async function expandSearch() {
+async function toggleSearch() {
+  if (searchExpanded.value) {
+    searchExpanded.value = false
+    return
+  }
+
+  organizerExpanded.value = false
   searchExpanded.value = true
   await nextTick()
   searchInput.value?.focus()
 }
 
 async function clearOrCloseSearch() {
-  if (searchQuery.value) {
+  if (!isReturningHomepage.value && searchQuery.value) {
     searchQuery.value = ''
     await nextTick()
     searchInput.value?.focus()
@@ -595,18 +625,23 @@ function exportMyEvents() {
         <template v-if="!isFavoritesView">
           <span v-if="isReturningHomepage" class="discovery-section-label">Find events</span>
           <div class="lookup-row">
-            <div class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || organizer !== 'all' }">
+            <div class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || (!isReturningHomepage && organizer !== 'all') }">
               <button
-                v-if="!organizerExpanded && organizer === 'all'"
+                v-if="isReturningHomepage || (!organizerExpanded && organizer === 'all')"
                 type="button"
                 class="search-trigger"
-                @click="organizerExpanded = true"
+                :aria-expanded="organizerExpanded ? 'true' : 'false'"
+                @click="isReturningHomepage ? toggleOrganizer() : organizerExpanded = true"
               >
                 <Users class="icon icon--sm" />
-                Organizer
+                {{ organizer === 'all' ? 'Organizer' : organizer }}
               </button>
-              <div v-else class="organizer-field">
-                <select :value="organizer" aria-label="Organizer" @change="setOrganizerFilter($event.target.value)">
+              <div v-if="organizerExpanded || (!isReturningHomepage && organizer !== 'all')" class="organizer-field">
+                <select
+                  :value="organizer"
+                  aria-label="Organizer"
+                  @change="isReturningHomepage ? selectHomepageOrganizer($event.target.value) : setOrganizerFilter($event.target.value)"
+                >
                   <option value="all">All organizers</option>
                   <option v-for="item in organizers" :key="item" :value="item">
                     {{ item }}
@@ -615,7 +650,7 @@ function exportMyEvents() {
                 <button
                   type="button"
                   class="organizer-field__action"
-                  :aria-label="organizer === 'all' ? 'Close organizer filter' : 'Clear organizer filter'"
+                  :aria-label="isReturningHomepage || organizer === 'all' ? 'Close organizer filter' : 'Clear organizer filter'"
                   @click="clearOrCloseOrganizer"
                 >
                   <X class="icon icon--sm" />
@@ -623,12 +658,18 @@ function exportMyEvents() {
               </div>
             </div>
 
-            <div class="search-section" :class="{ 'search-section--expanded': searchExpanded || searchQuery }">
-              <button v-if="!searchExpanded && !searchQuery" type="button" class="search-trigger" @click="expandSearch">
+            <div class="search-section" :class="{ 'search-section--expanded': searchExpanded || (!isReturningHomepage && searchQuery) }">
+              <button
+                v-if="isReturningHomepage || (!searchExpanded && !searchQuery)"
+                type="button"
+                class="search-trigger"
+                :aria-expanded="searchExpanded ? 'true' : 'false'"
+                @click="toggleSearch"
+              >
                 <Search class="icon icon--sm" />
-                Search events
+                {{ searchQuery ? 'Search active' : 'Search events' }}
               </button>
-              <div v-else class="search-field">
+              <div v-if="searchExpanded || (!isReturningHomepage && searchQuery)" class="search-field">
                 <input
                   ref="searchInput"
                   v-model="searchQuery"
@@ -639,7 +680,7 @@ function exportMyEvents() {
                 <button
                   type="button"
                   class="search-field__action"
-                  :aria-label="searchQuery ? 'Clear search' : 'Close search'"
+                  :aria-label="isReturningHomepage || !searchQuery ? 'Close search' : 'Clear search'"
                   @click="clearOrCloseSearch"
                 >
                   <X class="icon icon--sm" />

@@ -20,7 +20,14 @@ const render = new Function('Vue', code)(Vue)
 const noop = () => {}
 const stubComponent = { template: '<i></i>' }
 
-async function renderHomepage({ returningUser, category = 'all' }) {
+async function renderHomepage({
+  returningUser,
+  category = 'all',
+  organizer = 'all',
+  organizerExpanded = false,
+  searchQuery = '',
+  searchExpanded = false
+}) {
   const state = {
     isFavoritesView: false,
     isReturningHomepage: returningUser,
@@ -30,11 +37,11 @@ async function renderHomepage({ returningUser, category = 'all' }) {
     savedUpcomingEvents: [],
     calendarExportError: '',
     viewMode: 'list',
-    organizerExpanded: false,
-    organizer: 'all',
-    organizers: [],
-    searchExpanded: false,
-    searchQuery: '',
+    organizerExpanded,
+    organizer,
+    organizers: organizer === 'all' ? [] : [organizer],
+    searchExpanded,
+    searchQuery,
     homepageCategories: ['social', 'class', 'workshop', 'festival'],
     category,
     filter: 'all',
@@ -54,8 +61,10 @@ async function renderHomepage({ returningUser, category = 'all' }) {
     setCategoryFilter: noop,
     toggleCategoryFilter: noop,
     setOrganizerFilter: noop,
+    selectHomepageOrganizer: noop,
+    toggleOrganizer: noop,
     clearOrCloseOrganizer: noop,
-    expandSearch: noop,
+    toggleSearch: noop,
     clearOrCloseSearch: noop,
     setQuickFilter: noop,
     handleScroll: noop
@@ -92,4 +101,29 @@ test('returning-user category dropdown reflects the active category state', asyn
   const html = await renderHomepage({ returningUser: true, category: 'social' })
 
   assert.match(html, /<select value="social">/)
+})
+
+test('returning-user lookup buttons communicate active collapsed filters', async () => {
+  const html = await renderHomepage({
+    returningUser: true,
+    organizer: 'Dancemaniacs',
+    searchQuery: 'workshop'
+  })
+
+  assert.match(html, /Dancemaniacs<\/button>/)
+  assert.match(html, /Search active<\/button>/)
+  assert.doesNotMatch(html, /class="organizer-field"/)
+  assert.doesNotMatch(html, /class="search-field"/)
+})
+
+test('returning-user expanded search keeps its trigger and active query visible', async () => {
+  const html = await renderHomepage({
+    returningUser: true,
+    searchQuery: 'workshop',
+    searchExpanded: true
+  })
+
+  assert.match(html, /aria-expanded="true"[^>]*>.*Search active<\/button>/)
+  assert.match(html, /class="search-field"/)
+  assert.match(html, /value="workshop"/)
 })
