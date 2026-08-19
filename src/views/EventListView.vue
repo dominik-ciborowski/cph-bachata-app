@@ -46,6 +46,8 @@ const favoriteBusyId = ref(null)
 const calendarExportError = ref('')
 const calendarFiltersOpen = ref(false)
 const discoveryControls = ref(null)
+const organizerControl = ref(null)
+const searchControl = ref(null)
 const showListBackToTop = ref(false)
 const showLoginBenefitsBanner = ref(false)
 const hasSeenHomepageIntroduction = ref(readHomepageIntroductionFlag())
@@ -53,6 +55,8 @@ let searchAnalyticsTimeoutId = null
 let lastNoResultsSearchState = ''
 let lastPerformedSearchQuery = ''
 let weekRequestId = 0
+let lookupTouchStartY = null
+let lookupTouchStartedInside = false
 
 const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
 const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
@@ -74,6 +78,10 @@ today.setHours(0, 0, 0, 0)
 
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  document.addEventListener('pointerdown', handleLookupPointerDown)
+  window.addEventListener('wheel', handleLookupWheel, { passive: true })
+  window.addEventListener('touchstart', handleLookupTouchStart, { passive: true })
+  window.addEventListener('touchmove', handleLookupTouchMove, { passive: true })
   if (!isFavoritesView.value && !hasSeenHomepageIntroduction.value) {
     try {
       localStorage.setItem(homepageIntroductionShownKey, 'true')
@@ -119,6 +127,10 @@ watch(isFavoritesView, async () => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  document.removeEventListener('pointerdown', handleLookupPointerDown)
+  window.removeEventListener('wheel', handleLookupWheel)
+  window.removeEventListener('touchstart', handleLookupTouchStart)
+  window.removeEventListener('touchmove', handleLookupTouchMove)
   if (searchAnalyticsTimeoutId) window.clearTimeout(searchAnalyticsTimeoutId)
 })
 
@@ -459,6 +471,52 @@ function closeLookupPanels() {
   searchExpanded.value = false
 }
 
+function hasOpenLookupPanel() {
+  return organizerExpanded.value || searchExpanded.value
+}
+
+function isInsideLookupControls(target) {
+  return target instanceof Node && (
+    organizerControl.value?.contains(target) || searchControl.value?.contains(target)
+  )
+}
+
+function handleLookupPointerDown(event) {
+  if (!isReturningHomepage.value || !hasOpenLookupPanel() || isInsideLookupControls(event.target)) return
+  closeLookupPanels()
+}
+
+function handleLookupWheel(event) {
+  if (
+    !isReturningHomepage.value ||
+    !hasOpenLookupPanel() ||
+    isInsideLookupControls(event.target) ||
+    Math.abs(event.deltaY) <= Math.abs(event.deltaX)
+  ) return
+
+  closeLookupPanels()
+}
+
+function handleLookupTouchStart(event) {
+  if (!isReturningHomepage.value || !hasOpenLookupPanel()) return
+  lookupTouchStartY = event.touches[0]?.clientY ?? null
+  lookupTouchStartedInside = isInsideLookupControls(event.target)
+}
+
+function handleLookupTouchMove(event) {
+  if (
+    lookupTouchStartY === null ||
+    lookupTouchStartedInside ||
+    !isReturningHomepage.value ||
+    !hasOpenLookupPanel()
+  ) return
+
+  const currentY = event.touches[0]?.clientY
+  if (currentY === undefined || Math.abs(currentY - lookupTouchStartY) < 8) return
+  closeLookupPanels()
+  lookupTouchStartY = null
+}
+
 function toggleOrganizer() {
   if (organizerExpanded.value) {
     organizerExpanded.value = false
@@ -652,7 +710,7 @@ function exportMyEvents() {
             </button>
           </div>
           <div class="lookup-row">
-            <div class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || (!isReturningHomepage && organizer !== 'all') }">
+            <div ref="organizerControl" class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || (!isReturningHomepage && organizer !== 'all') }">
               <button
                 v-if="isReturningHomepage || (!organizerExpanded && organizer === 'all')"
                 type="button"
@@ -685,7 +743,7 @@ function exportMyEvents() {
               </div>
             </div>
 
-            <div class="search-section" :class="{ 'search-section--expanded': searchExpanded || (!isReturningHomepage && searchQuery) }">
+            <div ref="searchControl" class="search-section" :class="{ 'search-section--expanded': searchExpanded || (!isReturningHomepage && searchQuery) }">
               <button
                 v-if="isReturningHomepage || (!searchExpanded && !searchQuery)"
                 type="button"
