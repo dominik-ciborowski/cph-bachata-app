@@ -78,6 +78,7 @@ onMounted(() => {
 <template>
   <div class="calendar-week">
     <div class="calendar-view__header calendar-week__header">
+      <slot name="mode-toggle" />
       <button class="calendar-nav-button" type="button" aria-label="Previous week" @click="changeWeek(-1)"><ChevronLeft class="icon icon--sm" /></button>
       <div class="calendar-week__heading">
         <h2>{{ weekLabel }}</h2>

@@ -2290,11 +2290,6 @@ textarea {
   margin: 0 auto;
 }
 
-.calendar-view__mode-row {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .calendar-mode-toggle {
   display: inline-grid;
   grid-template-columns: repeat(2, auto);
@@ -2352,10 +2347,6 @@ textarea {
   color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 800;
-}
-
-.calendar-week__header {
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
 }
 
 .calendar-week__heading {
@@ -2600,7 +2591,7 @@ textarea {
 
 .calendar-view__header {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: auto 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
   padding: 14px;
@@ -2608,6 +2599,20 @@ textarea {
   border-radius: 22px;
   background: var(--color-surface);
   text-align: center;
+}
+
+.calendar-view__header .calendar-mode-toggle {
+  justify-self: start;
+}
+
+@media (max-width: 600px) {
+  .calendar-view__header {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+  }
+
+  .calendar-view__header .calendar-mode-toggle {
+    grid-column: 1 / -1;
+  }
 }
 
 .calendar-view__header h2 {
