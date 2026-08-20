@@ -1442,6 +1442,24 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .detail-summary,
+  .detail-summary__facts {
+    gap: 10px;
+  }
+
+  .detail-summary__place,
+  .detail-fact {
+    padding: 14px;
+  }
+
+  .detail-summary__place {
+    gap: 4px;
+  }
+
+  .detail-fact {
+    gap: 3px;
+  }
+
   .management-card {
     align-items: stretch;
     flex-direction: column;
