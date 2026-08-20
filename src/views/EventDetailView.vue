@@ -249,7 +249,7 @@ function addToCalendar() {
     <section v-if="event.event_link" class="card detail-cta">
       <div>
         <h2>Event Page</h2>
-        <p>Open the organizer's event page for registration, updates and additional details.</p>
+        <p>Registration, updates and additional details.</p>
       </div>
       <a class="button detail-cta__button icon-text" :href="event.event_link" target="_blank" rel="noreferrer" @click="trackEventLinkClicked(event)">
         <EventLinkIcon class="icon icon--sm" />

@@ -877,7 +877,18 @@ button, input, textarea, select { font: inherit; }
 
 .detail-cta {
   display: grid;
-  gap: 16px;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.detail-cta > div {
+  display: grid;
+  gap: 4px;
+}
+
+.detail-cta h2 {
+  margin: 0;
+  font-size: 20px;
 }
 
 .detail-cta__button {
@@ -2914,6 +2925,20 @@ textarea {
 
 .detail-badges {
   margin-bottom: 10px;
+}
+
+.detail-badges .detail-category,
+.detail-badges .recurring-badge {
+  min-height: 24px;
+  padding: 3px 8px;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.detail-badges .icon {
+  width: 14px;
+  height: 14px;
 }
 
 .recurring-badge {
