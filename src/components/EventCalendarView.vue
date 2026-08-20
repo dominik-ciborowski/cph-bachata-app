@@ -153,7 +153,6 @@ watch(visibleMonth, (month) => {
     <template v-else>
     <div ref="calendarGridSection" class="calendar-view__calendar">
       <div class="calendar-view__header">
-        <CalendarModeToggle :mode="calendarView" @select="emit('update:calendar-view', $event)" />
         <button class="calendar-nav-button" type="button" aria-label="Previous month" @click="changeMonth(-1)">
           <ChevronLeft class="icon icon--sm" />
         </button>
@@ -164,6 +163,7 @@ watch(visibleMonth, (month) => {
         <button class="calendar-nav-button" type="button" aria-label="Next month" @click="changeMonth(1)">
           <ChevronRight class="icon icon--sm" />
         </button>
+        <CalendarModeToggle :mode="calendarView" @select="emit('update:calendar-view', $event)" />
       </div>
 
       <div class="calendar-grid" role="grid" aria-label="Month calendar">

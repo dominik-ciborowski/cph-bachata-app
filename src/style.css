@@ -2591,7 +2591,7 @@ textarea {
 
 .calendar-view__header {
   display: grid;
-  grid-template-columns: auto 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
   padding: 14px;
@@ -2602,17 +2602,8 @@ textarea {
 }
 
 .calendar-view__header .calendar-mode-toggle {
-  justify-self: start;
-}
-
-@media (max-width: 600px) {
-  .calendar-view__header {
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-  }
-
-  .calendar-view__header .calendar-mode-toggle {
-    grid-column: 1 / -1;
-  }
+  grid-column: 1 / -1;
+  justify-self: center;
 }
 
 .calendar-view__header h2 {
@@ -2788,9 +2779,9 @@ textarea {
 
 .calendar-filter-panel__content {
   display: grid;
-  gap: 12px;
-  margin-top: 10px;
-  padding: 12px;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
   border: 1px solid var(--color-border);
   border-radius: 18px;
   background: var(--color-surface);
@@ -2799,6 +2790,33 @@ textarea {
 .calendar-filter-panel__content .filters,
 .calendar-filter-panel__content .category-filter {
   margin-bottom: 0;
+}
+
+.calendar-filter-panel__content .filters {
+  gap: 6px;
+}
+
+.calendar-filter-panel__content .filter-button {
+  min-height: 36px;
+  padding: 7px 11px;
+  font-size: 13px;
+}
+
+.calendar-filter-panel__content .category-filter {
+  gap: 5px;
+}
+
+.calendar-filter-panel__content select {
+  min-height: 42px;
+  padding: 9px 11px;
+}
+
+.calendar-filter-panel__content > .button {
+  min-height: 36px;
+  padding: 6px 10px;
+  justify-self: start;
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 
 .calendar-day--has-events:not(.calendar-day--selected):not(.calendar-day--has-multiple-events)::after {
