@@ -64,6 +64,7 @@ const validMainViewModes = new Set(['list', 'calendar'])
 
 const isFavoritesView = computed(() => route.path === '/favorites')
 const isReturningHomepage = computed(() => !isFavoritesView.value && hasSeenHomepageIntroduction.value)
+const usesCompactDiscoveryControls = computed(() => isReturningHomepage.value || isFavoritesView.value)
 const hasActiveDiscoveryFilters = computed(() => (
   organizer.value !== 'all' ||
   searchQuery.value !== '' ||
@@ -466,7 +467,7 @@ function selectHomepageOrganizer(selectedOrganizer) {
 }
 
 function closeLookupPanels() {
-  if (!isReturningHomepage.value) return
+  if (!usesCompactDiscoveryControls.value) return
   organizerExpanded.value = false
   searchExpanded.value = false
 }
@@ -482,13 +483,13 @@ function isInsideLookupControls(target) {
 }
 
 function handleLookupPointerDown(event) {
-  if (!isReturningHomepage.value || !hasOpenLookupPanel() || isInsideLookupControls(event.target)) return
+  if (!usesCompactDiscoveryControls.value || !hasOpenLookupPanel() || isInsideLookupControls(event.target)) return
   closeLookupPanels()
 }
 
 function handleLookupWheel(event) {
   if (
-    !isReturningHomepage.value ||
+    !usesCompactDiscoveryControls.value ||
     !hasOpenLookupPanel() ||
     isInsideLookupControls(event.target) ||
     Math.abs(event.deltaY) <= Math.abs(event.deltaX)
@@ -498,7 +499,7 @@ function handleLookupWheel(event) {
 }
 
 function handleLookupTouchStart(event) {
-  if (!isReturningHomepage.value || !hasOpenLookupPanel()) return
+  if (!usesCompactDiscoveryControls.value || !hasOpenLookupPanel()) return
   lookupTouchStartY = event.touches[0]?.clientY ?? null
   lookupTouchStartedInside = isInsideLookupControls(event.target)
 }
@@ -507,7 +508,7 @@ function handleLookupTouchMove(event) {
   if (
     lookupTouchStartY === null ||
     lookupTouchStartedInside ||
-    !isReturningHomepage.value ||
+    !usesCompactDiscoveryControls.value ||
     !hasOpenLookupPanel()
   ) return
 
@@ -528,7 +529,7 @@ function toggleOrganizer() {
 }
 
 function clearOrCloseOrganizer() {
-  if (!isReturningHomepage.value && organizer.value !== 'all') {
+  if (!usesCompactDiscoveryControls.value && organizer.value !== 'all') {
     setOrganizerFilter('all')
     return
   }
@@ -549,7 +550,7 @@ async function toggleSearch() {
 }
 
 async function clearOrCloseSearch() {
-  if (!isReturningHomepage.value && searchQuery.value) {
+  if (!usesCompactDiscoveryControls.value && searchQuery.value) {
     searchQuery.value = ''
     await nextTick()
     searchInput.value?.focus()
@@ -566,6 +567,10 @@ function scrollToDiscoveryControls() {
 const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
+
+const discoveryCategories = computed(() => isFavoritesView.value
+  ? categories.value.filter(item => item !== 'all')
+  : homepageCategories)
 
 const organizers = computed(() => {
   return [...new Set(events.value.map(getOrganizerFilterName).filter(Boolean))]
@@ -693,12 +698,12 @@ function exportMyEvents() {
     <section
       ref="discoveryControls"
       class="discovery-controls"
-      :class="{ 'discovery-controls--returning': isReturningHomepage }"
+      :class="{ 'discovery-controls--compact': usesCompactDiscoveryControls }"
       aria-label="Event discovery controls"
     >
       <template v-if="viewMode === 'list' || isFavoritesView">
-        <template v-if="!isFavoritesView">
-          <div v-if="isReturningHomepage" class="category-chip-filter__heading discovery-section-heading">
+        <template>
+          <div v-if="usesCompactDiscoveryControls" class="category-chip-filter__heading discovery-section-heading">
             <span class="category-chip-filter__label">Find events</span>
             <button
               v-if="hasActiveDiscoveryFilters"
@@ -710,22 +715,22 @@ function exportMyEvents() {
             </button>
           </div>
           <div class="lookup-row">
-            <div ref="organizerControl" class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || (!isReturningHomepage && organizer !== 'all') }">
+            <div ref="organizerControl" class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || (!usesCompactDiscoveryControls && organizer !== 'all') }">
               <button
-                v-if="isReturningHomepage || (!organizerExpanded && organizer === 'all')"
+                v-if="usesCompactDiscoveryControls || (!organizerExpanded && organizer === 'all')"
                 type="button"
                 class="search-trigger"
                 :aria-expanded="organizerExpanded ? 'true' : 'false'"
-                @click="isReturningHomepage ? toggleOrganizer() : organizerExpanded = true"
+                @click="usesCompactDiscoveryControls ? toggleOrganizer() : organizerExpanded = true"
               >
                 <Users class="icon icon--sm" />
                 {{ organizer === 'all' ? 'Organizer' : organizer }}
               </button>
-              <div v-if="organizerExpanded || (!isReturningHomepage && organizer !== 'all')" class="organizer-field">
+              <div v-if="organizerExpanded || (!usesCompactDiscoveryControls && organizer !== 'all')" class="organizer-field">
                 <select
                   :value="organizer"
                   aria-label="Organizer"
-                  @change="isReturningHomepage ? selectHomepageOrganizer($event.target.value) : setOrganizerFilter($event.target.value)"
+                  @change="usesCompactDiscoveryControls ? selectHomepageOrganizer($event.target.value) : setOrganizerFilter($event.target.value)"
                 >
                   <option value="all">All organizers</option>
                   <option v-for="item in organizers" :key="item" :value="item">
@@ -735,7 +740,7 @@ function exportMyEvents() {
                 <button
                   type="button"
                   class="organizer-field__action"
-                  :aria-label="isReturningHomepage || organizer === 'all' ? 'Close organizer filter' : 'Clear organizer filter'"
+                  :aria-label="usesCompactDiscoveryControls || organizer === 'all' ? 'Close organizer filter' : 'Clear organizer filter'"
                   @click="clearOrCloseOrganizer"
                 >
                   <X class="icon icon--sm" />
@@ -743,9 +748,9 @@ function exportMyEvents() {
               </div>
             </div>
 
-            <div ref="searchControl" class="search-section" :class="{ 'search-section--expanded': searchExpanded || (!isReturningHomepage && searchQuery) }">
+            <div ref="searchControl" class="search-section" :class="{ 'search-section--expanded': searchExpanded || (!usesCompactDiscoveryControls && searchQuery) }">
               <button
-                v-if="isReturningHomepage || (!searchExpanded && !searchQuery)"
+                v-if="usesCompactDiscoveryControls || (!searchExpanded && !searchQuery)"
                 type="button"
                 class="search-trigger"
                 :aria-expanded="searchExpanded ? 'true' : 'false'"
@@ -754,7 +759,7 @@ function exportMyEvents() {
                 <Search class="icon icon--sm" />
                 {{ searchQuery ? 'Search active' : 'Search events' }}
               </button>
-              <div v-if="searchExpanded || (!isReturningHomepage && searchQuery)" class="search-field">
+              <div v-if="searchExpanded || (!usesCompactDiscoveryControls && searchQuery)" class="search-field">
                 <input
                   ref="searchInput"
                   v-model="searchQuery"
@@ -765,7 +770,7 @@ function exportMyEvents() {
                 <button
                   type="button"
                   class="search-field__action"
-                  :aria-label="isReturningHomepage || !searchQuery ? 'Close search' : 'Clear search'"
+                  :aria-label="usesCompactDiscoveryControls || !searchQuery ? 'Close search' : 'Clear search'"
                   @click="clearOrCloseSearch"
                 >
                   <X class="icon icon--sm" />
@@ -774,11 +779,11 @@ function exportMyEvents() {
             </div>
           </div>
 
-          <label v-if="isReturningHomepage" class="category-filter homepage-category-select">
+          <label v-if="usesCompactDiscoveryControls" class="category-filter homepage-category-select">
             <span>Category</span>
             <select :value="category" @change="setCategoryFilter($event.target.value)">
               <option value="all">All categories</option>
-              <option v-for="item in homepageCategories" :key="item" :value="item">
+              <option v-for="item in discoveryCategories" :key="item" :value="item">
                 {{ getCategoryMeta(item).label }}
               </option>
             </select>
@@ -805,37 +810,7 @@ function exportMyEvents() {
           </div>
         </template>
 
-        <template v-else>
-          <label class="category-filter">
-            <span>Category</span>
-            <select :value="category" @change="setCategoryFilter($event.target.value)">
-              <option v-for="item in categories" :key="item" :value="item">
-                {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-              </option>
-            </select>
-          </label>
-
-          <label class="category-filter">
-            <span>Organizer</span>
-            <select :value="organizer" @change="setOrganizerFilter($event.target.value)">
-              <option value="all">All organizers</option>
-              <option v-for="item in organizers" :key="item" :value="item">
-                {{ item }}
-              </option>
-            </select>
-          </label>
-
-          <div class="search-section">
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="search-input"
-              placeholder="Search by title, organizer, or location..."
-            />
-          </div>
-        </template>
-
-        <span v-if="isReturningHomepage" class="discovery-section-label">Quick filters</span>
+        <span v-if="usesCompactDiscoveryControls" class="discovery-section-label">Quick filters</span>
         <section class="filters" aria-label="Event filters">
           <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>

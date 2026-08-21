@@ -727,11 +727,11 @@ button, input, textarea, select { font: inherit; }
 }
 
 .button.management-card__delete {
-  width: 34px;
-  min-width: 34px;
-  padding: 0;
+  width: auto;
+  min-width: 0;
+  padding: 7px 10px;
   border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
-  border-radius: 50%;
+  border-radius: 10px;
   background: transparent;
   color: var(--color-danger);
 }
@@ -1131,8 +1131,8 @@ textarea {
   flex-wrap: wrap;
 }
 
-.discovery-controls--returning .lookup-row,
-.discovery-controls--returning .homepage-category-select {
+.discovery-controls--compact .lookup-row,
+.discovery-controls--compact .homepage-category-select {
   margin-bottom: 24px;
 }
 
@@ -1152,15 +1152,15 @@ textarea {
   flex: 1 1 280px;
 }
 
-.discovery-controls--returning .lookup-control,
-.discovery-controls--returning .lookup-row .search-section {
+.discovery-controls--compact .lookup-control,
+.discovery-controls--compact .lookup-row .search-section {
   display: flex;
   align-items: flex-start;
   gap: 6px;
 }
 
-.discovery-controls--returning .organizer-field,
-.discovery-controls--returning .search-field {
+.discovery-controls--compact .organizer-field,
+.discovery-controls--compact .search-field {
   flex: 1 1 220px;
   min-width: 0;
 }
@@ -1825,11 +1825,14 @@ textarea {
 
 @media (max-width: 720px) {
   .toast {
-    top: calc(112px + env(safe-area-inset-top));
-    right: 14px;
-    left: 14px;
-    max-width: none;
+    top: calc(76px + env(safe-area-inset-top));
+    right: 10px;
+    left: auto;
+    max-width: min(300px, calc(100vw - 20px));
+    gap: 8px;
+    padding: 8px 10px;
     justify-content: space-between;
+    font-size: 14px;
   }
 }
 

@@ -561,13 +561,14 @@ function gotoBulkAdd() {
           <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="openRestoreModal(event)">Restore</button>
           <button v-else class="button danger button--compact" type="button" @click="openCancellationModal(event, event.cancellation_reason || '')">Cancel</button>
           <button
-            class="button button--compact management-card__delete"
+            class="button button--compact management-card__delete icon-text"
             type="button"
             aria-label="Delete event"
             title="Delete event"
             @click="openDeleteModal(event)"
           >
             <Trash2 class="icon icon--sm" aria-hidden="true" />
+            Delete
           </button>
         </div>
       </div>

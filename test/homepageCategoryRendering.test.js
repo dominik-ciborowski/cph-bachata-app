@@ -22,6 +22,7 @@ const stubComponent = { template: '<i></i>' }
 
 async function renderHomepage({
   returningUser,
+  favoritesView = false,
   category = 'all',
   filter = 'all',
   organizer = 'all',
@@ -30,8 +31,9 @@ async function renderHomepage({
   searchExpanded = false
 }) {
   const state = {
-    isFavoritesView: false,
-    isReturningHomepage: returningUser,
+    isFavoritesView: favoritesView,
+    isReturningHomepage: returningUser && !favoritesView,
+    usesCompactDiscoveryControls: returningUser || favoritesView,
     hasSeenHomepageIntroduction: returningUser,
     flashMessage: '',
     showLoginBenefitsBanner: false,
@@ -50,6 +52,7 @@ async function renderHomepage({
       filter !== 'all'
     ),
     homepageCategories: ['social', 'class', 'workshop', 'festival'],
+    discoveryCategories: ['social', 'class', 'workshop', 'festival'],
     category,
     filter,
     loading: true,
@@ -148,4 +151,14 @@ test('returning-user expanded organizer keeps its selected organizer trigger vis
   assert.match(html, /aria-expanded="true"[^>]*>.*Bachata House<\/button>/)
   assert.match(html, /class="organizer-field"/)
   assert.match(html, /<select value="Bachata House"/)
+})
+
+test('My Events uses the compact discovery controls', async () => {
+  const html = await renderHomepage({ returningUser: false, favoritesView: true })
+
+  assert.match(html, />\s*Find events\s*</)
+  assert.match(html, /Organizer<\/button>/)
+  assert.match(html, /Search events<\/button>/)
+  assert.match(html, /class="category-filter homepage-category-select"/)
+  assert.match(html, />All categories<\/option>/)
 })
