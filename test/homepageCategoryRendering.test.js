@@ -92,6 +92,9 @@ async function renderHomepage({
 test('returning-user homepage renders the category dropdown without category chips', async () => {
   const html = await renderHomepage({ returningUser: true })
 
+  assert.match(html, />\s*Find events\s*</)
+  assert.match(html, /Organizer<\/button>/)
+  assert.match(html, /Search events<\/button>/)
   assert.match(html, /class="category-filter homepage-category-select"/)
   assert.match(html, /<option value="all">All categories<\/option>/)
   assert.match(html, /<option value="social">Social<\/option>/)
@@ -100,6 +103,13 @@ test('returning-user homepage renders the category dropdown without category chi
   assert.match(html, /<option value="festival">Festival<\/option>/)
   assert.doesNotMatch(html, /class="category-chip-filter"/)
   assert.doesNotMatch(html, />\s*Clear\s*<\/button>/)
+  assert.match(html, />\s*Quick filters\s*</)
+  assert.match(html, />All Events<\/button>/)
+  assert.match(html, />Today<\/button>/)
+  assert.match(html, />This Weekend<\/button>/)
+  assert.match(html, />Free<\/button>/)
+  assert.match(html, />\s*List\s*<\/button>/)
+  assert.match(html, />\s*Calendar\s*<\/button>/)
 })
 
 test('first-time homepage keeps the existing category chips', async () => {

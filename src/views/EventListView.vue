@@ -702,8 +702,7 @@ function exportMyEvents() {
       aria-label="Event discovery controls"
     >
       <template v-if="viewMode === 'list' || isFavoritesView">
-        <template>
-          <div v-if="usesCompactDiscoveryControls" class="category-chip-filter__heading discovery-section-heading">
+        <div v-if="usesCompactDiscoveryControls" class="category-chip-filter__heading discovery-section-heading">
             <span class="category-chip-filter__label">Find events</span>
             <button
               v-if="hasActiveDiscoveryFilters"
@@ -808,7 +807,6 @@ function exportMyEvents() {
               </button>
             </div>
           </div>
-        </template>
 
         <span v-if="usesCompactDiscoveryControls" class="discovery-section-label">Quick filters</span>
         <section class="filters" aria-label="Event filters">
