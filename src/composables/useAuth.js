@@ -1,6 +1,7 @@
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { supabase } from '../lib/supabase'
 import { canManageEvent } from '../lib/permissions'
+import { analytics } from '../analytics/index.js'
 
 const user = ref(null)
 const profile = ref(null)
@@ -9,6 +10,10 @@ const profileLoading = ref(false)
 let authListenerInitialized = false
 let authStatePromise = null
 let profileRequestId = 0
+
+watch(profile, (currentProfile) => {
+  analytics.setAdminExcluded(currentProfile?.role === 'admin')
+}, { immediate: true })
 
 export async function loadCurrentUserProfile(currentUser = user.value) {
   const requestId = ++profileRequestId
