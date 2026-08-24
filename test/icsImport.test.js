@@ -120,6 +120,16 @@ test('rejects malformed ICS input with a useful error', () => {
   assert.throws(() => parseIcsEvents('BEGIN:VEVENT\nSUMMARY:Broken\nDTSTART:nope\nEND:VEVENT'), /Unsupported ICS date\/time/)
 })
 
+test('rejects ICS events that end on a different calendar date', () => {
+  assert.throws(() => parseIcsEvents(`BEGIN:VCALENDAR
+BEGIN:VEVENT
+SUMMARY:Overnight event
+DTSTART;TZID=Europe/Copenhagen:20260821T220000
+DTEND;TZID=Europe/Copenhagen:20260822T010000
+END:VEVENT
+END:VCALENDAR`), /Multi-day events are not supported/)
+})
+
 test('the management import flow renders a preview before its explicit save action', async () => {
   const source = await readFile(new URL('../src/views/IcsImportView.vue', import.meta.url), 'utf8')
 

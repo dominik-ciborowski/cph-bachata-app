@@ -36,12 +36,6 @@ describe('event payload ownership', () => {
     assert.equal(payload.status, 'approved')
   })
 
-  it('uses an explicitly provided end date for multi-day imported events', () => {
-    const payload = buildNewEventPayload({ ...form, end_date: '2026-06-13', end_time: '01:00' }, 'user-123')
-
-    assert.equal(payload.end_time, new Date('2026-06-13T01:00:00').toISOString())
-  })
-
   it('adds created_by to every bulk-created event payload', () => {
     const rows = buildBulkEventPayloads(form, ['2026-06-12', '2026-06-19'], 'user-456')
 

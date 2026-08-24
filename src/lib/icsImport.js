@@ -108,12 +108,15 @@ function buildPreviewEvent(properties, index) {
   const start = startProperty ? parseIcsDateTime(startProperty.value, startProperty.parameters) : null
   const end = endProperty ? parseIcsDateTime(endProperty.value, endProperty.parameters) : null
 
+  if (start && end && start.date !== end.date) {
+    throw new Error(`Event ${index + 1} ends on a different date. Multi-day events are not supported.`)
+  }
+
   return {
     importId: `ics-event-${index + 1}`,
     title: unescapeIcsText(properties.SUMMARY?.[0]?.value || ''),
     date: start?.date || '',
     start_time: start?.time || '',
-    end_date: end?.date || start?.date || '',
     end_time: end?.time || '',
     location: unescapeIcsText(properties.LOCATION?.[0]?.value || ''),
     description: unescapeIcsText(properties.DESCRIPTION?.[0]?.value || ''),

@@ -15,7 +15,7 @@ export function buildEventPayload(form) {
     is_recurring: Boolean(form.is_recurring),
     event_link: form.event_link || null,
     start_time: toDateTime(form.date, form.start_time),
-    end_time: form.end_time ? toDateTime(form.end_date || form.date, form.end_time) : null,
+    end_time: form.end_time ? toDateTime(form.date, form.end_time) : null,
     status: form.status || 'approved'
   }
 }
