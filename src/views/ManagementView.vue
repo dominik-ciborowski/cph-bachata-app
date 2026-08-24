@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import CancellationModal from '../components/CancellationModal.vue'
 import ConfirmationModal from '../components/ConfirmationModal.vue'
-import { CalendarPlus, Plus, Trash2 } from 'lucide-vue-next'
+import { CalendarPlus, FileUp, Plus, Trash2 } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
 import { trackOrganizerEvent } from '../analytics/interactionTracking'
@@ -419,6 +419,10 @@ function gotoAddEvent() {
 function gotoBulkAdd() {
   router.push('/management/bulk')
 }
+
+function gotoIcsImport() {
+  router.push('/management/import-ics')
+}
 </script>
 
 <template>
@@ -441,6 +445,7 @@ function gotoBulkAdd() {
     <div class="management-toolbar__actions" aria-label="Management actions">
       <button class="button button--compact icon-text" type="button" @click="gotoAddEvent"><Plus class="icon icon--sm" />Add Event</button>
       <button class="button secondary button--compact icon-text" type="button" @click="gotoBulkAdd"><CalendarPlus class="icon icon--sm" />Bulk Add Events</button>
+      <button class="button secondary button--compact icon-text" type="button" @click="gotoIcsImport"><FileUp class="icon icon--sm" />Import ICS</button>
     </div>
 
     <section v-if="!loading && filteredEvents.length > 0" class="card bulk-selection-bar" aria-label="Bulk event selection">
