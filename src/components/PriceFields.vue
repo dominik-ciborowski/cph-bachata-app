@@ -1,6 +1,17 @@
 <script setup>
 import { PRICE_TYPES } from '../lib/pricing'
 
+const props = defineProps({
+  idPrefix: {
+    type: String,
+    default: 'price'
+  },
+  requireConfirmation: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const price = defineModel({
   type: Object,
   required: true
@@ -18,8 +29,9 @@ function removePriceOption(index) {
 
 <template>
   <div class="field price-editor">
-    <label for="price-type">Price</label>
-    <select id="price-type" v-model="price.type">
+    <label :for="`${props.idPrefix}-type`">Price</label>
+    <select :id="`${props.idPrefix}-type`" v-model="price.type">
+      <option v-if="props.requireConfirmation" value="" disabled>Confirm price</option>
       <option :value="PRICE_TYPES.FREE">Free</option>
       <option :value="PRICE_TYPES.FIXED">Fixed Price</option>
       <option :value="PRICE_TYPES.MULTIPLE">Multiple Prices</option>
@@ -27,8 +39,8 @@ function removePriceOption(index) {
     </select>
 
     <div v-if="price.type === PRICE_TYPES.FIXED" class="field price-editor__nested">
-      <label for="price-amount">Amount (DKK)</label>
-      <input id="price-amount" v-model="price.amount" type="number" min="0" step="1" placeholder="140" required />
+      <label :for="`${props.idPrefix}-amount`">Amount (DKK)</label>
+      <input :id="`${props.idPrefix}-amount`" v-model="price.amount" type="number" min="0" step="1" placeholder="140" required />
     </div>
 
     <div v-else-if="price.type === PRICE_TYPES.MULTIPLE" class="price-editor__nested price-options">
@@ -48,11 +60,12 @@ function removePriceOption(index) {
     </div>
 
     <div v-else-if="price.type === PRICE_TYPES.LINK" class="field price-editor__nested">
-      <label for="price-note">Optional note</label>
-      <input id="price-note" v-model="price.note" placeholder="Ticket options available on the event page." />
+      <label :for="`${props.idPrefix}-note`">Optional note</label>
+      <input :id="`${props.idPrefix}-note`" v-model="price.note" placeholder="Ticket options available on the event page." />
       <p class="field-help">Use this when pricing depends on options listed on the event page.</p>
     </div>
 
-    <p v-else class="field-help">This event will be shown as free.</p>
+    <p v-else-if="price.type === PRICE_TYPES.FREE" class="field-help">This event will be shown as free.</p>
+    <p v-else class="field-help">Confirm whether this event is free or paid.</p>
   </div>
 </template>

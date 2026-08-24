@@ -56,6 +56,25 @@ test('disabled analytics does not track events', () => {
   assert.equal(logged, false)
 })
 
+test('admin users are excluded from analytics while other roles remain tracked', () => {
+  const calls = []
+  const service = new AnalyticsService([{ initialize: () => {}, track: (event) => calls.push(event) }], true)
+  const originalDebug = console.debug
+  console.debug = () => {}
+
+  try {
+    service.setAdminExcluded(true)
+    service.track('event_opened')
+
+    service.setAdminExcluded(false)
+    service.track('event_opened')
+  } finally {
+    console.debug = originalDebug
+  }
+
+  assert.deepEqual(calls, ['event_opened'])
+})
+
 test('enabled analytics initializes all providers', () => {
   let initializationCount = 0
   const provider = { initialize: () => { initializationCount += 1 }, track: () => {} }

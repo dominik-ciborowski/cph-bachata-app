@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { X } from 'lucide-vue-next'
+import { Megaphone, X } from 'lucide-vue-next'
 import {
   dismissAnnouncementId,
   fetchActiveAnnouncements,
@@ -12,6 +12,8 @@ import { AnalyticsEvents } from '../analytics/types'
 const announcements = ref([])
 const dismissedIds = ref(new Set())
 const loading = ref(false)
+const announcementTitle = 'New features coming soon'
+const announcementMessage = 'Thanks for the feedback — Week View and more are on the way.'
 
 const visibleAnnouncement = computed(() => (
   announcements.value.find((announcement) => !dismissedIds.value.has(String(announcement.id))) || null
@@ -53,9 +55,11 @@ function clickAnnouncement() {
     aria-live="polite"
     @click="clickAnnouncement"
   >
+    <Megaphone class="site-announcement__icon" aria-hidden="true" />
+
     <div class="site-announcement__content">
-      <p v-if="visibleAnnouncement.title" class="site-announcement__title">{{ visibleAnnouncement.title }}</p>
-      <p class="site-announcement__message">{{ visibleAnnouncement.message }}</p>
+      <p class="site-announcement__title">{{ announcementTitle }}</p>
+      <p class="site-announcement__message">{{ announcementMessage }}</p>
     </div>
 
     <button class="site-announcement__dismiss" type="button" aria-label="Dismiss announcement" @click.stop="dismissBanner">

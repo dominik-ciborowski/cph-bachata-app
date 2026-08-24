@@ -85,6 +85,7 @@ onMounted(() => {
         <span v-else class="calendar-week__current-label">Current week</span>
       </div>
       <button class="calendar-nav-button" type="button" aria-label="Next week" @click="changeWeek(1)"><ChevronRight class="icon icon--sm" /></button>
+      <slot name="mode-toggle" />
     </div>
 
     <p v-if="loading" class="empty-state calendar-week__desktop-status">Loading week…</p>

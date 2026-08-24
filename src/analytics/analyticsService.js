@@ -28,6 +28,11 @@ export class AnalyticsService {
   constructor(providers = [], enabled = false) {
     this.providers = providers
     this.enabled = enabled
+    this.adminExcluded = false
+  }
+
+  setAdminExcluded(excluded) {
+    this.adminExcluded = excluded === true
   }
 
   initialize() {
@@ -47,7 +52,7 @@ export class AnalyticsService {
    * @param {import('./types.js').AnalyticsProperties} [properties]
    */
   track(event, properties) {
-    if (!this.enabled) return
+    if (!this.enabled || this.adminExcluded) return
 
     const normalizedProperties = normalizeAnalyticsProperties(properties)
     console.debug('[Analytics]', event, normalizedProperties)

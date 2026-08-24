@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CalendarPlus, X } from 'lucide-vue-next'
+import { CalendarPlus, Search, Users, X } from 'lucide-vue-next'
 import EventCalendarView from '../components/EventCalendarView.vue'
 import EventListResultsView from '../components/EventListView.vue'
 import { useAuth } from '../composables/useAuth'
@@ -24,11 +24,16 @@ import {
 const route = useRoute()
 const router = useRouter()
 const { user, isAuthenticated, loading: authLoading } = useAuth()
+const homepageIntroductionShownKey = 'homepage_introduction_shown'
+const homepageCategories = ['social', 'class', 'workshop', 'festival']
 
 const filter = ref('all')
 const category = ref('all')
 const organizer = ref('all')
+const organizerExpanded = ref(false)
 const searchQuery = ref('')
+const searchExpanded = ref(false)
+const searchInput = ref(null)
 const events = ref([])
 const weekEvents = ref([])
 const weekLoading = ref(false)
@@ -41,18 +46,31 @@ const favoriteBusyId = ref(null)
 const calendarExportError = ref('')
 const calendarFiltersOpen = ref(false)
 const discoveryControls = ref(null)
+const organizerControl = ref(null)
+const searchControl = ref(null)
 const showListBackToTop = ref(false)
 const showLoginBenefitsBanner = ref(false)
+const hasSeenHomepageIntroduction = ref(readHomepageIntroductionFlag())
 let searchAnalyticsTimeoutId = null
 let lastNoResultsSearchState = ''
 let lastPerformedSearchQuery = ''
 let weekRequestId = 0
+let lookupTouchStartY = null
+let lookupTouchStartedInside = false
 
 const loginBenefitsDismissedUntilKey = 'login_benefits_dismissed_until'
 const loginBenefitsDismissDurationMs = 7 * 24 * 60 * 60 * 1000
 const validMainViewModes = new Set(['list', 'calendar'])
 
 const isFavoritesView = computed(() => route.path === '/favorites')
+const isReturningHomepage = computed(() => !isFavoritesView.value && hasSeenHomepageIntroduction.value)
+const usesCompactDiscoveryControls = computed(() => isReturningHomepage.value || isFavoritesView.value)
+const hasActiveDiscoveryFilters = computed(() => (
+  organizer.value !== 'all' ||
+  searchQuery.value !== '' ||
+  category.value !== 'all' ||
+  filter.value !== 'all'
+))
 const viewMode = ref(getStoredPreferredView())
 const calendarView = ref(getCalendarView())
 
@@ -61,6 +79,17 @@ today.setHours(0, 0, 0, 0)
 
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  document.addEventListener('pointerdown', handleLookupPointerDown)
+  window.addEventListener('wheel', handleLookupWheel, { passive: true })
+  window.addEventListener('touchstart', handleLookupTouchStart, { passive: true })
+  window.addEventListener('touchmove', handleLookupTouchMove, { passive: true })
+  if (!isFavoritesView.value && !hasSeenHomepageIntroduction.value) {
+    try {
+      localStorage.setItem(homepageIntroductionShownKey, 'true')
+    } catch {
+      // Keep showing the introduction when storage is unavailable.
+    }
+  }
   const storedFlashMessage = sessionStorage.getItem('flash_message')
   if (storedFlashMessage) {
     flashMessage.value = storedFlashMessage
@@ -73,6 +102,14 @@ onMounted(async () => {
   updateLoginBenefitsBannerVisibility()
   await loadEvents()
 })
+
+function readHomepageIntroductionFlag() {
+  try {
+    return localStorage.getItem(homepageIntroductionShownKey) === 'true'
+  } catch {
+    return false
+  }
+}
 
 watch(user, async () => {
   updateLoginBenefitsBannerVisibility()
@@ -91,6 +128,10 @@ watch(isFavoritesView, async () => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  document.removeEventListener('pointerdown', handleLookupPointerDown)
+  window.removeEventListener('wheel', handleLookupWheel)
+  window.removeEventListener('touchstart', handleLookupTouchStart)
+  window.removeEventListener('touchmove', handleLookupTouchMove)
   if (searchAnalyticsTimeoutId) window.clearTimeout(searchAnalyticsTimeoutId)
 })
 
@@ -321,13 +362,14 @@ function matchesSearch(event) {
 }
 
 function setQuickFilter(nextFilter) {
-  const selectedFilter = filter.value === nextFilter && nextFilter !== 'all' ? 'all' : nextFilter
-  if (selectedFilter === filter.value) return
-  filter.value = selectedFilter
-  trackFilterChanged('quick_filter', selectedFilter)
+  closeLookupPanels()
+  if (filter.value === nextFilter) return
+  filter.value = nextFilter
+  trackFilterChanged('quick_filter', nextFilter)
 }
 
 function setViewMode(nextViewMode) {
+  closeLookupPanels()
   if (!validMainViewModes.has(nextViewMode)) {
     nextViewMode = 'list'
   }
@@ -391,16 +433,131 @@ function clearFilters() {
   trackFiltersCleared()
 }
 
+function clearHomepageDiscovery() {
+  if (!hasActiveDiscoveryFilters.value) return
+  organizer.value = 'all'
+  searchQuery.value = ''
+  category.value = 'all'
+  filter.value = 'all'
+  organizerExpanded.value = false
+  searchExpanded.value = false
+  trackFiltersCleared()
+}
+
 function setCategoryFilter(selectedCategory) {
+  closeLookupPanels()
   if (category.value === selectedCategory) return
   category.value = selectedCategory
   trackFilterChanged('category', selectedCategory)
+}
+
+function toggleCategoryFilter(selectedCategory) {
+  setCategoryFilter(category.value === selectedCategory ? 'all' : selectedCategory)
 }
 
 function setOrganizerFilter(selectedOrganizer) {
   if (organizer.value === selectedOrganizer) return
   organizer.value = selectedOrganizer
   trackFilterChanged('organizer', selectedOrganizer)
+}
+
+function selectHomepageOrganizer(selectedOrganizer) {
+  setOrganizerFilter(selectedOrganizer)
+  organizerExpanded.value = false
+}
+
+function closeLookupPanels() {
+  if (!usesCompactDiscoveryControls.value) return
+  organizerExpanded.value = false
+  searchExpanded.value = false
+}
+
+function hasOpenLookupPanel() {
+  return organizerExpanded.value || searchExpanded.value
+}
+
+function isInsideLookupControls(target) {
+  return target instanceof Node && (
+    organizerControl.value?.contains(target) || searchControl.value?.contains(target)
+  )
+}
+
+function handleLookupPointerDown(event) {
+  if (!usesCompactDiscoveryControls.value || !hasOpenLookupPanel() || isInsideLookupControls(event.target)) return
+  closeLookupPanels()
+}
+
+function handleLookupWheel(event) {
+  if (
+    !usesCompactDiscoveryControls.value ||
+    !hasOpenLookupPanel() ||
+    isInsideLookupControls(event.target) ||
+    Math.abs(event.deltaY) <= Math.abs(event.deltaX)
+  ) return
+
+  closeLookupPanels()
+}
+
+function handleLookupTouchStart(event) {
+  if (!usesCompactDiscoveryControls.value || !hasOpenLookupPanel()) return
+  lookupTouchStartY = event.touches[0]?.clientY ?? null
+  lookupTouchStartedInside = isInsideLookupControls(event.target)
+}
+
+function handleLookupTouchMove(event) {
+  if (
+    lookupTouchStartY === null ||
+    lookupTouchStartedInside ||
+    !usesCompactDiscoveryControls.value ||
+    !hasOpenLookupPanel()
+  ) return
+
+  const currentY = event.touches[0]?.clientY
+  if (currentY === undefined || Math.abs(currentY - lookupTouchStartY) < 8) return
+  closeLookupPanels()
+  lookupTouchStartY = null
+}
+
+function toggleOrganizer() {
+  if (organizerExpanded.value) {
+    organizerExpanded.value = false
+    return
+  }
+
+  searchExpanded.value = false
+  organizerExpanded.value = true
+}
+
+function clearOrCloseOrganizer() {
+  if (!usesCompactDiscoveryControls.value && organizer.value !== 'all') {
+    setOrganizerFilter('all')
+    return
+  }
+
+  organizerExpanded.value = false
+}
+
+async function toggleSearch() {
+  if (searchExpanded.value) {
+    searchExpanded.value = false
+    return
+  }
+
+  organizerExpanded.value = false
+  searchExpanded.value = true
+  await nextTick()
+  searchInput.value?.focus()
+}
+
+async function clearOrCloseSearch() {
+  if (!usesCompactDiscoveryControls.value && searchQuery.value) {
+    searchQuery.value = ''
+    await nextTick()
+    searchInput.value?.focus()
+    return
+  }
+
+  searchExpanded.value = false
 }
 
 function scrollToDiscoveryControls() {
@@ -410,6 +567,10 @@ function scrollToDiscoveryControls() {
 const categories = computed(() => {
   return ['all', ...new Set(events.value.map(event => event.category))]
 })
+
+const discoveryCategories = computed(() => isFavoritesView.value
+  ? categories.value.filter(item => item !== 'all')
+  : homepageCategories)
 
 const organizers = computed(() => {
   return [...new Set(events.value.map(getOrganizerFilterName).filter(Boolean))]
@@ -483,16 +644,22 @@ function exportMyEvents() {
 
 <template>
   <div class="public-page">
-    <section class="hero app-hero">
-      <p v-if="isFavoritesView" class="eyebrow">Copenhagen Bachata App</p>
-      <h1>{{ isFavoritesView ? 'My Events' : 'Find your next dance event.' }}</h1>
-      <p>
-        {{ isFavoritesView
-          ? 'Your saved upcoming bachata events in Copenhagen.'
-          : 'Discover bachata socials, classes and workshops across Copenhagen.'
-        }}
-      </p>
-      <p v-if="!isFavoritesView" class="app-hero__attribution">Created by Dancemaniacs for the Copenhagen bachata community.</p>
+    <section class="hero app-hero" :class="{ 'app-hero--compact': isReturningHomepage }">
+      <template v-if="isReturningHomepage">
+        <h1>Find your next dance event.</h1>
+        <p class="app-hero__compact-message">Created by Dancemaniacs for the Copenhagen bachata community.</p>
+      </template>
+      <template v-else>
+        <p v-if="isFavoritesView" class="eyebrow">Copenhagen Bachata App</p>
+        <h1>{{ isFavoritesView ? 'My Events' : 'Find your next dance event.' }}</h1>
+        <p>
+          {{ isFavoritesView
+            ? 'Your saved upcoming bachata events in Copenhagen.'
+            : 'Discover bachata socials, classes and workshops across Copenhagen.'
+          }}
+        </p>
+        <p v-if="!isFavoritesView" class="app-hero__attribution">Created by Dancemaniacs for the Copenhagen bachata community.</p>
+      </template>
     </section>
 
     <p v-if="flashMessage" class="flash-message">{{ flashMessage }}</p>
@@ -528,36 +695,120 @@ function exportMyEvents() {
 
     <p v-else-if="isFavoritesView && calendarExportError" class="empty-state">{{ calendarExportError }}</p>
 
-    <section ref="discoveryControls" class="discovery-controls" aria-label="Event discovery controls">
+    <section
+      ref="discoveryControls"
+      class="discovery-controls"
+      :class="{ 'discovery-controls--compact': usesCompactDiscoveryControls }"
+      aria-label="Event discovery controls"
+    >
       <template v-if="viewMode === 'list' || isFavoritesView">
-        <label class="category-filter">
-          <span>Category</span>
-          <select :value="category" @change="setCategoryFilter($event.target.value)">
-            <option v-for="item in categories" :key="item" :value="item">
-              {{ item === 'all' ? 'All categories' : getCategoryMeta(item).label }}
-            </option>
-          </select>
-        </label>
+        <div v-if="usesCompactDiscoveryControls" class="category-chip-filter__heading discovery-section-heading">
+            <span class="category-chip-filter__label">Find events</span>
+            <button
+              v-if="hasActiveDiscoveryFilters"
+              type="button"
+              class="category-chip-filter__clear"
+              @click="clearHomepageDiscovery"
+            >
+              Clear
+            </button>
+          </div>
+          <div class="lookup-row">
+            <div ref="organizerControl" class="lookup-control" :class="{ 'lookup-control--expanded': organizerExpanded || (!usesCompactDiscoveryControls && organizer !== 'all') }">
+              <button
+                v-if="usesCompactDiscoveryControls || (!organizerExpanded && organizer === 'all')"
+                type="button"
+                class="search-trigger"
+                :aria-expanded="organizerExpanded ? 'true' : 'false'"
+                @click="usesCompactDiscoveryControls ? toggleOrganizer() : organizerExpanded = true"
+              >
+                <Users class="icon icon--sm" />
+                {{ organizer === 'all' ? 'Organizer' : organizer }}
+              </button>
+              <div v-if="organizerExpanded || (!usesCompactDiscoveryControls && organizer !== 'all')" class="organizer-field">
+                <select
+                  :value="organizer"
+                  aria-label="Organizer"
+                  @change="usesCompactDiscoveryControls ? selectHomepageOrganizer($event.target.value) : setOrganizerFilter($event.target.value)"
+                >
+                  <option value="all">All organizers</option>
+                  <option v-for="item in organizers" :key="item" :value="item">
+                    {{ item }}
+                  </option>
+                </select>
+                <button
+                  type="button"
+                  class="organizer-field__action"
+                  :aria-label="usesCompactDiscoveryControls || organizer === 'all' ? 'Close organizer filter' : 'Clear organizer filter'"
+                  @click="clearOrCloseOrganizer"
+                >
+                  <X class="icon icon--sm" />
+                </button>
+              </div>
+            </div>
 
-        <label class="category-filter">
-          <span>Organizer</span>
-          <select :value="organizer" @change="setOrganizerFilter($event.target.value)">
-            <option value="all">All organizers</option>
-            <option v-for="item in organizers" :key="item" :value="item">
-              {{ item }}
-            </option>
-          </select>
-        </label>
+            <div ref="searchControl" class="search-section" :class="{ 'search-section--expanded': searchExpanded || (!usesCompactDiscoveryControls && searchQuery) }">
+              <button
+                v-if="usesCompactDiscoveryControls || (!searchExpanded && !searchQuery)"
+                type="button"
+                class="search-trigger"
+                :aria-expanded="searchExpanded ? 'true' : 'false'"
+                @click="toggleSearch"
+              >
+                <Search class="icon icon--sm" />
+                {{ searchQuery ? 'Search active' : 'Search events' }}
+              </button>
+              <div v-if="searchExpanded || (!usesCompactDiscoveryControls && searchQuery)" class="search-field">
+                <input
+                  ref="searchInput"
+                  v-model="searchQuery"
+                  type="text"
+                  class="search-input"
+                  placeholder="Search by title, organizer, or location..."
+                />
+                <button
+                  type="button"
+                  class="search-field__action"
+                  :aria-label="usesCompactDiscoveryControls || !searchQuery ? 'Close search' : 'Clear search'"
+                  @click="clearOrCloseSearch"
+                >
+                  <X class="icon icon--sm" />
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <div class="search-section">
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="search-input"
-            placeholder="Search by title, organizer, or location..."
-          />
-        </div>
+          <label v-if="usesCompactDiscoveryControls" class="category-filter homepage-category-select">
+            <span>Category</span>
+            <select :value="category" @change="setCategoryFilter($event.target.value)">
+              <option value="all">All categories</option>
+              <option v-for="item in discoveryCategories" :key="item" :value="item">
+                {{ getCategoryMeta(item).label }}
+              </option>
+            </select>
+          </label>
 
+          <div v-else class="category-chip-filter">
+            <div class="category-chip-filter__heading">
+              <span id="homepage-category-label" class="category-chip-filter__label">Category</span>
+              <button v-if="category !== 'all'" type="button" class="category-chip-filter__clear" @click="setCategoryFilter('all')">Clear</button>
+            </div>
+            <div class="category-chip-filter__options" role="group" aria-labelledby="homepage-category-label">
+              <button
+                v-for="item in homepageCategories"
+                :key="item"
+                type="button"
+                class="category-chip"
+                :class="{ active: category === item }"
+                :aria-pressed="category === item ? 'true' : 'false'"
+                @click="toggleCategoryFilter(item)"
+              >
+                {{ getCategoryMeta(item).label }}
+              </button>
+            </div>
+          </div>
+
+        <span v-if="usesCompactDiscoveryControls" class="discovery-section-label">Quick filters</span>
         <section class="filters" aria-label="Event filters">
           <button type="button" class="filter-button" :class="{ active: filter === 'all' }" :aria-pressed="filter === 'all'" @click="setQuickFilter('all')">All Events</button>
           <button type="button" class="filter-button" :class="{ active: filter === 'today' }" :aria-pressed="filter === 'today'" @click="setQuickFilter('today')">Today</button>
