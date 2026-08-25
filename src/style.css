@@ -3194,6 +3194,7 @@ textarea {
   color: var(--color-text-muted);
   font-size: 14px;
   line-height: 1.45;
+  white-space: pre-line;
 }
 
 .site-announcement--warning .site-announcement__title,
