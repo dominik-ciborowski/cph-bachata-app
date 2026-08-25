@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import {
   announcementDismissStorageKey,
@@ -7,6 +8,9 @@ import {
   normalizeAnnouncement,
   readDismissedAnnouncementIds
 } from '../src/lib/siteAnnouncementUtils.js'
+
+const bannerSource = readFileSync(new URL('../src/components/SiteAnnouncementBanner.vue', import.meta.url), 'utf8')
+const announcementsSource = readFileSync(new URL('../src/lib/siteAnnouncements.js', import.meta.url), 'utf8')
 
 function createMemoryStorage(initialValue = null) {
   const values = new Map()
@@ -57,4 +61,16 @@ test('ignores malformed dismissed announcement storage', () => {
   const storage = createMemoryStorage('{bad json')
 
   assert.deepEqual([...readDismissedAnnouncementIds(storage)], [])
+})
+
+test('banner renders the fetched announcement title and message without fallback copy', () => {
+  assert.match(bannerSource, /\{\{ visibleAnnouncement\.title \}\}/)
+  assert.match(bannerSource, /\{\{ visibleAnnouncement\.message \}\}/)
+  assert.doesNotMatch(bannerSource, /New features coming soon/)
+  assert.doesNotMatch(bannerSource, /Week View and more are on the way/)
+})
+
+test('active announcement query requests newest announcements first', () => {
+  assert.match(announcementsSource, /\.eq\('is_active', true\)/)
+  assert.match(announcementsSource, /\.order\('created_at', \{ ascending: false \}\)/)
 })
