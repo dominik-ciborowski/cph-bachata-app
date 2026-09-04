@@ -14,10 +14,11 @@ import { supabase } from '../lib/supabase'
 import { trackOrganizerEvent } from '../analytics/interactionTracking'
 import { AnalyticsEvents } from '../analytics/types'
 import { useAuth } from '../composables/useAuth'
+import { findDefaultOrganizer } from '../lib/profile'
 
 const router = useRouter()
 const route = useRoute()
-const { user, isAdmin, canManageEventRecord } = useAuth()
+const { user, profile, role, isAdmin, canManageEventRecord } = useAuth()
 const status = ref('')
 const organizers = ref([])
 const isEditing = ref(false)
@@ -121,6 +122,13 @@ async function loadEvent(id, options = {}) {
 async function loadOrganizers() {
   try {
     organizers.value = await fetchOrganizers()
+    if (!route.params.id && !route.query.duplicateId) {
+      const defaultOrganizer = findDefaultOrganizer(organizers.value, profile.value, role.value)
+      if (defaultOrganizer) {
+        form.value.organizer_id = defaultOrganizer.id
+        form.value.organizer = defaultOrganizer.name
+      }
+    }
   } catch (organizerError) {
     status.value = organizerError.message
     organizers.value = []

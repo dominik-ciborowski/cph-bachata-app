@@ -160,6 +160,30 @@ export function parseIcsEvents(source) {
   return events
 }
 
+export function combineIcsFileResults(files) {
+  const events = []
+  const errors = []
+
+  for (const file of files) {
+    try {
+      events.push(...parseIcsEvents(file.source))
+    } catch (error) {
+      errors.push(`${file.name}: ${error.message || 'The ICS file could not be parsed.'}`)
+    }
+  }
+
+  events.forEach((event, index) => { event.importId = `ics-event-${index + 1}` })
+  return { events, errors }
+}
+
+export function applyOrganizerToImportedEvents(events, organizer) {
+  for (const event of events) {
+    event.organizer_id = organizer?.id || ''
+    event.organizer = organizer?.name || ''
+  }
+  return events
+}
+
 export function getIcsImportErrors(event) {
   const errors = []
   if (!event.title?.trim()) errors.push('Title is required.')
