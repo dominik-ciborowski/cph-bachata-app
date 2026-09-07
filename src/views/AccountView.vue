@@ -1,14 +1,41 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../lib/supabase'
 import { authMessages, logAuthError } from '../lib/authMessages'
 import { useAuth } from '../composables/useAuth'
+import { fetchOrganizers } from '../lib/organizers'
+import { saveDefaultOrganizer } from '../lib/profile'
 
-const { user } = useAuth()
+const { user, profile, isOrganizer, loadCurrentUserProfile } = useAuth()
 const password = ref('')
 const confirmPassword = ref('')
 const status = ref('')
 const isSuccess = ref(false)
+const organizers = ref([])
+const defaultOrganizer = ref('')
+const organizerStatus = ref('')
+
+onMounted(async () => {
+  if (!isOrganizer.value) return
+  defaultOrganizer.value = profile.value?.default_organizer || ''
+  try {
+    organizers.value = await fetchOrganizers()
+  } catch (error) {
+    organizerStatus.value = error.message || 'Could not load organizers.'
+  }
+})
+
+async function updateDefaultOrganizer() {
+  if (!user.value || !isOrganizer.value) return
+  organizerStatus.value = 'Saving...'
+  try {
+    await saveDefaultOrganizer(user.value.id, defaultOrganizer.value, supabase)
+    await loadCurrentUserProfile(user.value)
+    organizerStatus.value = 'Default organizer saved.'
+  } catch (error) {
+    organizerStatus.value = error.message || 'Could not save default organizer.'
+  }
+}
 const providerLabels = {
   email: 'Email & Password',
   google: 'Google'
@@ -101,6 +128,24 @@ async function changePassword() {
     <section class="hero">
       <h1>Account</h1>
       <p>Manage your login settings.</p>
+    </section>
+
+    <section v-if="isOrganizer" class="card form auth-panel">
+      <div>
+        <h2>Event defaults</h2>
+        <p class="field-help">Choose the organizer that should be pre-filled when you add events.</p>
+      </div>
+      <form class="form" @submit.prevent="updateDefaultOrganizer">
+        <div class="field">
+          <label for="account-default-organizer">Default organizer</label>
+          <select id="account-default-organizer" v-model="defaultOrganizer">
+            <option value="">No default organizer</option>
+            <option v-for="organizer in organizers" :key="organizer.id" :value="organizer.name">{{ organizer.name }}</option>
+          </select>
+        </div>
+        <button class="button" type="submit">Save</button>
+        <p v-if="organizerStatus" class="status" aria-live="polite">{{ organizerStatus }}</p>
+      </form>
     </section>
 
     <section class="card form auth-panel">

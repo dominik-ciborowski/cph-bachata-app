@@ -220,7 +220,7 @@ async function confirmImport() {
         </div>
 
         <div class="field">
-          <label :for="`${event.importId}-end`">End time</label>
+          <label :for="`${event.importId}-end`">End time (optional)</label>
           <input :id="`${event.importId}-end`" v-model="event.end_time" type="time" />
         </div>
 
@@ -237,7 +237,7 @@ async function confirmImport() {
           <input :id="`${event.importId}-link`" v-model="event.event_link" type="url" />
         </div>
 
-        <p v-if="event.allDay" class="field-help">This was an all-day ICS event. Confirm the start and end times before importing.</p>
+        <p v-if="event.allDay" class="field-help">This was an all-day ICS event. Confirm the start time before importing.</p>
         <p v-if="hasDuplicate(event)" class="status ics-import-warning">Possible duplicate: an event with the same title, date, time and organizer already exists.</p>
         <ul v-if="validationErrors[index].length" class="status ics-import-errors">
           <li v-for="message in validationErrors[index]" :key="message">{{ message }}</li>

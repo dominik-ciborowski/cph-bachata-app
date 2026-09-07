@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import CancellationModal from '../components/CancellationModal.vue'
@@ -11,10 +11,11 @@ import { buildEventPayload, buildNewEventPayload } from '../lib/eventPayload'
 import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
 import { createDefaultPrice, normalizePrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
-import { trackOrganizerEvent } from '../analytics/interactionTracking'
+import { trackBulkEventsCreated, trackOrganizerEvent } from '../analytics/interactionTracking'
 import { AnalyticsEvents } from '../analytics/types'
 import { useAuth } from '../composables/useAuth'
 import { findDefaultOrganizer } from '../lib/profile'
+import { getWeeklyOccurrenceDates, WEEKDAYS } from '../lib/weeklyRecurrence'
 
 const router = useRouter()
 const route = useRoute()
@@ -30,6 +31,15 @@ const eventStatus = ref('approved')
 const cancellationModalOpen = ref(false)
 const cancellationReason = ref('')
 const confirmationModal = ref(null)
+const occurrence = ref('once')
+const selectedWeekdays = ref([])
+const recurrenceStartDate = ref('')
+const recurrenceEndDate = ref('')
+const recurringDates = computed(() => getWeeklyOccurrenceDates(
+  recurrenceStartDate.value,
+  recurrenceEndDate.value,
+  selectedWeekdays.value
+))
 
 const form = ref({
   title: '',
@@ -44,7 +54,7 @@ const form = ref({
   event_link: '',
   date: '',
   start_time: '18:30',
-  end_time: '21:30'
+  end_time: ''
 })
 
 onMounted(async () => {
@@ -143,6 +153,11 @@ async function saveEvent() {
     return
   }
 
+  if (!isEditing.value && occurrence.value === 'weekly' && recurringDates.value.length === 0) {
+    status.value = 'Select at least one weekday and a valid start and end date.'
+    return
+  }
+
   let organizer
 
   try {
@@ -158,9 +173,12 @@ async function saveEvent() {
     organizer: organizer?.name || form.value.organizer || null,
     status: reviewMode.value ? reviewStatus.value : eventStatus.value
   }
+  const isWeeklyCreation = !isEditing.value && occurrence.value === 'weekly'
   const payload = isEditing.value
     ? buildEventPayload(eventForm)
-    : buildNewEventPayload(eventForm, user.value.id)
+    : (isWeeklyCreation
+        ? recurringDates.value.map((date) => buildNewEventPayload({ ...eventForm, date, is_recurring: true }, user.value.id))
+        : buildNewEventPayload({ ...eventForm, is_recurring: false }, user.value.id))
   const query = isEditing.value
     ? supabase.from('events').update(payload).eq('id', eventId.value)
     : supabase.from('events').insert(payload)
@@ -172,13 +190,16 @@ async function saveEvent() {
     return
   }
 
-  const analyticsEvent = { ...payload, ...(isEditing.value ? { id: eventId.value } : {}) }
+  const analyticsEvent = { ...(Array.isArray(payload) ? payload[0] : payload), ...(isEditing.value ? { id: eventId.value } : {}) }
   const analyticsEventName = isEditing.value
     ? AnalyticsEvents.EVENT_UPDATED
     : (isDuplicating.value ? AnalyticsEvents.EVENT_DUPLICATED : AnalyticsEvents.EVENT_CREATED)
-  trackOrganizerEvent(analyticsEventName, analyticsEvent)
+  if (isWeeklyCreation) trackBulkEventsCreated(analyticsEvent, payload.length)
+  else trackOrganizerEvent(analyticsEventName, analyticsEvent)
 
-  sessionStorage.setItem('flash_message', isEditing.value ? 'Event updated successfully.' : 'Event created successfully.')
+  sessionStorage.setItem('flash_message', isEditing.value
+    ? 'Event updated successfully.'
+    : `${isWeeklyCreation ? payload.length : 1} event${isWeeklyCreation && payload.length !== 1 ? 's' : ''} created successfully.`)
   router.push(reviewMode.value ? '/admin/submissions' : '/management')
 }
 
@@ -388,16 +409,44 @@ async function deleteEvent() {
         <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
       </div>
 
-      <div class="field checkbox-field">
+      <fieldset v-if="!isEditing" class="field">
+        <legend>Occurs</legend>
         <label class="checkbox-field__label">
-          <input v-model="form.is_recurring" type="checkbox" />
-          Weekly event
+          <input v-model="occurrence" type="radio" value="once" /> Once
         </label>
-        <p class="field-help">Show this when the event repeats weekly.</p>
-      </div>
+        <label class="checkbox-field__label">
+          <input v-model="occurrence" type="radio" value="weekly" /> Repeats weekly
+        </label>
+      </fieldset>
 
-      <div class="field">
-        <label for="event-date">Date *</label>
+      <template v-if="!isEditing && occurrence === 'weekly'">
+        <fieldset class="field">
+          <legend>Repeats on *</legend>
+          <div class="date-chip-list">
+            <label v-for="weekday in WEEKDAYS" :key="weekday.value" class="date-chip">
+              <input v-model="selectedWeekdays" type="checkbox" :value="weekday.value" />
+              {{ weekday.label }}
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="grid-two">
+          <div class="field">
+            <label for="recurrence-start-date">Start date *</label>
+            <input id="recurrence-start-date" v-model="recurrenceStartDate" type="date" required />
+          </div>
+          <div class="field">
+            <label for="recurrence-end-date">End date *</label>
+            <input id="recurrence-end-date" v-model="recurrenceEndDate" type="date" required />
+          </div>
+        </div>
+        <p class="field-help" aria-live="polite">
+          {{ recurringDates.length }} event{{ recurringDates.length === 1 ? '' : 's' }} will be created.
+        </p>
+      </template>
+
+      <div v-else class="field">
+        <label for="event-date">{{ isEditing ? 'Date' : 'Date *' }}</label>
         <input id="event-date" v-model="form.date" type="date" required />
       </div>
 
@@ -408,7 +457,7 @@ async function deleteEvent() {
         </div>
 
         <div class="field">
-          <label for="event-end">End Time</label>
+          <label for="event-end">End Time (optional)</label>
           <input id="event-end" v-model="form.end_time" type="time" />
         </div>
       </div>
@@ -416,7 +465,7 @@ async function deleteEvent() {
       <div class="form-actions">
         <button class="button icon-text" type="submit">
           <component :is="isEditing ? Pencil : Plus" class="icon icon--sm" />
-          {{ reviewMode ? 'Save edits' : (isEditing ? 'Save changes' : 'Create event') }}
+          {{ reviewMode ? 'Save edits' : (isEditing ? 'Save changes' : (occurrence === 'weekly' ? `Create ${recurringDates.length} Events` : 'Create Event')) }}
         </button>
         <RouterLink :to="reviewMode ? '/admin/submissions' : '/management'" class="button secondary">Cancel</RouterLink>
         <button v-if="reviewMode && isAdmin" class="button" type="button" @click="reviewSubmission('approved')">Approve submission</button>

@@ -8,7 +8,6 @@ import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
 import AccountView from '../views/AccountView.vue'
 import ManagementView from '../views/ManagementView.vue'
-import BulkAddView from '../views/BulkAddView.vue'
 import IcsImportView from '../views/IcsImportView.vue'
 import OrganizerManagementView from '../views/OrganizerManagementView.vue'
 import UserManagementView from '../views/UserManagementView.vue'
@@ -32,7 +31,7 @@ const routes = [
   { path: '/admin/submissions', component: PendingSubmissionsView, meta: { requiresAdmin: true } },
   { path: '/admin/:id', component: AdminView, meta: { requiresManagement: true } },
   { path: '/management', component: ManagementView, meta: { requiresManagement: true } },
-  { path: '/management/bulk', component: BulkAddView, meta: { requiresManagement: true } },
+  { path: '/management/bulk', redirect: '/admin' },
   { path: '/management/import-ics', component: IcsImportView, meta: { requiresManagement: true } },
   { path: '/management/organizers', component: OrganizerManagementView, meta: { requiresAdmin: true } },
   { path: '/management/users', component: UserManagementView, meta: { requiresAdmin: true } },

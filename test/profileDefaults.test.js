@@ -39,14 +39,16 @@ test('saves the nullable default organizer to the current profile', async () => 
   assert.equal(matchedId, 'user-1')
 })
 
-test('organizer management saves defaults while account settings do not expose them', async () => {
+test('organizer management and organizer account settings save defaults explicitly', async () => {
   const organizerManagementSource = await readFile(new URL('../src/views/OrganizerManagementView.vue', import.meta.url), 'utf8')
   const accountSource = await readFile(new URL('../src/views/AccountView.vue', import.meta.url), 'utf8')
 
   assert.match(organizerManagementSource, /select\('id,email,role,default_organizer'\)/)
   assert.match(organizerManagementSource, /@change="updateDefaultOrganizer\(profile, \$event\.target\.value\)"/)
   assert.match(organizerManagementSource, /v-for="organizer in organizerOptions"/)
-  assert.doesNotMatch(accountSource, /defaultOrganizer|Default organizer|Event defaults/)
+  assert.match(accountSource, /@submit\.prevent="updateDefaultOrganizer"/)
+  assert.match(accountSource, />Save<\/button>/)
+  assert.doesNotMatch(accountSource, /@change="updateDefaultOrganizer/)
 })
 
 test('add event and ICS import continue to use the organizer profile default', async () => {
