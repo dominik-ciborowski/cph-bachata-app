@@ -31,3 +31,18 @@ export function getWeeklyOccurrenceDates(startDate, endDate, weekdays) {
   }
   return dates
 }
+
+export function addDays(dateValue, days) {
+  const date = parseDate(dateValue)
+  if (!date) return ''
+  date.setUTCDate(date.getUTCDate() + Number(days || 0))
+  return formatDate(date)
+}
+
+export function buildOccurrenceRanges(dates, durationDays = 1) {
+  const offset = Math.max(1, Number(durationDays) || 1) - 1
+  return (dates || []).map((startDate) => ({
+    startDate,
+    endDate: addDays(startDate, offset)
+  }))
+}

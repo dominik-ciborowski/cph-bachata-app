@@ -108,14 +108,11 @@ function buildPreviewEvent(properties, index) {
   const start = startProperty ? parseIcsDateTime(startProperty.value, startProperty.parameters) : null
   const end = endProperty ? parseIcsDateTime(endProperty.value, endProperty.parameters) : null
 
-  if (start && end && start.date !== end.date) {
-    throw new Error(`Event ${index + 1} ends on a different date. Multi-day events are not supported.`)
-  }
-
   return {
     importId: `ics-event-${index + 1}`,
     title: unescapeIcsText(properties.SUMMARY?.[0]?.value || ''),
     date: start?.date || '',
+    end_date: end?.date || start?.date || '',
     start_time: start?.time || '',
     end_time: end?.time || '',
     location: unescapeIcsText(properties.LOCATION?.[0]?.value || ''),
@@ -189,6 +186,7 @@ export function getIcsImportErrors(event) {
   if (!event.title?.trim()) errors.push('Title is required.')
   if (!event.date) errors.push('Date is required.')
   if (!event.start_time) errors.push('Start time is required.')
+  if (event.end_date && event.date && event.end_date < event.date) errors.push('End date cannot be before start date.')
   if (!event.organizer_id) errors.push('Organizer must be selected.')
   if (!supportedCategories.includes(event.category)) errors.push('Category must be selected.')
   if (!Object.values(PRICE_TYPES).includes(event.price?.type)) errors.push('Price must be confirmed.')

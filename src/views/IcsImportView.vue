@@ -121,7 +121,7 @@ async function confirmImport() {
   const rows = previewEvents.value.map((event) => ({
     ...buildNewEventPayload({ ...event, status: 'approved' }, user.value.id),
     start_time: copenhagenDateTimeToIso(event.date, event.start_time),
-    end_time: event.end_time ? copenhagenDateTimeToIso(event.date, event.end_time) : null
+    end_time: event.end_time ? copenhagenDateTimeToIso(event.end_date || event.date, event.end_time) : null
   }))
   saving.value = true
   status.value = 'Importing events...'
@@ -217,6 +217,12 @@ async function confirmImport() {
             <label :for="`${event.importId}-start`">Start time *</label>
             <input :id="`${event.importId}-start`" v-model="event.start_time" type="time" required />
           </div>
+        </div>
+
+        <div class="field">
+          <label :for="`${event.importId}-end-date`">End date (optional)</label>
+          <input :id="`${event.importId}-end-date`" v-model="event.end_date" type="date" :min="event.date" />
+          <p class="field-help">Leave empty for a one-day event.</p>
         </div>
 
         <div class="field">
