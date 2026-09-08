@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import CancellationModal from '../components/CancellationModal.vue'
@@ -11,13 +11,16 @@ import { buildEventPayload, buildNewEventPayload } from '../lib/eventPayload'
 import { fetchOrganizers, resolveOrganizerForEvent } from '../lib/organizers'
 import { createDefaultPrice, normalizePrice } from '../lib/pricing'
 import { supabase } from '../lib/supabase'
-import { trackOrganizerEvent } from '../analytics/interactionTracking'
+import { trackBulkEventsCreated, trackOrganizerEvent } from '../analytics/interactionTracking'
 import { AnalyticsEvents } from '../analytics/types'
 import { useAuth } from '../composables/useAuth'
+import { findDefaultOrganizer } from '../lib/profile'
+import { buildOccurrenceRanges, getWeeklyOccurrenceDates, WEEKDAYS } from '../lib/weeklyRecurrence'
+import { buildEventSeriesPayload, SERIES_GENERATION_TYPES } from '../lib/eventSeries'
 
 const router = useRouter()
 const route = useRoute()
-const { user, isAdmin, canManageEventRecord } = useAuth()
+const { user, profile, role, isAdmin, canManageEventRecord } = useAuth()
 const status = ref('')
 const organizers = ref([])
 const isEditing = ref(false)
@@ -29,6 +32,18 @@ const eventStatus = ref('approved')
 const cancellationModalOpen = ref(false)
 const cancellationReason = ref('')
 const confirmationModal = ref(null)
+const occurrence = ref('once')
+const selectedWeekdays = ref([])
+const recurrenceStartDate = ref('')
+const recurrenceEndDate = ref('')
+const eventDurationDays = ref(1)
+const multipleDateInput = ref('')
+const selectedDates = ref([])
+const recurringDates = computed(() => getWeeklyOccurrenceDates(
+  recurrenceStartDate.value,
+  recurrenceEndDate.value,
+  selectedWeekdays.value
+))
 
 const form = ref({
   title: '',
@@ -42,8 +57,9 @@ const form = ref({
   is_recurring: false,
   event_link: '',
   date: '',
+  end_date: '',
   start_time: '18:30',
-  end_time: '21:30'
+  end_time: ''
 })
 
 onMounted(async () => {
@@ -75,6 +91,7 @@ function applyEventToForm(data) {
     is_recurring: Boolean(event.is_recurring),
     event_link: event.event_link || '',
     date: startDate.toISOString().slice(0, 10),
+    end_date: event.end_date || startDate.toISOString().slice(0, 10),
     start_time: startDate.toTimeString().slice(0, 5),
     end_time: event.end_time ? new Date(event.end_time).toTimeString().slice(0, 5) : ''
   }
@@ -104,6 +121,7 @@ async function loadEvent(id, options = {}) {
   if (options.duplicate) {
     isDuplicating.value = true
     form.value.date = ''
+    form.value.end_date = ''
     isEditing.value = false
     eventId.value = null
     eventStatus.value = 'approved'
@@ -121,6 +139,13 @@ async function loadEvent(id, options = {}) {
 async function loadOrganizers() {
   try {
     organizers.value = await fetchOrganizers()
+    if (!route.params.id && !route.query.duplicateId) {
+      const defaultOrganizer = findDefaultOrganizer(organizers.value, profile.value, role.value)
+      if (defaultOrganizer) {
+        form.value.organizer_id = defaultOrganizer.id
+        form.value.organizer = defaultOrganizer.name
+      }
+    }
   } catch (organizerError) {
     status.value = organizerError.message
     organizers.value = []
@@ -132,6 +157,21 @@ async function saveEvent() {
 
   if (!user.value) {
     status.value = 'You must be logged in to save events.'
+    return
+  }
+
+  if (!isEditing.value && occurrence.value === 'weekly' && recurringDates.value.length === 0) {
+    status.value = 'Select at least one weekday and a valid start and end date.'
+    return
+  }
+
+  if (!isEditing.value && occurrence.value === 'multiple' && selectedDates.value.length === 0) {
+    status.value = 'Select at least one date.'
+    return
+  }
+
+  if ((isEditing.value || occurrence.value === 'once') && form.value.end_date && form.value.end_date < form.value.date) {
+    status.value = 'End date cannot be before start date.'
     return
   }
 
@@ -150,9 +190,53 @@ async function saveEvent() {
     organizer: organizer?.name || form.value.organizer || null,
     status: reviewMode.value ? reviewStatus.value : eventStatus.value
   }
+  const isSeriesCreation = !isEditing.value && occurrence.value !== 'once'
+  let seriesId = null
+
+  if (isSeriesCreation) {
+    if (!organizer?.id) {
+      status.value = 'An organizer is required for an event series.'
+      return
+    }
+    const generationType = occurrence.value === 'weekly'
+      ? SERIES_GENERATION_TYPES.WEEKLY
+      : SERIES_GENERATION_TYPES.MULTIPLE_DATES
+    const { data: series, error: seriesError } = await supabase
+      .from('event_series')
+      .insert(buildEventSeriesPayload({
+        title: eventForm.title,
+        generation_type: generationType,
+        recurrence_start_date: occurrence.value === 'weekly' ? recurrenceStartDate.value : null,
+        recurrence_end_date: occurrence.value === 'weekly' ? recurrenceEndDate.value : null,
+        weekdays: occurrence.value === 'weekly' ? selectedWeekdays.value : null,
+        event_duration_days: eventDurationDays.value
+      }, organizer.id, user.value.id))
+      .select('id')
+      .single()
+
+    if (seriesError) {
+      status.value = seriesError.message
+      return
+    }
+    seriesId = series.id
+  }
+
+  const occurrenceDates = occurrence.value === 'weekly' ? recurringDates.value : selectedDates.value
+  const occurrenceRanges = isSeriesCreation
+    ? buildOccurrenceRanges(occurrenceDates, eventDurationDays.value)
+    : []
   const payload = isEditing.value
     ? buildEventPayload(eventForm)
-    : buildNewEventPayload(eventForm, user.value.id)
+    : (isSeriesCreation
+        ? occurrenceRanges.map(({ startDate, endDate }) => buildNewEventPayload({
+            ...eventForm,
+            date: startDate,
+            start_date: startDate,
+            end_date: endDate,
+            series_id: seriesId,
+            is_recurring: occurrence.value === 'weekly'
+          }, user.value.id))
+        : buildNewEventPayload({ ...eventForm, end_date: eventForm.end_date || eventForm.date, is_recurring: false }, user.value.id))
   const query = isEditing.value
     ? supabase.from('events').update(payload).eq('id', eventId.value)
     : supabase.from('events').insert(payload)
@@ -160,18 +244,31 @@ async function saveEvent() {
   const { error } = await query
 
   if (error) {
+    if (seriesId) await supabase.from('event_series').delete().eq('id', seriesId)
     status.value = error.message
     return
   }
 
-  const analyticsEvent = { ...payload, ...(isEditing.value ? { id: eventId.value } : {}) }
+  const analyticsEvent = { ...(Array.isArray(payload) ? payload[0] : payload), ...(isEditing.value ? { id: eventId.value } : {}) }
   const analyticsEventName = isEditing.value
     ? AnalyticsEvents.EVENT_UPDATED
     : (isDuplicating.value ? AnalyticsEvents.EVENT_DUPLICATED : AnalyticsEvents.EVENT_CREATED)
-  trackOrganizerEvent(analyticsEventName, analyticsEvent)
+  if (isSeriesCreation) trackBulkEventsCreated(analyticsEvent, payload.length)
+  else trackOrganizerEvent(analyticsEventName, analyticsEvent)
 
-  sessionStorage.setItem('flash_message', isEditing.value ? 'Event updated successfully.' : 'Event created successfully.')
+  sessionStorage.setItem('flash_message', isEditing.value
+    ? 'Event updated successfully.'
+    : `${isSeriesCreation ? payload.length : 1} event${isSeriesCreation && payload.length !== 1 ? 's' : ''} created successfully.`)
   router.push(reviewMode.value ? '/admin/submissions' : '/management')
+}
+
+function addMultipleDate(value) {
+  if (value && !selectedDates.value.includes(value)) selectedDates.value = [...selectedDates.value, value].sort()
+  multipleDateInput.value = ''
+}
+
+function removeMultipleDate(value) {
+  selectedDates.value = selectedDates.value.filter((date) => date !== value)
 }
 
 async function restoreSubmission() {
@@ -380,17 +477,84 @@ async function deleteEvent() {
         <input id="event-link" v-model="form.event_link" type="url" placeholder="https://..." />
       </div>
 
-      <div class="field checkbox-field">
+      <fieldset v-if="!isEditing" class="field">
+        <legend>Occurs</legend>
         <label class="checkbox-field__label">
-          <input v-model="form.is_recurring" type="checkbox" />
-          Weekly event
+          <input v-model="occurrence" type="radio" value="once" /> Once
         </label>
-        <p class="field-help">Show this when the event repeats weekly.</p>
+        <label class="checkbox-field__label">
+          <input v-model="occurrence" type="radio" value="weekly" /> Repeats weekly
+        </label>
+        <label class="checkbox-field__label">
+          <input v-model="occurrence" type="radio" value="multiple" /> Multiple dates
+        </label>
+      </fieldset>
+
+      <template v-if="!isEditing && occurrence === 'weekly'">
+        <fieldset class="field">
+          <legend>Repeats on *</legend>
+          <div class="date-chip-list">
+            <label v-for="weekday in WEEKDAYS" :key="weekday.value" class="date-chip">
+              <input v-model="selectedWeekdays" type="checkbox" :value="weekday.value" />
+              {{ weekday.label }}
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="grid-two">
+          <div class="field">
+            <label for="recurrence-start-date">Start date *</label>
+            <input id="recurrence-start-date" v-model="recurrenceStartDate" type="date" required />
+          </div>
+          <div class="field">
+            <label for="recurrence-end-date">End date *</label>
+            <input id="recurrence-end-date" v-model="recurrenceEndDate" type="date" required />
+          </div>
+        </div>
+        <p class="field-help" aria-live="polite">
+          {{ recurringDates.length }} event{{ recurringDates.length === 1 ? '' : 's' }} will be created.
+        </p>
+      </template>
+
+      <template v-else-if="!isEditing && occurrence === 'multiple'">
+        <div class="field">
+          <label for="multiple-event-date">Dates *</label>
+          <input
+            id="multiple-event-date"
+            :value="multipleDateInput"
+            type="date"
+            @change="addMultipleDate($event.target.value)"
+          />
+          <div v-if="selectedDates.length" class="date-chip-list">
+            <button v-for="date in selectedDates" :key="date" class="date-chip" type="button" @click="removeMultipleDate(date)">
+              {{ date }} <span aria-hidden="true">×</span>
+            </button>
+          </div>
+        </div>
+        <p class="field-help" aria-live="polite">
+          {{ selectedDates.length }} event{{ selectedDates.length === 1 ? '' : 's' }} will be created.
+        </p>
+      </template>
+
+      <div v-else class="grid-two">
+        <div class="field">
+          <label for="event-date">Start date *</label>
+          <input id="event-date" v-model="form.date" type="date" required />
+        </div>
+        <div class="field">
+          <label for="event-end-date">End date (optional)</label>
+          <input id="event-end-date" v-model="form.end_date" type="date" :min="form.date" />
+          <p class="field-help">Leave empty for a one-day event.</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label for="event-date">Date *</label>
-        <input id="event-date" v-model="form.date" type="date" required />
+      <div v-if="!isEditing && occurrence !== 'once'" class="field">
+        <label for="event-duration-days">Event duration</label>
+        <select id="event-duration-days" v-model.number="eventDurationDays">
+          <option v-for="days in 14" :key="days" :value="days">
+            {{ days }} day{{ days === 1 ? '' : 's' }}
+          </option>
+        </select>
       </div>
 
       <div class="grid-two">
@@ -400,7 +564,7 @@ async function deleteEvent() {
         </div>
 
         <div class="field">
-          <label for="event-end">End Time</label>
+          <label for="event-end">End Time (optional)</label>
           <input id="event-end" v-model="form.end_time" type="time" />
         </div>
       </div>
@@ -408,7 +572,7 @@ async function deleteEvent() {
       <div class="form-actions">
         <button class="button icon-text" type="submit">
           <component :is="isEditing ? Pencil : Plus" class="icon icon--sm" />
-          {{ reviewMode ? 'Save edits' : (isEditing ? 'Save changes' : 'Create event') }}
+          {{ reviewMode ? 'Save edits' : (isEditing ? 'Save changes' : (occurrence === 'once' ? 'Create Event' : `Create ${occurrence === 'weekly' ? recurringDates.length : selectedDates.length} Events`)) }}
         </button>
         <RouterLink :to="reviewMode ? '/admin/submissions' : '/management'" class="button secondary">Cancel</RouterLink>
         <button v-if="reviewMode && isAdmin" class="button" type="button" @click="reviewSubmission('approved')">Approve submission</button>

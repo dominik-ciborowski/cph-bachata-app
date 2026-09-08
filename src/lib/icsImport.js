@@ -108,14 +108,11 @@ function buildPreviewEvent(properties, index) {
   const start = startProperty ? parseIcsDateTime(startProperty.value, startProperty.parameters) : null
   const end = endProperty ? parseIcsDateTime(endProperty.value, endProperty.parameters) : null
 
-  if (start && end && start.date !== end.date) {
-    throw new Error(`Event ${index + 1} ends on a different date. Multi-day events are not supported.`)
-  }
-
   return {
     importId: `ics-event-${index + 1}`,
     title: unescapeIcsText(properties.SUMMARY?.[0]?.value || ''),
     date: start?.date || '',
+    end_date: end?.date || start?.date || '',
     start_time: start?.time || '',
     end_time: end?.time || '',
     location: unescapeIcsText(properties.LOCATION?.[0]?.value || ''),
@@ -160,11 +157,36 @@ export function parseIcsEvents(source) {
   return events
 }
 
+export function combineIcsFileResults(files) {
+  const events = []
+  const errors = []
+
+  for (const file of files) {
+    try {
+      events.push(...parseIcsEvents(file.source))
+    } catch (error) {
+      errors.push(`${file.name}: ${error.message || 'The ICS file could not be parsed.'}`)
+    }
+  }
+
+  events.forEach((event, index) => { event.importId = `ics-event-${index + 1}` })
+  return { events, errors }
+}
+
+export function applyOrganizerToImportedEvents(events, organizer) {
+  for (const event of events) {
+    event.organizer_id = organizer?.id || ''
+    event.organizer = organizer?.name || ''
+  }
+  return events
+}
+
 export function getIcsImportErrors(event) {
   const errors = []
   if (!event.title?.trim()) errors.push('Title is required.')
   if (!event.date) errors.push('Date is required.')
   if (!event.start_time) errors.push('Start time is required.')
+  if (event.end_date && event.date && event.end_date < event.date) errors.push('End date cannot be before start date.')
   if (!event.organizer_id) errors.push('Organizer must be selected.')
   if (!supportedCategories.includes(event.category)) errors.push('Category must be selected.')
   if (!Object.values(PRICE_TYPES).includes(event.price?.type)) errors.push('Price must be confirmed.')

@@ -2,6 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import {
+  applyOrganizerToImportedEvents,
+  combineIcsFileResults,
   copenhagenDateTimeToIso,
   getIcsImportErrors,
   getImportableOrganizers,
@@ -46,6 +48,36 @@ END:VCALENDAR`)
   const events = parseIcsEvents(source)
   assert.equal(events.length, 2)
   assert.deepEqual(events.map((event) => event.title), ['Friday Social', 'Sunday Class'])
+})
+
+test('combines events from multiple ICS files and retains errors from failed files', () => {
+  const secondFile = singleEventIcs.replace('Friday Social', 'Saturday Social')
+  const result = combineIcsFileResults([
+    { name: 'friday.ics', source: singleEventIcs },
+    { name: 'broken.ics', source: 'not a calendar' },
+    { name: 'saturday.ics', source: secondFile }
+  ])
+
+  assert.deepEqual(result.events.map((event) => event.title), ['Friday Social', 'Saturday Social'])
+  assert.deepEqual(result.events.map((event) => event.importId), ['ics-event-1', 'ics-event-2'])
+  assert.equal(result.errors.length, 1)
+  assert.match(result.errors[0], /broken\.ics: No events were found/)
+})
+
+test('applies one organizer to all previews while preserving individual overrides', () => {
+  const events = combineIcsFileResults([
+    { name: 'one.ics', source: singleEventIcs },
+    { name: 'two.ics', source: singleEventIcs.replace('Friday Social', 'Another Social') }
+  ]).events
+
+  applyOrganizerToImportedEvents(events, { id: 'house', name: 'Bachata House' })
+  assert.deepEqual(events.map((event) => event.organizer_id), ['house', 'house'])
+  assert.deepEqual(events.map((event) => event.organizer), ['Bachata House', 'Bachata House'])
+
+  events[1].organizer_id = 'studio'
+  events[1].organizer = 'Other Studio'
+  assert.equal(events[0].organizer, 'Bachata House')
+  assert.equal(events[1].organizer, 'Other Studio')
 })
 
 test('allows missing optional ICS fields without inventing values', () => {
@@ -120,14 +152,18 @@ test('rejects malformed ICS input with a useful error', () => {
   assert.throws(() => parseIcsEvents('BEGIN:VEVENT\nSUMMARY:Broken\nDTSTART:nope\nEND:VEVENT'), /Unsupported ICS date\/time/)
 })
 
-test('rejects ICS events that end on a different calendar date', () => {
-  assert.throws(() => parseIcsEvents(`BEGIN:VCALENDAR
+test('preserves multi-day ICS event dates', () => {
+  const [event] = parseIcsEvents(`BEGIN:VCALENDAR
 BEGIN:VEVENT
 SUMMARY:Overnight event
 DTSTART;TZID=Europe/Copenhagen:20260821T220000
 DTEND;TZID=Europe/Copenhagen:20260822T010000
 END:VEVENT
-END:VCALENDAR`), /Multi-day events are not supported/)
+END:VCALENDAR`)
+
+  assert.equal(event.date, '2026-08-21')
+  assert.equal(event.end_date, '2026-08-22')
+  assert.equal(event.end_time, '01:00')
 })
 
 test('the management import flow renders a preview before its explicit save action', async () => {
@@ -137,4 +173,13 @@ test('the management import flow renders a preview before its explicit save acti
   assert.match(source, /Nothing will be saved until you confirm below\./)
   assert.match(source, /@submit\.prevent="confirmImport"/)
   assert.match(source, /Import \{\{ previewEvents\.length \}\} event/)
+})
+
+test('only admins receive multi-file and bulk import controls', async () => {
+  const source = await readFile(new URL('../src/views/IcsImportView.vue', import.meta.url), 'utf8')
+
+  assert.match(source, /:multiple="isAdmin"/)
+  assert.match(source, /v-if="isAdmin" class="card form ics-import-bulk"/)
+  assert.match(source, /if \(!isAdmin\.value\) return/)
+  assert.match(source, /selectedFiles\.slice\(0, 1\)/)
 })

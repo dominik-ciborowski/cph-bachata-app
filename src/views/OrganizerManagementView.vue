@@ -4,9 +4,11 @@ import { fetchOrganizers, findOrganizerByNameInDatabase } from '../lib/organizer
 import { findOrganizerByName, normalizeOrganizerName, sortOrganizersByName } from '../lib/organizerDisplay'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../composables/useAuth'
+import { saveDefaultOrganizer } from '../lib/profile'
 
 const { user, isAdmin } = useAuth()
 const organizers = ref([])
+const organizerProfiles = ref([])
 const loading = ref(true)
 const error = ref('')
 const status = ref('')
@@ -22,7 +24,7 @@ onMounted(async () => {
     return
   }
 
-  await loadOrganizers()
+  await loadManagementData()
 })
 
 const filteredOrganizers = computed(() => {
@@ -38,6 +40,38 @@ const targetOptions = computed(() => {
   return sortOrganizersByName(organizers.value).filter((organizer) => !sourceIds.has(organizer.id))
 })
 
+const organizerOptions = computed(() => sortOrganizersByName(organizers.value))
+
+async function loadManagementData() {
+  loading.value = true
+  error.value = ''
+
+  const [organizerResult, profileResult] = await Promise.allSettled([
+    fetchOrganizers(),
+    supabase
+      .from('profiles')
+      .select('id,email,role,default_organizer')
+      .eq('role', 'organizer')
+      .order('email', { ascending: true })
+  ])
+
+  if (organizerResult.status === 'rejected') {
+    error.value = organizerResult.reason?.message || 'Could not load organizers.'
+    organizers.value = []
+  } else {
+    organizers.value = organizerResult.value
+  }
+
+  if (profileResult.status === 'rejected' || profileResult.value.error) {
+    error.value ||= profileResult.reason?.message || profileResult.value?.error?.message || 'Could not load organizer profiles.'
+    organizerProfiles.value = []
+  } else {
+    organizerProfiles.value = profileResult.value.data || []
+  }
+
+  loading.value = false
+}
+
 async function loadOrganizers() {
   loading.value = true
   error.value = ''
@@ -50,6 +84,19 @@ async function loadOrganizers() {
   }
 
   loading.value = false
+}
+
+async function updateDefaultOrganizer(profile, value) {
+  if (!isAdmin.value) return
+  status.value = `Saving default organizer for ${profile.email || 'organizer'}...`
+
+  try {
+    const updatedProfile = await saveDefaultOrganizer(profile.id, value, supabase)
+    profile.default_organizer = updatedProfile.default_organizer
+    status.value = `Default organizer saved for ${profile.email || 'organizer'}.`
+  } catch (updateError) {
+    status.value = updateError.message || 'Could not save the default organizer.'
+  }
 }
 
 async function addOrganizer() {
@@ -248,9 +295,37 @@ async function mergeOrganizers() {
     </section>
 
     <p v-if="loading" class="empty-state">Loading organizers...</p>
-    <p v-else-if="error" class="empty-state">Could not load organizers: {{ error }}</p>
+    <p v-else-if="error" class="empty-state">Could not load organizer management data: {{ error }}</p>
 
     <template v-else>
+      <section class="card organizer-admin-section">
+        <h2>Organizer profile defaults</h2>
+        <p class="field-help">Choose the organizer that should be pre-filled when each organizer user creates or imports events.</p>
+
+        <p v-if="organizerProfiles.length === 0" class="empty-state">No organizer profiles found.</p>
+        <div v-else class="management-list">
+          <article v-for="profile in organizerProfiles" :key="profile.id" class="organizer-admin-row">
+            <div>
+              <span class="organizer-admin-row__name">{{ profile.email || 'No email recorded' }}</span>
+              <span class="organizer-admin-row__meta">Organizer user</span>
+            </div>
+            <div class="field">
+              <label :for="`profile-default-organizer-${profile.id}`">Default organizer</label>
+              <select
+                :id="`profile-default-organizer-${profile.id}`"
+                :value="profile.default_organizer || ''"
+                @change="updateDefaultOrganizer(profile, $event.target.value)"
+              >
+                <option value="">No default organizer</option>
+                <option v-for="organizer in organizerOptions" :key="organizer.id" :value="organizer.name">
+                  {{ organizer.name }}
+                </option>
+              </select>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="card organizer-admin-section">
         <h2>Add Organizer</h2>
         <form class="organizer-admin-form" @submit.prevent="addOrganizer">

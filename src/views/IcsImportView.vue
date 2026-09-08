@@ -6,23 +6,27 @@ import PriceFields from '../components/PriceFields.vue'
 import { buildNewEventPayload } from '../lib/eventPayload.js'
 import {
   copenhagenDateTimeToIso,
+  applyOrganizerToImportedEvents,
+  combineIcsFileResults,
   getIcsImportErrors,
   getImportableOrganizers,
-  isPossibleIcsDuplicate,
-  parseIcsEvents
+  isPossibleIcsDuplicate
 } from '../lib/icsImport.js'
 import { fetchOrganizers } from '../lib/organizers.js'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../composables/useAuth.js'
+import { findDefaultOrganizer } from '../lib/profile.js'
 
 const router = useRouter()
-const { user, role, canManageEvents } = useAuth()
+const { user, profile, role, isAdmin, canManageEvents } = useAuth()
 const fileInput = ref(null)
 const previewEvents = ref([])
 const existingEvents = ref([])
 const organizers = ref([])
 const status = ref('')
 const saving = ref(false)
+const fileErrors = ref([])
+const bulkOrganizerId = ref('')
 
 const importableOrganizers = computed(() => getImportableOrganizers(
   organizers.value,
@@ -62,25 +66,38 @@ function chooseFile() {
 }
 
 async function handleFileSelection(event) {
-  const [file] = event.target.files || []
+  const selectedFiles = [...(event.target.files || [])]
+  const files = isAdmin.value ? selectedFiles : selectedFiles.slice(0, 1)
   previewEvents.value = []
+  fileErrors.value = []
   status.value = ''
-  if (!file) return
-
-  if (!file.name.toLowerCase().endsWith('.ics')) {
-    status.value = 'Choose a valid .ics calendar file.'
-    event.target.value = ''
-    return
-  }
+  if (!files.length) return
 
   try {
-    previewEvents.value = parseIcsEvents(await file.text())
-    status.value = `Found ${previewEvents.value.length} event${previewEvents.value.length === 1 ? '' : 's'}. Review the details before importing.`
+    const sources = await Promise.all(files.map(async (file) => ({ name: file.name, source: await file.text() })))
+    const invalidFiles = sources.filter((file) => !file.name.toLowerCase().endsWith('.ics'))
+    const result = combineIcsFileResults(sources.filter((file) => file.name.toLowerCase().endsWith('.ics')))
+    fileErrors.value = [
+      ...invalidFiles.map((file) => `${file.name}: Choose a valid .ics calendar file.`),
+      ...result.errors
+    ]
+    previewEvents.value = result.events
+    const defaultOrganizer = findDefaultOrganizer(importableOrganizers.value, profile.value, role.value)
+    if (defaultOrganizer) applyOrganizerToImportedEvents(previewEvents.value, defaultOrganizer)
+    status.value = previewEvents.value.length
+      ? `Found ${previewEvents.value.length} event${previewEvents.value.length === 1 ? '' : 's'}. Review the details before importing.`
+      : 'No events could be imported from the selected files.'
   } catch (parseError) {
     status.value = parseError.message || 'The ICS file could not be parsed.'
   } finally {
     event.target.value = ''
   }
+}
+
+function applyBulkOrganizer() {
+  if (!isAdmin.value) return
+  const organizer = importableOrganizers.value.find((item) => String(item.id) === String(bulkOrganizerId.value))
+  if (organizer) applyOrganizerToImportedEvents(previewEvents.value, organizer)
 }
 
 function updateOrganizer(importedEvent) {
@@ -104,7 +121,7 @@ async function confirmImport() {
   const rows = previewEvents.value.map((event) => ({
     ...buildNewEventPayload({ ...event, status: 'approved' }, user.value.id),
     start_time: copenhagenDateTimeToIso(event.date, event.start_time),
-    end_time: event.end_time ? copenhagenDateTimeToIso(event.date, event.end_time) : null
+    end_time: event.end_time ? copenhagenDateTimeToIso(event.end_date || event.date, event.end_time) : null
   }))
   saving.value = true
   status.value = 'Importing events...'
@@ -130,14 +147,17 @@ async function confirmImport() {
 
     <section class="card form ics-import-upload" aria-labelledby="ics-upload-title">
       <h2 id="ics-upload-title">Choose calendar file</h2>
-      <input ref="fileInput" class="visually-hidden" type="file" accept=".ics,text/calendar" @change="handleFileSelection" />
+      <input ref="fileInput" class="visually-hidden" type="file" accept=".ics,text/calendar" :multiple="isAdmin" @change="handleFileSelection" />
       <div class="form-actions">
         <button class="button secondary icon-text" type="button" @click="chooseFile">
-          <FileUp class="icon icon--sm" />Select .ics file
+          <FileUp class="icon icon--sm" />Select .ics file{{ isAdmin ? 's' : '' }}
         </button>
         <RouterLink to="/management" class="button secondary">Cancel</RouterLink>
       </div>
       <p v-if="status" class="status" aria-live="polite">{{ status }}</p>
+      <ul v-if="fileErrors.length" class="status ics-import-errors" aria-label="Import errors">
+        <li v-for="message in fileErrors" :key="message">{{ message }}</li>
+      </ul>
     </section>
 
     <form v-if="previewEvents.length" class="ics-import-preview" @submit.prevent="confirmImport">
@@ -145,6 +165,18 @@ async function confirmImport() {
         <h2>Import preview</h2>
         <p>Nothing will be saved until you confirm below.</p>
       </div>
+
+      <section v-if="isAdmin" class="card form ics-import-bulk" aria-labelledby="ics-bulk-title">
+        <h3 id="ics-bulk-title">Apply to all events</h3>
+        <div class="field">
+          <label for="ics-bulk-organizer">Organizer</label>
+          <select id="ics-bulk-organizer" v-model="bulkOrganizerId">
+            <option value="">Select organizer</option>
+            <option v-for="organizer in importableOrganizers" :key="organizer.id" :value="String(organizer.id)">{{ organizer.name }}</option>
+          </select>
+        </div>
+        <button class="button secondary" type="button" :disabled="!bulkOrganizerId" @click="applyBulkOrganizer">Apply organizer to all</button>
+      </section>
 
       <article v-for="(event, index) in previewEvents" :key="event.importId" class="card form ics-import-event">
         <h3>Event {{ index + 1 }}</h3>
@@ -188,7 +220,13 @@ async function confirmImport() {
         </div>
 
         <div class="field">
-          <label :for="`${event.importId}-end`">End time</label>
+          <label :for="`${event.importId}-end-date`">End date (optional)</label>
+          <input :id="`${event.importId}-end-date`" v-model="event.end_date" type="date" :min="event.date" />
+          <p class="field-help">Leave empty for a one-day event.</p>
+        </div>
+
+        <div class="field">
+          <label :for="`${event.importId}-end`">End time (optional)</label>
           <input :id="`${event.importId}-end`" v-model="event.end_time" type="time" />
         </div>
 
@@ -205,7 +243,7 @@ async function confirmImport() {
           <input :id="`${event.importId}-link`" v-model="event.event_link" type="url" />
         </div>
 
-        <p v-if="event.allDay" class="field-help">This was an all-day ICS event. Confirm the start and end times before importing.</p>
+        <p v-if="event.allDay" class="field-help">This was an all-day ICS event. Confirm the start time before importing.</p>
         <p v-if="hasDuplicate(event)" class="status ics-import-warning">Possible duplicate: an event with the same title, date, time and organizer already exists.</p>
         <ul v-if="validationErrors[index].length" class="status ics-import-errors">
           <li v-for="message in validationErrors[index]" :key="message">{{ message }}</li>
