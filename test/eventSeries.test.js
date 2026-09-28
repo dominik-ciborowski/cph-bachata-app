@@ -43,6 +43,7 @@ test('event listing and individual editing continue to use concrete event rows',
   const addEvent = await readFile(new URL('../src/views/AdminView.vue', import.meta.url), 'utf8')
 
   assert.match(management, /\.from\('events'\)/)
-  assert.doesNotMatch(management, /\.from\('event_series'\)/)
+  assert.match(management, /groupManagementEvents\(filteredEvents\.value\)/)
+  assert.doesNotMatch(management, /getWeeklyOccurrenceDates/)
   assert.match(addEvent, /supabase\.from\('events'\)\.update\(payload\)\.eq\('id', eventId\.value\)/)
 })
