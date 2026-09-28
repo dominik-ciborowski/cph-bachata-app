@@ -36,6 +36,11 @@ describe('event payload ownership', () => {
     assert.equal(payload.status, 'approved')
   })
 
+  it('stores no end time when the optional end time is empty', () => {
+    assert.equal(buildNewEventPayload({ ...form, end_time: '' }, 'user-123').end_time, null)
+    assert.equal(buildEventPayload({ ...form, end_time: '' }).end_time, null)
+  })
+
   it('adds created_by to every bulk-created event payload', () => {
     const rows = buildBulkEventPayloads(form, ['2026-06-12', '2026-06-19'], 'user-456')
 

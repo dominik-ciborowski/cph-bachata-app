@@ -59,3 +59,14 @@ test('generateIcsCalendar creates multiple events in chronological order', () =>
 test('generateIcsCalendar rejects empty exports', () => {
   assert.throws(() => generateIcsCalendar([]), /No events to export/)
 })
+
+test('calendar export does not invent an end time when one is unknown', () => {
+  const ics = buildEventIcs({
+    id: 'start-only',
+    title: 'Start only',
+    start_time: '2026-06-20T17:00:00.000Z'
+  })
+
+  assert.match(ics, /DTSTART;TZID=Europe\/Copenhagen:/)
+  assert.doesNotMatch(ics, /DTEND/)
+})

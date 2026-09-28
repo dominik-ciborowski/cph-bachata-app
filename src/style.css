@@ -1340,6 +1340,32 @@ textarea {
   flex: 0 0 auto;
 }
 
+.management-display-mode {
+  margin-bottom: 16px;
+}
+
+.series-management-card {
+  display: grid;
+  gap: 16px;
+}
+
+.series-management-card__content h2,
+.series-management-card__content p {
+  margin: 0;
+}
+
+.series-management-card__content {
+  display: grid;
+  gap: 6px;
+}
+
+.series-management-card__events {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+}
+
 .management-card__actions .button,
 .management-toolbar__actions .button {
   white-space: nowrap;

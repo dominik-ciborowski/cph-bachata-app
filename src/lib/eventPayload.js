@@ -4,6 +4,8 @@ function toDateTime(date, time) {
 }
 
 export function buildEventPayload(form) {
+  const startDate = form.start_date || form.date
+  const endDate = form.end_date || startDate
   return {
     title: form.title,
     organizer_id: form.organizer_id || null,
@@ -14,8 +16,11 @@ export function buildEventPayload(form) {
     price_text: serializePrice(form.price),
     is_recurring: Boolean(form.is_recurring),
     event_link: form.event_link || null,
-    start_time: toDateTime(form.date, form.start_time),
-    end_time: form.end_time ? toDateTime(form.date, form.end_time) : null,
+    series_id: form.series_id || null,
+    start_date: startDate,
+    end_date: endDate,
+    start_time: toDateTime(startDate, form.start_time),
+    end_time: form.end_time ? toDateTime(endDate, form.end_time) : null,
     status: form.status || 'approved'
   }
 }
