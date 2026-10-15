@@ -1,9 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import CancellationModal from '../components/CancellationModal.vue'
 import ConfirmationModal from '../components/ConfirmationModal.vue'
-import { CalendarPlus, FileUp, Plus, Trash2 } from 'lucide-vue-next'
+import ManagementEventCard from '../components/ManagementEventCard.vue'
+import { FileUp, Plus } from 'lucide-vue-next'
 import { normalizeEvent } from '../lib/events'
 import { supabase } from '../lib/supabase'
 import { trackOrganizerEvent } from '../analytics/interactionTracking'
@@ -11,12 +12,14 @@ import { AnalyticsEvents } from '../analytics/types'
 import {
   applyBulkEventUpdates,
   applyBulkStatusUpdates,
+  deleteSelectedEvents,
   filterManageableEvents,
   getBulkChangeSummary,
   selectAllVisibleEventIds,
   toggleSelectedEventId
 } from '../lib/bulkEventActions'
 import { useAuth } from '../composables/useAuth'
+import { groupManagementEvents, selectSeriesEventIds } from '../lib/eventManagementGroups'
 
 const router = useRouter()
 const { user, role, isAdmin, isOrganizer, canManageEvents } = useAuth()
@@ -24,6 +27,8 @@ const events = ref([])
 const creatorProfiles = ref({})
 const searchQuery = ref('')
 const activeView = ref('upcoming')
+const displayMode = ref('individual')
+const expandedSeriesIds = ref(new Set())
 const loading = ref(true)
 const error = ref('')
 const flashMessage = ref('')
@@ -40,6 +45,7 @@ const restoreModalOpen = ref(false)
 const restoreTargets = ref([])
 const deleteModalOpen = ref(false)
 const deleteTarget = ref(null)
+const bulkDeleteModalOpen = ref(false)
 
 const bulkForm = ref(createDefaultBulkForm())
 
@@ -84,6 +90,7 @@ const filteredEvents = computed(() => {
     event.location
   ].some((value) => String(value || '').toLowerCase().includes(term)))
 })
+const groupedItems = computed(() => groupManagementEvents(filteredEvents.value))
 
 const viewLabel = computed(() => (activeView.value === 'past' ? 'past' : 'upcoming'))
 const selectedEvents = computed(() => filterManageableEvents(
@@ -131,7 +138,7 @@ async function loadEvents() {
 
   let query = supabase
     .from('events')
-    .select('*, organizer_record:organizers(id,name,verified)')
+    .select('*, organizer_record:organizers(id,name,verified), series:event_series(id,generation_type)')
     .in('status', ['approved', 'cancelled'])
 
   if (isOrganizer.value && !isAdmin.value) {
@@ -191,6 +198,22 @@ function toggleSelectAllVisible(checked) {
   selectedEventIds.value = checked ? selectAllVisibleEventIds(selectedEventIds.value, filteredEvents.value) : new Set()
 }
 
+function selectSeries(seriesEvents) {
+  selectedEventIds.value = selectSeriesEventIds(selectedEventIds.value, seriesEvents)
+}
+
+function toggleSeries(seriesId) {
+  const next = new Set(expandedSeriesIds.value)
+  const key = String(seriesId)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  expandedSeriesIds.value = next
+}
+
+function isSeriesExpanded(seriesId) {
+  return expandedSeriesIds.value.has(String(seriesId))
+}
+
 function openBulkEdit() {
   bulkForm.value = createDefaultBulkForm()
   bulkEditOpen.value = true
@@ -219,6 +242,31 @@ function formatStart(value) {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(value))
+}
+
+function formatShortDate(value) {
+  return new Intl.DateTimeFormat('en-DK', { day: 'numeric', month: 'short' }).format(new Date(value))
+}
+
+function formatTime(value) {
+  return new Intl.DateTimeFormat('en-DK', { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
+}
+
+function getSeriesSummary(item) {
+  const first = item.events[0]
+  const last = item.events[item.events.length - 1]
+  const weekdays = [...new Set(item.events.map((event) => (
+    new Intl.DateTimeFormat('en', { weekday: 'long' }).format(new Date(event.start_time))
+  )))]
+
+  return {
+    title: first.title,
+    kind: first.series?.generation_type === 'WEEKLY' || first.is_recurring ? 'Weekly series' : 'Multiple dates',
+    dateRange: first.id === last.id ? formatShortDate(first.start_time) : `${formatShortDate(first.start_time)} – ${formatShortDate(last.start_time)}`,
+    weekdays: weekdays.length <= 3 ? weekdays.join(', ') : '',
+    time: formatTime(first.start_time),
+    organizer: first.organizer_display || first.organizer_name || first.organizer || ''
+  }
 }
 
 function openCancellationModal(targetEvents, initialReason = '') {
@@ -254,6 +302,14 @@ function closeDeleteModal() {
   if (bulkSaving.value) return
   deleteModalOpen.value = false
   deleteTarget.value = null
+}
+
+function openBulkDeleteModal() {
+  if (selectedEvents.value.length) bulkDeleteModalOpen.value = true
+}
+
+function closeBulkDeleteModal() {
+  if (!bulkSaving.value) bulkDeleteModalOpen.value = false
 }
 
 async function confirmCancellation(reason) {
@@ -361,12 +417,47 @@ async function confirmDelete() {
     return
   }
 
-  trackOrganizerEvent(AnalyticsEvents.EVENT_DELETED, deleteTarget.value)
+  const deletedEvent = deleteTarget.value
+  trackOrganizerEvent(AnalyticsEvents.EVENT_DELETED, deletedEvent)
 
   flashMessage.value = 'Event deleted.'
   selectedEventIds.value.delete(String(deleteTarget.value.id))
   closeDeleteModal()
+  await cleanupEmptySeries([deletedEvent.series_id])
   await loadEvents()
+}
+
+async function cleanupEmptySeries(seriesIds) {
+  const ids = [...new Set(seriesIds.filter(Boolean))]
+  for (const seriesId of ids) {
+    const { count, error: countError } = await supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('series_id', seriesId)
+    if (!countError && count === 0) await supabase.from('event_series').delete().eq('id', seriesId)
+  }
+}
+
+async function confirmBulkDelete() {
+  const targetEvents = [...selectedEvents.value]
+  if (!targetEvents.length) return
+
+  bulkSaving.value = true
+  const result = await deleteSelectedEvents(targetEvents, (eventIds) => (
+    supabase.from('events').delete().in('id', eventIds)
+  ))
+  bulkSaving.value = false
+
+  if (result.error) {
+    error.value = result.error.message
+    return
+  }
+
+  await cleanupEmptySeries(targetEvents.map((event) => event.series_id))
+  bulkDeleteModalOpen.value = false
+  flashMessage.value = `${targetEvents.length} event${targetEvents.length === 1 ? '' : 's'} deleted.`
+  await loadEvents()
+  clearSelection()
 }
 
 async function prepareBulkEditConfirmation() {
@@ -416,10 +507,6 @@ function gotoAddEvent() {
   router.push('/admin')
 }
 
-function gotoBulkAdd() {
-  router.push('/management/bulk')
-}
-
 function gotoIcsImport() {
   router.push('/management/import-ics')
 }
@@ -442,9 +529,13 @@ function gotoIcsImport() {
       </div>
     </div>
 
+    <div class="segmented-control management-display-mode" role="tablist" aria-label="Event display">
+      <button class="button button--compact" :class="{ secondary: displayMode !== 'individual' }" type="button" role="tab" :aria-selected="displayMode === 'individual'" @click="displayMode = 'individual'">Individual events</button>
+      <button class="button button--compact" :class="{ secondary: displayMode !== 'series' }" type="button" role="tab" :aria-selected="displayMode === 'series'" @click="displayMode = 'series'">Group by series</button>
+    </div>
+
     <div class="management-toolbar__actions" aria-label="Management actions">
       <button class="button button--compact icon-text" type="button" @click="gotoAddEvent"><Plus class="icon icon--sm" />Add Event</button>
-      <button class="button secondary button--compact icon-text" type="button" @click="gotoBulkAdd"><CalendarPlus class="icon icon--sm" />Bulk Add Events</button>
       <button class="button secondary button--compact icon-text" type="button" @click="gotoIcsImport"><FileUp class="icon icon--sm" />Import ICS</button>
     </div>
 
@@ -463,6 +554,7 @@ function gotoIcsImport() {
         <button class="button button--compact" type="button" @click="openBulkEdit">Bulk Edit</button>
         <button v-if="canBulkCancel" class="button danger button--compact" type="button" :disabled="bulkSaving" @click="bulkCancelSelected">Cancel Selected</button>
         <button v-if="canBulkRestore" class="button secondary button--compact" type="button" :disabled="bulkSaving" @click="bulkRestoreSelected">Restore Selected</button>
+        <button class="button danger button--compact" type="button" :disabled="bulkSaving" @click="openBulkDeleteModal">Delete Selected</button>
         <button class="button secondary button--compact" type="button" :disabled="bulkSaving" @click="clearSelection">Clear Selection</button>
       </div>
     </section>
@@ -544,39 +636,77 @@ function gotoIcsImport() {
     <p v-else-if="error" class="empty-state">Could not load events: {{ error }}</p>
     <p v-else-if="filteredEvents.length === 0" class="empty-state">No {{ viewLabel }} events match these filters.</p>
 
-    <section v-else class="management-list">
-      <div v-for="event in filteredEvents" :key="event.id" class="card management-card" :class="{ 'management-card--cancelled': event.status === 'cancelled' }">
-        <label class="management-card__select" :aria-label="`Select ${event.title}`">
-          <input type="checkbox" :checked="selectedEventIds.has(String(event.id))" @change="toggleEventSelection(event, $event.target.checked)" />
-        </label>
+    <section v-else-if="displayMode === 'individual'" class="management-list" aria-label="Individual events">
+      <ManagementEventCard
+        v-for="event in filteredEvents"
+        :key="event.id"
+        :event="event"
+        :selected="selectedEventIds.has(String(event.id))"
+        :is-admin="isAdmin"
+        :creator-label="getCreatorLabel(event)"
+        :formatted-start="formatStart(event.start_time)"
+        @select="toggleEventSelection(event, $event)"
+        @edit="editEvent(event.id)"
+        @duplicate="duplicateEvent(event.id)"
+        @restore="openRestoreModal(event)"
+        @cancel="openCancellationModal(event, event.cancellation_reason || '')"
+        @delete="openDeleteModal(event)"
+      />
+    </section>
 
-        <RouterLink :to="{ path: `/events/${event.id}`, query: { from: 'management' } }" class="management-card__content management-card__link">
-          <h2 class="management-card__title">{{ event.title }} <span v-if="event.status === 'cancelled'" class="pill cancelled-badge">Cancelled</span></h2>
-          <p class="management-card__meta">
-            {{ formatStart(event.start_time) }}
-            <span v-if="event.location">• {{ event.location }}</span>
-            <span v-if="event.organizer_display">• {{ event.organizer_display }}</span>
-          </p>
-          <p v-if="isAdmin" class="management-card__meta">Created by: {{ getCreatorLabel(event) }}</p>
-        </RouterLink>
+    <section v-else class="management-list" aria-label="Events grouped by series">
+      <template v-for="item in groupedItems" :key="item.key">
+        <ManagementEventCard
+          v-if="item.type === 'event'"
+          :event="item.event"
+          :selected="selectedEventIds.has(String(item.event.id))"
+          :is-admin="isAdmin"
+          :creator-label="getCreatorLabel(item.event)"
+          :formatted-start="formatStart(item.event.start_time)"
+          @select="toggleEventSelection(item.event, $event)"
+          @edit="editEvent(item.event.id)"
+          @duplicate="duplicateEvent(item.event.id)"
+          @restore="openRestoreModal(item.event)"
+          @cancel="openCancellationModal(item.event, item.event.cancellation_reason || '')"
+          @delete="openDeleteModal(item.event)"
+        />
 
-        <div class="management-card__actions">
-          <button class="button button--compact" type="button" @click="editEvent(event.id)">Edit</button>
-          <button class="button secondary button--compact" type="button" @click="duplicateEvent(event.id)">Duplicate</button>
-          <button v-if="event.status === 'cancelled'" class="button secondary button--compact" type="button" @click="openRestoreModal(event)">Restore</button>
-          <button v-else class="button danger button--compact" type="button" @click="openCancellationModal(event, event.cancellation_reason || '')">Cancel</button>
-          <button
-            class="button button--compact management-card__delete icon-text"
-            type="button"
-            aria-label="Delete event"
-            title="Delete event"
-            @click="openDeleteModal(event)"
-          >
-            <Trash2 class="icon icon--sm" aria-hidden="true" />
-            Delete
-          </button>
-        </div>
-      </div>
+        <article v-else class="card series-management-card">
+          <div class="series-management-card__content">
+            <h2>{{ getSeriesSummary(item).title }}</h2>
+            <p><strong>{{ getSeriesSummary(item).kind }} · {{ item.events.length }} event{{ item.events.length === 1 ? '' : 's' }}</strong></p>
+            <p class="management-card__meta">
+              {{ getSeriesSummary(item).dateRange }}
+              <span v-if="getSeriesSummary(item).weekdays"> · {{ getSeriesSummary(item).weekdays }}</span>
+              · {{ getSeriesSummary(item).time }}
+            </p>
+            <p v-if="getSeriesSummary(item).organizer" class="management-card__meta">{{ getSeriesSummary(item).organizer }}</p>
+          </div>
+          <div class="management-card__actions">
+            <button class="button secondary button--compact" type="button" :aria-expanded="isSeriesExpanded(item.seriesId)" @click="toggleSeries(item.seriesId)">
+              {{ isSeriesExpanded(item.seriesId) ? 'Collapse' : 'Expand' }}
+            </button>
+            <button class="button button--compact" type="button" @click="selectSeries(item.events)">Select series</button>
+          </div>
+          <div v-if="isSeriesExpanded(item.seriesId)" class="series-management-card__events">
+            <ManagementEventCard
+              v-for="event in item.events"
+              :key="event.id"
+              :event="event"
+              :selected="selectedEventIds.has(String(event.id))"
+              :is-admin="isAdmin"
+              :creator-label="getCreatorLabel(event)"
+              :formatted-start="formatStart(event.start_time)"
+              @select="toggleEventSelection(event, $event)"
+              @edit="editEvent(event.id)"
+              @duplicate="duplicateEvent(event.id)"
+              @restore="openRestoreModal(event)"
+              @cancel="openCancellationModal(event, event.cancellation_reason || '')"
+              @delete="openDeleteModal(event)"
+            />
+          </div>
+        </article>
+      </template>
     </section>
 
     <CancellationModal
@@ -607,6 +737,17 @@ function gotoIcsImport() {
       :busy="bulkSaving"
       @close="closeDeleteModal"
       @confirm="confirmDelete"
+    />
+
+    <ConfirmationModal
+      v-if="bulkDeleteModalOpen"
+      :title="`Permanently delete ${selectedCount} selected event${selectedCount === 1 ? '' : 's'}?`"
+      description="This cannot be undone."
+      confirm-label="Delete Selected"
+      danger
+      :busy="bulkSaving"
+      @close="closeBulkDeleteModal"
+      @confirm="confirmBulkDelete"
     />
   </div>
 </template>

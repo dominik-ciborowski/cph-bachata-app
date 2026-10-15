@@ -93,7 +93,6 @@ function getEventIcsLines(event, timestamp) {
 
   const title = compact(event.title) || 'Copenhagen Bachata event'
   const startTime = event.start_time
-  const endTime = event.end_time || event.start_time
 
   if (!startTime) throw new Error('Event start time is missing.')
 
@@ -102,11 +101,14 @@ function getEventIcsLines(event, timestamp) {
     `UID:${escapeIcsText(getEventUid(event))}`,
     `DTSTAMP:${timestamp}`,
     `DTSTART;TZID=${CALENDAR_TIME_ZONE}:${formatCopenhagenDateTime(startTime)}`,
-    `DTEND;TZID=${CALENDAR_TIME_ZONE}:${formatCopenhagenDateTime(endTime)}`,
     `SUMMARY:${escapeIcsText(title)}`,
     `DESCRIPTION:${escapeIcsText(getDescription(event))}`,
     `LOCATION:${escapeIcsText(event.location || '')}`
   ]
+
+  if (event.end_time) {
+    lines.splice(4, 0, `DTEND;TZID=${CALENDAR_TIME_ZONE}:${formatCopenhagenDateTime(event.end_time)}`)
+  }
 
   if (compact(event.event_link)) {
     lines.push(`URL:${escapeIcsText(event.event_link)}`)

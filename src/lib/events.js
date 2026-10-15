@@ -8,6 +8,9 @@
  * @property {string | null} event_link
  * @property {string} start_time
  * @property {string | null} end_time
+ * @property {string} start_date
+ * @property {string} end_date
+ * @property {string | null} series_id
  * @property {string} category
  * @property {string | null} location
  * @property {string | null} description

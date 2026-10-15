@@ -238,9 +238,8 @@ onBeforeUnmount(() => {
 
           <section v-if="canManageEvents" class="mobile-menu-section">
             <h2>Manage</h2>
-            <RouterLink to="/management" class="mobile-menu-item" @click="closeNavigation">Dashboard</RouterLink>
+            <RouterLink to="/management" class="mobile-menu-item" @click="closeNavigation">Event Management</RouterLink>
             <RouterLink to="/admin" class="mobile-menu-item" @click="closeNavigation">Add Event</RouterLink>
-            <RouterLink to="/management/bulk" class="mobile-menu-item" @click="closeNavigation">Bulk Add Event</RouterLink>
           </section>
 
           <section v-if="isAdmin" class="mobile-menu-section">

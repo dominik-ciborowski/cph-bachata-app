@@ -103,3 +103,10 @@ export async function applyBulkStatusUpdates(events, payload, updateEvent) {
     results
   }
 }
+
+export async function deleteSelectedEvents(events, deleteEvents) {
+  const manageableEvents = [...(events || [])]
+  if (!manageableEvents.length) return { deleted: 0, error: null }
+  const result = await deleteEvents(manageableEvents.map((event) => event.id))
+  return { deleted: result?.error ? 0 : manageableEvents.length, error: result?.error || null }
+}
